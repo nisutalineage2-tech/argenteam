@@ -19,13 +19,16 @@ public class FactionWarConfig
 	private static long _flagRespawnDelay;
 	private static int _guardNpcId;
 	private static long _guardRespawnDelay;
+	private static int _warRegistrarNpcId;
+	private static int _checkpointNpcId;
+	private static int _checkpointCount;
+	private static int _checkpointRadius;
 	private static int _mapRotationMinutes;
 	private static final List<WarMap> _maps = new ArrayList<>();
 	private static Location _goodGuardLoc;
 	private static Location _evilGuardLoc;
 	private static Location _goodSpawnLoc;
 	private static Location _evilSpawnLoc;
-	private static boolean _autoTeleportOnLogin;
 	private static boolean _announceStart;
 	private static boolean _announceEnd;
 	private static boolean _announceFlagKill;
@@ -47,8 +50,11 @@ public class FactionWarConfig
 		_flagRespawnDelay = props.getProperty("FlagRespawnDelay", 30) * 1000L;
 		_guardNpcId = props.getProperty("GuardNpcId", 90001);
 		_guardRespawnDelay = props.getProperty("GuardRespawnDelay", 60) * 1000L;
+		_warRegistrarNpcId = props.getProperty("WarRegistrarNpcId", 90002);
+		_checkpointNpcId = props.getProperty("CheckpointNpcId", 90003);
+		_checkpointCount = props.getProperty("CheckpointCount", 3);
+		_checkpointRadius = props.getProperty("CheckpointRadius", 2000);
 		_mapRotationMinutes = props.getProperty("MapRotationMinutes", 30);
-		_autoTeleportOnLogin = props.getProperty("AutoTeleportOnLogin", true);
 		_announceStart = props.getProperty("AnnounceStart", true);
 		_announceEnd = props.getProperty("AnnounceEnd", true);
 		_announceFlagKill = props.getProperty("AnnounceFlagKill", true);
@@ -96,7 +102,7 @@ public class FactionWarConfig
 		return new Location(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), Integer.parseInt(p[2].trim()));
 	}
 	
-	public static boolean isEnabled() { return _enabled; }
+	public static boolean isEnabled() { return Config.ENABLE_FACTION_SYSTEM && _enabled; }
 	public static int getGoodFactionId() { return _goodFactionId; }
 	public static int getEvilFactionId() { return _evilFactionId; }
 	public static int getScoreToWin() { return _scoreToWin; }
@@ -106,13 +112,16 @@ public class FactionWarConfig
 	public static long getFlagRespawnDelay() { return _flagRespawnDelay; }
 	public static int getGuardNpcId() { return _guardNpcId; }
 	public static long getGuardRespawnDelay() { return _guardRespawnDelay; }
+	public static int getWarRegistrarNpcId() { return _warRegistrarNpcId; }
+	public static int getCheckpointNpcId() { return _checkpointNpcId; }
+	public static int getCheckpointCount() { return _checkpointCount; }
+	public static int getCheckpointRadius() { return _checkpointRadius; }
 	public static int getMapRotationMinutes() { return _mapRotationMinutes; }
 	public static List<WarMap> getMaps() { return _maps; }
 	public static Location getGoodGuardLoc() { return _goodGuardLoc; }
 	public static Location getEvilGuardLoc() { return _evilGuardLoc; }
 	public static Location getGoodSpawnLoc() { return _goodSpawnLoc; }
 	public static Location getEvilSpawnLoc() { return _evilSpawnLoc; }
-	public static boolean isAutoTeleportOnLogin() { return _autoTeleportOnLogin; }
 	public static boolean isAnnounceStart() { return _announceStart; }
 	public static boolean isAnnounceEnd() { return _announceEnd; }
 	public static boolean isAnnounceFlagKill() { return _announceFlagKill; }

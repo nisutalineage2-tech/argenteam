@@ -2619,7 +2619,7 @@ public final class Player extends Playable
 			final Player pk = killer.getActingPlayer();
 			
 			// Faction War PvP scoring
-			if (pk != null && Config.ENABLE_FACTION_SYSTEM && pk.getFactionId() > 0 && getFactionId() > 0 && pk.getFactionId() != getFactionId())
+			if (pk != null && pk.getFactionId() > 0 && getFactionId() > 0 && pk.getFactionId() != getFactionId())
 			{
 				net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().onPvpKill(pk.getFactionId(), getFactionId());
 			}

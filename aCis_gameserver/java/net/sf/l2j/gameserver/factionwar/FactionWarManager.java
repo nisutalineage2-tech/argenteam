@@ -29,6 +29,10 @@ public class FactionWarManager
 	private Npc _goodGuardNpc;
 	private Spawn _evilGuardSpawn;
 	private Npc _evilGuardNpc;
+	private Spawn _registrarSpawn;
+	private Npc _registrarNpc;
+	
+	private final FactionWarCheckpoint _checkpoints = new FactionWarCheckpoint();
 	
 	private ScheduledFuture<?> _mapRotationTask;
 	private ScheduledFuture<?> _flagRespawnTask;
@@ -63,6 +67,11 @@ public class FactionWarManager
 	public Map<Integer, Integer> getAllScores()
 	{
 		return new HashMap<>(_scores);
+	}
+	
+	public FactionWarCheckpoint getCheckpoints()
+	{
+		return _checkpoints;
 	}
 	
 	public String getScoreboard()
@@ -100,6 +109,8 @@ public class FactionWarManager
 		
 		spawnFlag();
 		spawnGuards();
+		spawnRegistrar();
+		_checkpoints.spawn(_currentMapIndex);
 		
 		if (FactionWarConfig.getMapRotationMinutes() > 0 && FactionWarConfig.getMaps().size() > 1)
 		{
@@ -131,6 +142,8 @@ public class FactionWarManager
 		
 		despawnFlag();
 		despawnGuards();
+		despawnRegistrar();
+		_checkpoints.despawn();
 		
 		if (FactionWarConfig.isAnnounceEnd())
 		{
@@ -152,7 +165,7 @@ public class FactionWarManager
 	
 	public void onFlagKilled(int killerFactionId)
 	{
-		if (!_running)
+		if (!_running || !FactionWarConfig.isEnabled())
 			return;
 		
 		final int points = FactionWarConfig.getPointsPerFlagKill();
@@ -172,7 +185,7 @@ public class FactionWarManager
 	
 	public void onPvpKill(int killerFactionId, int victimFactionId)
 	{
-		if (!_running || killerFactionId == victimFactionId)
+		if (!_running || !FactionWarConfig.isEnabled() || killerFactionId == victimFactionId)
 			return;
 		
 		final int points = FactionWarConfig.getPointsPerPvpKill();
@@ -288,6 +301,31 @@ public class FactionWarManager
 			spawn.doDelete();
 	}
 	
+	private void spawnRegistrar()
+	{
+		if (FactionWarConfig.getMaps().isEmpty())
+			return;
+		
+		try
+		{
+			final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
+			_registrarSpawn = new Spawn(FactionWarConfig.getWarRegistrarNpcId(), true);
+			_registrarSpawn.setLoc(map.getX(), map.getY() + 200, map.getZ(), 0);
+			_registrarNpc = _registrarSpawn.doSpawn(false);
+		}
+		catch (Exception e)
+		{
+			LOGGER.error("Failed to spawn War Registrar.", e);
+		}
+	}
+	
+	private void despawnRegistrar()
+	{
+		despawnNpc(_registrarNpc, _registrarSpawn);
+		_registrarNpc = null;
+		_registrarSpawn = null;
+	}
+	
 	public void onGuardDied()
 	{
 		if (!_running)
@@ -312,16 +350,18 @@ public class FactionWarManager
 		
 		despawnFlag();
 		despawnGuards();
+		despawnRegistrar();
+		_checkpoints.despawn();
 		
 		_currentMapIndex = (_currentMapIndex + 1) % FactionWarConfig.getMaps().size();
 		
-		final FactionWarConfig.WarMap newMap = FactionWarConfig.getMaps().get(_currentMapIndex);
-		
 		spawnFlag();
 		spawnGuards();
+		spawnRegistrar();
+		_checkpoints.spawn(_currentMapIndex);
 		
 		if (FactionWarConfig.isAnnounceMapSwitch())
-			broadcast("[Faction War] El mapa ha cambiado a: " + newMap.getName());
+			broadcast("[Faction War] El mapa ha cambiado a: " + FactionWarConfig.getMaps().get(_currentMapIndex).getName());
 	}
 	
 	public int getCurrentMapIndex()

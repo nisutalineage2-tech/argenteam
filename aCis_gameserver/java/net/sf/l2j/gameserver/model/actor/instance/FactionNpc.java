@@ -4,9 +4,7 @@ import java.util.StringTokenizer;
 
 import net.sf.l2j.commons.pool.ThreadPool;
 
-import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.xml.FactionData;
-import net.sf.l2j.gameserver.enums.SpawnType;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
@@ -21,9 +19,6 @@ public class FactionNpc extends Folk
 	@Override
 	public void onBypassFeedback(Player player, String command)
 	{
-		if (!Config.ENABLE_FACTION_SYSTEM)
-			return;
-		
 		StringTokenizer st = new StringTokenizer(command, " ");
 		String currentCommand = st.nextToken();
 		

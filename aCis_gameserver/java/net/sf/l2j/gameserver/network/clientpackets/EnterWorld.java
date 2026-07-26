@@ -19,8 +19,6 @@ import net.sf.l2j.gameserver.enums.SealType;
 import net.sf.l2j.gameserver.enums.SiegeSide;
 import net.sf.l2j.gameserver.enums.ZoneId;
 import net.sf.l2j.gameserver.enums.actors.ClassRace;
-import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
-import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.holder.IntIntHolder;
@@ -259,18 +257,6 @@ public class EnterWorld extends L2GameClientPacket
 		player.onPlayerEnter();
 		
 		FactionData.getInstance().onPlayerEnter(player);
-		
-		// Faction War: auto-teleport faction members during war
-		if (FactionWarConfig.isEnabled() && FactionWarManager.getInstance().isRunning() && Config.ENABLE_FACTION_SYSTEM)
-		{
-			final int factionId = player.getFactionId();
-			if (factionId == FactionWarConfig.getGoodFactionId() || factionId == FactionWarConfig.getEvilFactionId())
-			{
-				final net.sf.l2j.gameserver.model.location.Location spawnLoc = FactionWarManager.getInstance().getFactionSpawn(factionId);
-				if (spawnLoc != null && player.isOnline())
-					player.teleportTo(spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ(), 0);
-			}
-		}
 		
 		sendPacket(new SkillCoolTime(player));
 		

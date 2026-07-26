@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
@@ -65,7 +64,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		
 		if (cmd.equals("admin_phantom_factions"))
 		{
-			if (!Config.ENABLE_FACTION_SYSTEM)
+			if (!FactionWarConfig.isEnabled())
 			{
 				showPanel(player, "Faction system is disabled.");
 				return;
@@ -193,7 +192,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		
 		if (cmd.equals("admin_phantom_faction"))
 		{
-			if (!Config.ENABLE_FACTION_SYSTEM)
+			if (!FactionWarConfig.isEnabled())
 			{
 				showPanel(player, "Faction system is disabled.");
 				return;
@@ -352,7 +351,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("AI: ").append(PhantomConfig.aiEnabled()).append(" | Tick: ").append(PhantomConfig.aiTickMs()).append("ms | Zone: ").append(PhantomConfig.levelZoneProfile()).append("<br>");
 		sb.append("Skills: ").append(PhantomConfig.advancedSkillUsage()).append(" | Mage: ").append(PhantomConfig.mageNeverMelee()).append(" | Herbs: ").append(PhantomConfig.autoLootHerbs()).append("<br>");
 		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat: ").append(PhantomConfig.phantomChatEnabled()).append("<br>");
-		sb.append("Factions: ").append(Config.ENABLE_FACTION_SYSTEM).append("<br>");
+		sb.append("Factions: ").append(FactionWarConfig.isEnabled()).append("<br>");
 		
 		if (FactionWarConfig.isEnabled())
 		{
@@ -388,7 +387,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			for (int fKey : sortedKeys)
 			{
 				final List<Player> list = groups.get(fKey);
-				final Faction faction = (Config.ENABLE_FACTION_SYSTEM && fKey > 0) ? FactionData.getInstance().getFaction(fKey) : null;
+				final Faction faction = (FactionWarConfig.isEnabled() && fKey > 0) ? FactionData.getInstance().getFaction(fKey) : null;
 				
 				sb.append("<br><font color=FFD700> ");
 				if (fKey == 0)
@@ -412,7 +411,7 @@ public class AdminPhantom implements IAdminCommandHandler
 					sb.append("</td><td width=22>");
 					miniButton(sb, "X", "admin_phantom delete 0 0 " + oid, 22);
 					sb.append("</td><td width=28>");
-					if (Config.ENABLE_FACTION_SYSTEM)
+					if (FactionWarConfig.isEnabled())
 						miniButton(sb, String.valueOf(nextFaction == 0 ? "-" : nextFaction), "admin_phantom faction 0 0 " + oid + " " + nextFaction, 28);
 					sb.append("</td></tr>");
 				}
@@ -441,7 +440,7 @@ public class AdminPhantom implements IAdminCommandHandler
 	private static int nextFactionId(int current)
 	{
 		final int maxFaction = FactionData.getInstance().getFactionCount();
-		if (!Config.ENABLE_FACTION_SYSTEM || maxFaction <= 0)
+		if (!FactionWarConfig.isEnabled() || maxFaction <= 0)
 			return 0;
 		
 		if (current < 1)
@@ -485,7 +484,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			final Player phantom = phantoms.get(i);
 			final int objectId = phantom.getObjectId();
 			final int fId = phantom.getFactionId();
-			final String factionTag = (Config.ENABLE_FACTION_SYSTEM && fId > 0) ? String.valueOf(fId) : "-";
+			final String factionTag = (FactionWarConfig.isEnabled() && fId > 0) ? String.valueOf(fId) : "-";
 			sb.append("<tr><td>").append(shortText(phantom.getName(), 10)).append("</td><td>").append(phantom.getStatus().getLevel()).append("</td><td>").append(factionTag).append("</td><td>").append(shortText(PhantomState.label(objectId), 5)).append("</td><td>").append(shortText(PhantomAI.getLastAction(phantom), 6)).append("</td>");
 			sb.append("<td>");
 			miniButton(sb, "K", "admin_phantom kill " + page + " " + filterFaction + " " + objectId, 22);
@@ -494,7 +493,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			sb.append("</td><td>");
 			miniButton(sb, "X", "admin_phantom delete " + page + " " + filterFaction + " " + objectId, 22);
 			sb.append("</td><td>");
-			if (Config.ENABLE_FACTION_SYSTEM)
+			if (FactionWarConfig.isEnabled())
 			{
 				final int nextFaction = (fId == 0) ? 1 : (fId >= FactionData.getInstance().getFactionCount()) ? 0 : fId + 1;
 				miniButton(sb, (fId == 0) ? "+" : String.valueOf(fId), "admin_phantom faction " + page + " " + filterFaction + " " + objectId + " " + nextFaction, 28);

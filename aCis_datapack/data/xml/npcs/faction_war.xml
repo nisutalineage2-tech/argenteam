@@ -61,4 +61,66 @@
 		<set name="aggroRange" val="500"/>
 		<set name="seedable" val="false"/>
 	</npc>
+	
+	<npc id="90002" name="War Registrar" title="Faction War" alias="faction_war_npc">
+		<set name="type" val="FactionWarNpc"/>
+		<set name="level" val="80"/>
+		<set name="radius" val="8.0"/>
+		<set name="height" val="24.0"/>
+		<set name="exp" val="0"/>
+		<set name="sp" val="0"/>
+		<set name="hp" val="999999"/>
+		<set name="mp" val="1"/>
+		<set name="hpRegen" val="999"/>
+		<set name="mpRegen" val="0"/>
+		<set name="baseAttackRange" val="40"/>
+		<set name="baseDamageRange" val="0;0;0;0"/>
+		<set name="baseRandomDamage" val="0"/>
+		<set name="pAtk" val="1"/>
+		<set name="pDef" val="9999"/>
+		<set name="mAtk" val="1"/>
+		<set name="mDef" val="9999"/>
+		<set name="crit" val="1.0"/>
+		<set name="atkSpd" val="200"/>
+		<set name="walkSpd" val="0"/>
+		<set name="runSpd" val="0"/>
+		<set name="canSeeThrough" val="true"/>
+		<set name="canBeAttacked" val="false"/>
+		<set name="canMove" val="false"/>
+		<set name="corpseTime" val="0"/>
+		<set name="noSleepMode" val="true"/>
+		<set name="aggroRange" val="0"/>
+		<set name="seedable" val="false"/>
+	</npc>
+	
+	<npc id="90003" name="Checkpoint" title="Teleport" alias="faction_war_checkpoint">
+		<set name="type" val="Folk"/>
+		<set name="level" val="80"/>
+		<set name="radius" val="12.0"/>
+		<set name="height" val="30.0"/>
+		<set name="exp" val="0"/>
+		<set name="sp" val="0"/>
+		<set name="hp" val="999999"/>
+		<set name="mp" val="1"/>
+		<set name="hpRegen" val="999"/>
+		<set name="mpRegen" val="0"/>
+		<set name="baseAttackRange" val="40"/>
+		<set name="baseDamageRange" val="0;0;0;0"/>
+		<set name="baseRandomDamage" val="0"/>
+		<set name="pAtk" val="1"/>
+		<set name="pDef" val="9999"/>
+		<set name="mAtk" val="1"/>
+		<set name="mDef" val="9999"/>
+		<set name="crit" val="1.0"/>
+		<set name="atkSpd" val="200"/>
+		<set name="walkSpd" val="0"/>
+		<set name="runSpd" val="0"/>
+		<set name="canSeeThrough" val="true"/>
+		<set name="canBeAttacked" val="false"/>
+		<set name="canMove" val="false"/>
+		<set name="corpseTime" val="0"/>
+		<set name="noSleepMode" val="true"/>
+		<set name="aggroRange" val="0"/>
+		<set name="seedable" val="false"/>
+	</npc>
 </list>

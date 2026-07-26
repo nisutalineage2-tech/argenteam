@@ -32,6 +32,7 @@ public final class Config
 	
 	private static final String CLANS_FILE = "./config/clans.properties";
 	private static final String EVENTS_FILE = "./config/events.properties";
+	private static final String FACTIONWAR_FILE = "./config/factionwar.properties";
 	public static final String GEOENGINE_FILE = "./config/geoengine.properties";
 	private static final String HEXID_FILE = "./config/hexid.txt";
 	private static final String LOGINSERVER_FILE = "./config/loginserver.properties";
@@ -636,6 +637,17 @@ public final class Config
 	}
 	
 	/**
+	 * Loads faction war settings.<br>
+	 * Faction system master toggle and faction war event config.
+	 */
+	private static final void loadFactionWar()
+	{
+		final ExProperties props = initProperties(FACTIONWAR_FILE);
+		
+		ENABLE_FACTION_SYSTEM = props.getProperty("EnableFactionSystem", false);
+	}
+	
+	/**
 	 * Loads geoengine settings.
 	 */
 	private static final void loadGeoengine()
@@ -997,8 +1009,6 @@ public final class Config
 		
 		ENABLE_FALLING_DAMAGE = server.getProperty("EnableFallingDamage", true);
 		
-		ENABLE_FACTION_SYSTEM = server.getProperty("EnableFactionSystem", false);
-		
 		NO_SPAWNS = server.getProperty("NoSpawns", false);
 		DEVELOPER = server.getProperty("Developer", false);
 		PACKET_HANDLER_DEBUG = server.getProperty("PacketHandlerDebug", false);
@@ -1069,6 +1079,9 @@ public final class Config
 		
 		// events settings
 		loadEvents();
+		
+		// faction war settings
+		loadFactionWar();
 		
 		// geoengine settings
 		loadGeoengine();

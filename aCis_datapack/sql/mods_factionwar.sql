@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS `mods_factionwar` (
+  `char_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  `faction_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`char_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
