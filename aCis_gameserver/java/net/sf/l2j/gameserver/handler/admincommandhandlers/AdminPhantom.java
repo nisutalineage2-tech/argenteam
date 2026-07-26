@@ -177,18 +177,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			
 			if (!st.hasMoreTokens())
 			{
-				showOnline(player, 0, "Usage: phantom_faction <page> <objectId> <factionId|0>");
-				return;
-			}
-			
-			final int page = parsePage(st);
-			final int objectId = parseObjectId(st, player, page);
-			if (objectId <= 0)
-				return;
-			
-			if (!st.hasMoreTokens())
-			{
-				showOnline(player, page, "Usage: phantom_faction " + page + " " + objectId + " <factionId|0>");
+				showPanel(player, "Usage: phantom_faction &lt;factionId|0&gt; (0 = remove faction)");
 				return;
 			}
 			
@@ -199,35 +188,33 @@ public class AdminPhantom implements IAdminCommandHandler
 			}
 			catch (NumberFormatException e)
 			{
-				showOnline(player, page, "Invalid factionId.");
+				showPanel(player, "Invalid factionId.");
 				return;
 			}
 			
-			final Player phantom = PhantomEngine.getActivePhantom(objectId);
-			if (phantom == null)
+			if (factionId != 0 && FactionData.getInstance().getFaction(factionId) == null)
 			{
-				showOnline(player, page, "Phantom " + objectId + " is not active.");
+				showPanel(player, "Faction " + factionId + " not found in faction.xml.");
 				return;
 			}
 			
-			if (factionId == 0)
+			final List<Player> phantoms = PhantomEngine.getActivePhantomsSorted();
+			int updated = 0;
+			for (Player phantom : phantoms)
 			{
-				phantom.setFactionId(0);
-				FactionData.getInstance().removeData(phantom);
-				showOnline(player, page, "Phantom " + phantom.getName() + " removed from faction.");
-			}
-			else
-			{
-				final Faction faction = FactionData.getInstance().getFaction(factionId);
-				if (faction == null)
-				{
-					showOnline(player, page, "Faction " + factionId + " not found in faction.xml.");
-					return;
-				}
+				if (phantom == null)
+					continue;
+				
 				phantom.setFactionId(factionId);
-				FactionData.getInstance().storeData(phantom);
-				showOnline(player, page, "Phantom " + phantom.getName() + " assigned to " + faction.getName() + ".");
+				if (factionId == 0)
+					FactionData.getInstance().removeData(phantom);
+				else
+					FactionData.getInstance().storeData(phantom);
+				updated++;
 			}
+			
+			final String msg = (factionId == 0) ? "Removed faction from " + updated + " phantoms." : "Assigned faction " + factionId + " to " + updated + " phantoms.";
+			showPanel(player, msg);
 			return;
 		}
 	}
