@@ -8,6 +8,8 @@ import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 import net.sf.l2j.gameserver.network.serverpackets.SystemMessage;
+import net.sf.l2j.gameserver.phantom.PhantomChat;
+import net.sf.l2j.gameserver.phantom.PhantomEngine;
 
 public class ChatTell implements IChatHandler
 {
@@ -20,6 +22,10 @@ public class ChatTell implements IChatHandler
 	public void handleChat(SayType type, Player player, String target, String text)
 	{
 		if (target == null)
+			return;
+		
+		final Player phantom = PhantomEngine.getActivePhantom(target);
+		if (phantom != null && PhantomChat.onWhisper(player, phantom, text))
 			return;
 		
 		final Player targetPlayer = World.getInstance().getPlayer(target);
