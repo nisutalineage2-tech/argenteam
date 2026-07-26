@@ -5,9 +5,13 @@ import java.util.StringTokenizer;
 import net.sf.l2j.commons.pool.ThreadPool;
 
 import net.sf.l2j.gameserver.data.xml.FactionData;
+import net.sf.l2j.gameserver.enums.SayType;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
+import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
+import net.sf.l2j.gameserver.network.serverpackets.MagicSkillUse;
 
 public class FactionNpc extends Folk
 {
@@ -52,13 +56,18 @@ public class FactionNpc extends Folk
 			player.broadcastUserInfo();
 			
 			player.sendMessage("You've decided to fight for " + faction.getName() + ".");
-			player.sendMessage("You'll be teleported to your base in 6 second(s).");
+			
+			player.startAbnormalEffect(AbnormalEffect.MAGIC_CIRCLE);
+			broadcastPacket(new MagicSkillUse(this, player, 1034, 1, 2000, 0));
+			broadcastPacket(new CreatureSay(getObjectId(), SayType.ALL, getName(), "Welcome, warrior. May the light guide your path to " + faction.getName() + "."));
+			
 			ThreadPool.schedule(() ->
 			{
+				player.stopAbnormalEffect(AbnormalEffect.MAGIC_CIRCLE);
 				final Faction f = FactionData.getInstance().getFaction(id);
 				if (f != null)
 					player.teleportTo(f.getHomeLocation(), 0);
-			}, 6000);
+			}, 2000);
 		}
 		else if (currentCommand.startsWith("leaveFaction"))
 		{

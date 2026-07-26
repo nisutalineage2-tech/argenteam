@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list>
+	<!-- Faction neutral zone NPCs - Talking Island (Peace Zone) -->
+	<territory name="faction_neutral_zone" minZ="-3966" maxZ="-3000">
+		<node x="-84500" y="242800"/>
+		<node x="-84100" y="242800"/>
+		<node x="-84100" y="243200"/>
+		<node x="-84500" y="243200"/>
+	</territory>
+	<npcmaker name="faction_neutral_zone_maker" territory="faction_neutral_zone" maximumNpcs="2">
+		<ai type="default_maker"/>
+		<npc id="90004" pos="-84300;243000;-3450;16384" total="1" respawn="1min"/>
+		<npc id="90002" pos="-84400;243100;-3450;16384" total="1" respawn="1min"/>
+	</npcmaker>
+</list>

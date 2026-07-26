@@ -2,6 +2,7 @@ package net.sf.l2j.gameserver.network.clientpackets;
 
 import net.sf.l2j.commons.lang.StringUtil;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.sql.PlayerInfoTable;
 import net.sf.l2j.gameserver.data.xml.NpcData;
 import net.sf.l2j.gameserver.data.xml.PlayerData;
@@ -133,7 +134,7 @@ public final class RequestCharacterCreate extends L2GameClientPacket
 		
 		World.getInstance().addObject(player);
 		
-		player.getPosition().set(template.getRandomSpawn());
+		player.getPosition().set(Config.ENABLE_FACTION_SYSTEM ? new net.sf.l2j.gameserver.model.location.Location(-84300, 243000, -3450) : template.getRandomSpawn());
 		player.setTitle("");
 		
 		// Register shortcuts.
