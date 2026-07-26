@@ -385,6 +385,8 @@ public final class Player extends Playable
 	
 	private boolean _wantsPeace;
 	
+	private int _factionId;
+	
 	private int _deathPenaltyBuffLevel;
 	
 	private final AtomicInteger _charges = new AtomicInteger();
@@ -2799,8 +2801,11 @@ public final class Player extends Playable
 			return;
 		}
 		
-		// Check if it's pvp (cases : regular, wars, victim is PKer)
-		if (checkIfPvP(target) || (targetPlayer.getClan() != null && getClan() != null && getClan().isAtWarWith(targetPlayer.getClanId()) && targetPlayer.getClan().isAtWarWith(getClanId()) && targetPlayer.getPledgeType() != Clan.SUBUNIT_ACADEMY && getPledgeType() != Clan.SUBUNIT_ACADEMY) || (targetPlayer.getKarma() > 0 && Config.KARMA_AWARD_PK_KILL))
+		// Faction members count as PvP kills (no PK penalty for killing faction enemies).
+		final boolean factionPvP = Config.ENABLE_FACTION_SYSTEM && getFactionId() != 0 && targetPlayer.getFactionId() != 0 && getFactionId() != targetPlayer.getFactionId();
+		
+		// Check if it's pvp (cases : regular, wars, victim is PKer, faction war)
+		if (factionPvP || checkIfPvP(target) || (targetPlayer.getClan() != null && getClan() != null && getClan().isAtWarWith(targetPlayer.getClanId()) && targetPlayer.getClan().isAtWarWith(getClanId()) && targetPlayer.getPledgeType() != Clan.SUBUNIT_ACADEMY && getPledgeType() != Clan.SUBUNIT_ACADEMY) || (targetPlayer.getKarma() > 0 && Config.KARMA_AWARD_PK_KILL))
 		{
 			if (target instanceof Player)
 			{
@@ -2816,7 +2821,12 @@ public final class Player extends Playable
 		{
 			// PK Points are increased only if you kill a player.
 			if (target instanceof Player)
+			{
+				if (Config.ENABLE_FACTION_SYSTEM && targetPlayer.getFactionId() != 0)
+					return;
+				
 				setPkKills(getPkKills() + 1);
+			}
 			
 			// Calculate new karma.
 			setKarma(getKarma() + Formulas.calculateKarmaGain(getPkKills(), target instanceof Summon));
@@ -2834,6 +2844,9 @@ public final class Player extends Playable
 		if (isInsideZone(ZoneId.PVP))
 			return;
 		
+		if (Config.ENABLE_FACTION_SYSTEM && getFactionId() != 0)
+			return;
+		
 		PvpFlagTaskManager.getInstance().add(this, Config.PVP_NORMAL_TIME);
 		
 		if (getPvpFlag() == 0)
@@ -2847,6 +2860,9 @@ public final class Player extends Playable
 			return;
 		
 		if (isInDuel() && player.getDuelId() == getDuelId())
+			return;
+		
+		if (Config.ENABLE_FACTION_SYSTEM && getFactionId() != 0)
 			return;
 		
 		if ((!isInsideZone(ZoneId.PVP) || !target.isInsideZone(ZoneId.PVP)) && player.getKarma() == 0)
@@ -4830,6 +4846,10 @@ public final class Player extends Playable
 			return true;
 		
 		final Player targetPlayer = target.getActingPlayer();
+		
+		// Faction check: cannot buff enemy faction members.
+		if (Config.ENABLE_FACTION_SYSTEM && _factionId != 0 && targetPlayer.getFactionId() != 0 && _factionId != targetPlayer.getFactionId())
+			return false;
 		
 		// No checks if both players are in Arena ; CTRL check if caster is on PEACE zone.
 		if (targetPlayer.isInsideZone(ZoneId.PVP))
@@ -7143,6 +7163,16 @@ public final class Player extends Playable
 	public Set<Integer> getSelectedBlocksList()
 	{
 		return _selectedBlocksList;
+	}
+	
+	public void setFactionId(int id)
+	{
+		_factionId = id;
+	}
+	
+	public int getFactionId()
+	{
+		return _factionId;
 	}
 	
 	public void stopToFight()

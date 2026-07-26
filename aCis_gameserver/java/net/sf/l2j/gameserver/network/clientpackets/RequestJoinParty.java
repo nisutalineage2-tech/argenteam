@@ -74,6 +74,9 @@ public final class RequestJoinParty extends L2GameClientPacket
 		if (target.isInOlympiadMode() || requestor.isInOlympiadMode())
 			return;
 		
+		if (Config.ENABLE_FACTION_SYSTEM && requestor.getFactionId() != target.getFactionId())
+			return;
+		
 		if (requestor.isProcessingRequest())
 		{
 			requestor.sendPacket(SystemMessageId.WAITING_FOR_ANOTHER_REPLY);

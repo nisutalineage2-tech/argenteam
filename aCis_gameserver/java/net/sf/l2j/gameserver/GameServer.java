@@ -49,6 +49,7 @@ import net.sf.l2j.gameserver.data.xml.AugmentationData;
 import net.sf.l2j.gameserver.data.xml.BoatData;
 import net.sf.l2j.gameserver.data.xml.ClanHallDecoData;
 import net.sf.l2j.gameserver.data.xml.DoorData;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.FishData;
 import net.sf.l2j.gameserver.data.xml.HealSpsData;
 import net.sf.l2j.gameserver.data.xml.HennaData;
@@ -182,6 +183,7 @@ public class GameServer
 		RaidPointManager.getInstance();
 		HealSpsData.getInstance();
 		RestartPointData.getInstance();
+		FactionData.getInstance();
 		
 		StringUtil.printSection("Community server");
 		CommunityBoard.getInstance();

@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.handler.skillhandlers;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.ZoneId;
 import net.sf.l2j.gameserver.enums.skills.SkillType;
 import net.sf.l2j.gameserver.handler.ISkillHandler;
@@ -59,11 +60,15 @@ public class SummonFriend implements ISkillHandler
 				if (!(obj instanceof Player))
 					continue;
 				
-				final Player target = ((Player) obj);
-				
-				// Check target status.
-				if (!checkSummoned(player, target))
-					continue;
+			final Player target = ((Player) obj);
+			
+			// Check target status.
+			if (!checkSummoned(player, target))
+				continue;
+			
+			// Faction check: can only summon same faction.
+			if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != target.getFactionId())
+				continue;
 				
 				// Check target teleport request status.
 				if (!target.teleportRequest(player, skill))

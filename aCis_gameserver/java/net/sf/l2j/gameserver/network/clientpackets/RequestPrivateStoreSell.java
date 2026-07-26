@@ -64,6 +64,9 @@ public final class RequestPrivateStoreSell extends L2GameClientPacket
 		if (!player.isIn3DRadius(storePlayer, Npc.INTERACTION_DISTANCE))
 			return;
 		
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != storePlayer.getFactionId())
+			return;
+		
 		if (storePlayer.getOperateType() != OperateType.BUY)
 			return;
 		

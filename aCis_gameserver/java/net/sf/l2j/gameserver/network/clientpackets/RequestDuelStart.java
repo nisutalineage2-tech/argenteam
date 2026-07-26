@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.group.CommandChannel;
@@ -33,6 +34,9 @@ public final class RequestDuelStart extends L2GameClientPacket
 			player.sendPacket(SystemMessageId.THERE_IS_NO_OPPONENT_TO_RECEIVE_YOUR_CHALLENGE_FOR_A_DUEL);
 			return;
 		}
+		
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() == target.getFactionId())
+			return;
 		
 		// Check if duel is possible.
 		if (!player.canDuel())

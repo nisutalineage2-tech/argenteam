@@ -42,6 +42,9 @@ public final class RequestSendL2FriendSay extends L2GameClientPacket
 			return;
 		}
 		
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != recipient.getFactionId())
+			return;
+		
 		// If sender is in block list of recipient then notify him about this and ignore message.
 		if (RelationManager.getInstance().isInBlockList(recipient, player))
 		{

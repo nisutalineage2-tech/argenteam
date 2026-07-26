@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list>
+	<!-- 
+	  Faction system configuration.
+	  Each faction requires: id, name, nameColor (hex), titleColor (hex), homeX, homeY, homeZ.
+	  
+	  homeX/homeY/homeZ = Coordinates of the faction base (respawn location on death / teleport on join).
+	  Adjust coordinates to match your server's geodata.
+	  
+	  Example factions below use Gludio and Giran as bases.
+	-->
+	<faction id="1" name="Order of the Elites" nameColor="00FF00" titleColor="FF0000" homeX="-84318" homeY="244579" homeZ="-792"/>
+	<faction id="2" name="Shadow Legion" nameColor="FF0000" titleColor="00FF00" homeX="82218" homeY="148561" homeZ="-3472"/>
+</list>

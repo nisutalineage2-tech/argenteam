@@ -453,6 +453,9 @@ public final class Config
 	public static boolean ALLOW_MANOR;
 	public static boolean ENABLE_FALLING_DAMAGE;
 	
+	/** Mods */
+	public static boolean ENABLE_FACTION_SYSTEM;
+	
 	/** Debug & Dev */
 	public static boolean NO_SPAWNS;
 	public static boolean DEVELOPER;
@@ -993,6 +996,8 @@ public final class Config
 		ALLOW_CURSED_WEAPONS = server.getProperty("AllowCursedWeapons", true);
 		
 		ENABLE_FALLING_DAMAGE = server.getProperty("EnableFallingDamage", true);
+		
+		ENABLE_FACTION_SYSTEM = server.getProperty("EnableFactionSystem", false);
 		
 		NO_SPAWNS = server.getProperty("NoSpawns", false);
 		DEVELOPER = server.getProperty("Developer", false);

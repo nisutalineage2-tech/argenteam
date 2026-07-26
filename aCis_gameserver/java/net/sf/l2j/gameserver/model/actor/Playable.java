@@ -396,6 +396,10 @@ public abstract class Playable extends Creature
 		if (isInSameActiveDuel(targetPlayer))
 			return true;
 		
+		// Faction check: same faction members cannot attack each other.
+		if (Config.ENABLE_FACTION_SYSTEM && getActingPlayer().getFactionId() != 0 && targetPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() == targetPlayer.getFactionId())
+			return false;
+		
 		final boolean sameParty = isInSameParty(targetPlayer);
 		final boolean sameCommandChannel = isInSameCommandChannel(targetPlayer);
 		
@@ -468,6 +472,9 @@ public abstract class Playable extends Creature
 		
 		if (attacker instanceof Playable attackerPlayable)
 		{
+			// Faction check: same faction members cannot be attacked.
+			if (Config.ENABLE_FACTION_SYSTEM && attackerPlayable.getActingPlayer().getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayable.getActingPlayer().getFactionId() == getActingPlayer().getFactionId())
+				return false;
 			// You cannot be attacked by a Playable in Olympiad before the start of the game.
 			if (getActingPlayer().isInOlympiadMode() && !getActingPlayer().isOlympiadStart())
 				return false;
@@ -509,6 +516,10 @@ public abstract class Playable extends Creature
 		// No checks for players in Duel.
 		if (isInSameActiveDuel(attackerPlayer))
 			return true;
+		
+		// Faction check: same faction members cannot auto-attack each other.
+		if (Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayer.getFactionId() == getActingPlayer().getFactionId())
+			return false;
 		
 		final boolean sameParty = isInSameParty(attackerPlayer);
 		final boolean sameCommandChannel = isInSameCommandChannel(attackerPlayer);

@@ -53,6 +53,9 @@ public final class TradeRequest extends L2GameClientPacket
 			return;
 		}
 		
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != target.getFactionId())
+			return;
+		
 		if (player.isInManageStoreMode() || target.isInManageStoreMode())
 		{
 			player.sendPacket(SystemMessageId.PRIVATE_STORE_UNDER_WAY);

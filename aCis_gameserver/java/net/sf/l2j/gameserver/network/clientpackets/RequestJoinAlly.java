@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.pledge.Clan;
@@ -39,6 +40,9 @@ public final class RequestJoinAlly extends L2GameClientPacket
 		}
 		
 		if (!Clan.checkAllyJoinCondition(player, target))
+			return;
+		
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != target.getFactionId())
 			return;
 		
 		if (!player.getRequest().setRequest(target, this))

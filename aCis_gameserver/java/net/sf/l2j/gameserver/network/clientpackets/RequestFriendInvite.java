@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.manager.RelationManager;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -67,6 +68,9 @@ public final class RequestFriendInvite extends L2GameClientPacket
 			player.sendPacket(FriendAddRequestResult.STATIC_FAIL);
 			return;
 		}
+		
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != target.getFactionId())
+			return;
 		
 		if (target.isProcessingRequest())
 		{

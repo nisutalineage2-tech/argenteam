@@ -21,6 +21,7 @@ import net.sf.l2j.gameserver.communitybbs.model.Forum;
 import net.sf.l2j.gameserver.data.SkillTable;
 import net.sf.l2j.gameserver.data.cache.CrestCache;
 import net.sf.l2j.gameserver.data.manager.CastleManager;
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.manager.RelationManager;
 import net.sf.l2j.gameserver.data.sql.ClanTable;
 import net.sf.l2j.gameserver.enums.CrestType;
@@ -1721,6 +1722,12 @@ public class Clan
 		if (target.getClanId() != 0)
 		{
 			player.sendPacket(SystemMessage.getSystemMessage(SystemMessageId.S1_WORKING_WITH_ANOTHER_CLAN).addCharName(target));
+			return false;
+		}
+		
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != target.getFactionId())
+		{
+			player.sendPacket(SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
 			return false;
 		}
 		

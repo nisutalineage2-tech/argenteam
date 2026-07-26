@@ -5,9 +5,11 @@ import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.manager.CastleManager;
 import net.sf.l2j.gameserver.data.manager.ClanHallManager;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.RestartPointData;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.SiegeSide;
+import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.model.pledge.Clan;
@@ -133,7 +135,18 @@ public final class RequestRestartPoint extends L2GameClientPacket
 		}
 		// Nothing has been found, use regular "To town" behavior.
 		else
-			loc = RestartPointData.getInstance().getLocationToTeleport(player, RestartType.TOWN);
+		{
+			// Faction respawn: respawn at faction base if player has a faction.
+			if (Config.ENABLE_FACTION_SYSTEM)
+			{
+				final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
+				if (faction != null && faction.getHomeLocation() != null)
+					loc = faction.getHomeLocation();
+			}
+			
+			if (loc == null)
+				loc = RestartPointData.getInstance().getLocationToTeleport(player, RestartType.TOWN);
+		}
 		
 		player.setIsIn7sDungeon(false);
 		

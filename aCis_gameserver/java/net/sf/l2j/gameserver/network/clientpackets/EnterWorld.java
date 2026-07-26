@@ -12,6 +12,7 @@ import net.sf.l2j.gameserver.data.manager.PetitionManager;
 import net.sf.l2j.gameserver.data.manager.SevenSignsManager;
 import net.sf.l2j.gameserver.data.xml.AdminData;
 import net.sf.l2j.gameserver.data.xml.AnnouncementData;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.enums.CabalType;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.SealType;
@@ -254,6 +255,8 @@ public class EnterWorld extends L2GameClientPacket
 		PetitionManager.getInstance().checkActivePetition(player);
 		
 		player.onPlayerEnter();
+		
+		FactionData.getInstance().onPlayerEnter(player);
 		
 		sendPacket(new SkillCoolTime(player));
 		

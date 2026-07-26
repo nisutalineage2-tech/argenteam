@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.handler.itemhandlers;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.ZoneId;
 import net.sf.l2j.gameserver.handler.IItemHandler;
 import net.sf.l2j.gameserver.model.WorldObject;
@@ -42,6 +43,10 @@ public class ScrollsOfResurrection implements IItemHandler
 					playable.sendMessage("You may not resurrect participants in a festival.");
 					return;
 				}
+				
+				// Faction check: can only resurrect same faction.
+				if (Config.ENABLE_FACTION_SYSTEM && playable instanceof Player player && player.getFactionId() != targetPlayer.getFactionId())
+					return;
 				
 				if (targetPlayer.isReviveRequested())
 				{

@@ -2,10 +2,13 @@ package net.sf.l2j.gameserver.skills.l2skills;
 
 import net.sf.l2j.commons.data.StatSet;
 
+import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.RestartPointData;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.ZoneId;
 import net.sf.l2j.gameserver.enums.items.ShotType;
+import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.WorldObject;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -63,7 +66,18 @@ public class L2SkillTeleport extends L2Skill
 				else if (_recallType.equalsIgnoreCase("ClanHall"))
 					loc = RestartPointData.getInstance().getLocationToTeleport(targetPlayer, RestartType.CLAN_HALL);
 				else
-					loc = RestartPointData.getInstance().getLocationToTeleport(targetPlayer, RestartType.TOWN);
+				{
+					// Faction recall: teleport to faction base if configured.
+					if (Config.ENABLE_FACTION_SYSTEM && targetPlayer instanceof Player p)
+					{
+						final Faction faction = FactionData.getInstance().getFaction(p.getFactionId());
+						if (faction != null)
+							loc = faction.getHomeLocation();
+					}
+					
+					if (loc == null)
+						loc = RestartPointData.getInstance().getLocationToTeleport(targetPlayer, RestartType.TOWN);
+				}
 			}
 			
 			if (loc != null)
