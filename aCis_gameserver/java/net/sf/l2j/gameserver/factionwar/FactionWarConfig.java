@@ -64,8 +64,8 @@ public class FactionWarConfig
 		
 		_goodGuardLoc = parseLoc(props.getProperty("GoodGuardLoc", "-84318,244579,-792"));
 		_evilGuardLoc = parseLoc(props.getProperty("EvilGuardLoc", "82218,148561,-3472"));
-		_goodSpawnLoc = new Location(props.getProperty("GoodSpawnX", -84318), props.getProperty("GoodSpawnY", 244579), props.getProperty("GoodSpawnZ", -792));
-		_evilSpawnLoc = new Location(props.getProperty("EvilSpawnX", 82218), props.getProperty("EvilSpawnY", 148561), props.getProperty("EvilSpawnZ", -3472));
+		_goodSpawnLoc = parseLoc(props.getProperty("GoodSpawn", "-84318,244579,-792"));
+		_evilSpawnLoc = parseLoc(props.getProperty("EvilSpawn", "82218,148561,-3472"));
 		
 		_maps.clear();
 		final String[] mapEntries = props.getProperty("Maps", "").split(";");
