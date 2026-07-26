@@ -91,8 +91,8 @@ public class FactionWarConfig
 		
 		if (_maps.isEmpty())
 		{
-			_maps.add(new WarMap("Gludio", -84318, 244579, -792, 3000));
-			_maps.add(new WarMap("Giran", 82218, 148561, -3472, 3000));
+			_maps.add(new WarMap("Gludio", -14300, 123700, -3100, 3000));
+			_maps.add(new WarMap("Giran", 83400, 148000, -3400, 3000));
 		}
 	}
 	
