@@ -8,6 +8,8 @@ import java.util.StringTokenizer;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.xml.FactionData;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.handler.IAdminCommandHandler;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -352,11 +354,26 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat: ").append(PhantomConfig.phantomChatEnabled()).append("<br>");
 		sb.append("Factions: ").append(Config.ENABLE_FACTION_SYSTEM).append("<br>");
 		
+		if (FactionWarConfig.isEnabled())
+		{
+			final boolean warRunning = FactionWarManager.getInstance().isRunning();
+			sb.append("Faction War: <font color=").append(warRunning ? "00FF00" : "FF0000").append(">").append(warRunning ? "RUNNING" : "STOPPED").append("</font> | ");
+			sb.append("Good: <font color=0000FF>").append(FactionWarManager.getInstance().getScore(FactionWarConfig.getGoodFactionId())).append("</font> | ");
+			sb.append("Evil: <font color=FF0000>").append(FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId())).append("</font><br>");
+			if (!warRunning)
+				sb.append("<a action=\"bypass -h admin_factionwar start\">Start War</a> | ");
+			else
+				sb.append("<a action=\"bypass -h admin_factionwar stop\">Stop War</a> | ");
+			sb.append("<a action=\"bypass -h admin_factionwar reload\">War Config</a><br>");
+		}
+		
 		sb.append("<br>");
 		buttonRow(sb, "Restore", "admin_phantom start", "New 1", "admin_phantom create 1", "New 10", "admin_phantom create 10");
 		buttonRow(sb, "AI On", "admin_phantom ai on", "AI Off", "admin_phantom ai off", "Set Home", "admin_phantom ai home");
 		buttonRow(sb, "Bring", "admin_phantom bring", "Radar", "admin_phantom radar phantoms", "Reload", "admin_phantom reload");
 		buttonRow(sb, "Stop All", "admin_phantom stop", "Clear", "admin_phantom radar clear", "Online", "admin_phantom online 0");
+		if (FactionWarConfig.isEnabled())
+			buttonRow(sb, "War Panel", "admin_factionwar", "War Start", "admin_factionwar start", "War Stop", "admin_factionwar stop");
 		
 		if (allPhantoms.isEmpty())
 		{
@@ -479,7 +496,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			sb.append("</td><td>");
 			if (Config.ENABLE_FACTION_SYSTEM)
 			{
-				final int nextFaction = (fId == 0) ? 1 : (fId >= countByFaction().size()) ? 0 : fId + 1;
+				final int nextFaction = (fId == 0) ? 1 : (fId >= FactionData.getInstance().getFactionCount()) ? 0 : fId + 1;
 				miniButton(sb, (fId == 0) ? "+" : String.valueOf(fId), "admin_phantom faction " + page + " " + filterFaction + " " + objectId + " " + nextFaction, 28);
 			}
 			sb.append("</td></tr>");
