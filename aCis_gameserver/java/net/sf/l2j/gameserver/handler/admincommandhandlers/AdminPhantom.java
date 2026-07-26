@@ -1,6 +1,9 @@
 package net.sf.l2j.gameserver.handler.admincommandhandlers;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import net.sf.l2j.Config;
@@ -33,7 +36,8 @@ public class AdminPhantom implements IAdminCommandHandler
 		"admin_phantom_bring",
 		"admin_phantom_online",
 		"admin_phantom_status",
-		"admin_phantom_faction"
+		"admin_phantom_faction",
+		"admin_phantom_factions"
 	};
 	
 	@Override
@@ -53,7 +57,21 @@ public class AdminPhantom implements IAdminCommandHandler
 		
 		if (cmd.equals("admin_phantom_online"))
 		{
-			showOnline(player, parsePage(st));
+			showOnline(player, parsePage(st), 0, null);
+			return;
+		}
+		
+		if (cmd.equals("admin_phantom_factions"))
+		{
+			if (!Config.ENABLE_FACTION_SYSTEM)
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+			
+			final int factionId = parseCount(st, 0);
+			final int page = parsePage(st);
+			showOnline(player, page, factionId, null);
 			return;
 		}
 		
@@ -89,7 +107,8 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Brought phantoms: " + PhantomEngine.bringAll(player) + ".");
 			return;
 		}
-				if (cmd.equals("admin_phantom_ai"))
+		
+		if (cmd.equals("admin_phantom_ai"))
 		{
 			if (!st.hasMoreTokens())
 			{
@@ -122,7 +141,7 @@ public class AdminPhantom implements IAdminCommandHandler
 				return;
 			}
 			
-			final int objectId = parseObjectId(st, player, 0);
+			final int objectId = parseObjectId(st, player, 0, 0);
 			if (objectId <= 0)
 				return;
 			
@@ -138,18 +157,20 @@ public class AdminPhantom implements IAdminCommandHandler
 		if (cmd.equals("admin_phantom_kill"))
 		{
 			final int page = parsePage(st);
-			final int objectId = parseObjectId(st, player, page);
+			final int filterFaction = parseCount(st, 0);
+			final int objectId = parseObjectId(st, player, page, filterFaction);
 			if (objectId > 0)
-				showOnline(player, page, PhantomEngine.kill(objectId) ? "Killed phantom " + objectId + "." : "Phantom " + objectId + " isn't active.");
+				showOnline(player, page, filterFaction, PhantomEngine.kill(objectId) ? "Killed phantom " + objectId + "." : "Phantom " + objectId + " isn't active.");
 			return;
 		}
 		
 		if (cmd.equals("admin_phantom_delete"))
 		{
 			final int page = parsePage(st);
-			final int objectId = parseObjectId(st, player, page);
+			final int filterFaction = parseCount(st, 0);
+			final int objectId = parseObjectId(st, player, page, filterFaction);
 			if (objectId > 0)
-				showOnline(player, page, PhantomEngine.deleteConfigured(objectId) ? "Deleted phantom " + objectId + "." : "Phantom " + objectId + " not found.");
+				showOnline(player, page, filterFaction, PhantomEngine.deleteConfigured(objectId) ? "Deleted phantom " + objectId + "." : "Phantom " + objectId + " not found.");
 			return;
 		}
 		
@@ -158,9 +179,10 @@ public class AdminPhantom implements IAdminCommandHandler
 			if (st.hasMoreTokens())
 			{
 				final int page = parsePage(st);
-				final int objectId = parseObjectId(st, player, page);
+				final int filterFaction = parseCount(st, 0);
+				final int objectId = parseObjectId(st, player, page, filterFaction);
 				if (objectId > 0)
-					showOnline(player, page, PhantomEngine.stop(objectId) ? "Stopped phantom " + objectId + "." : "Phantom " + objectId + " isn't active.");
+					showOnline(player, page, filterFaction, PhantomEngine.stop(objectId) ? "Stopped phantom " + objectId + "." : "Phantom " + objectId + " isn't active.");
 				return;
 			}
 			
@@ -171,13 +193,19 @@ public class AdminPhantom implements IAdminCommandHandler
 		{
 			if (!Config.ENABLE_FACTION_SYSTEM)
 			{
-				showPanel(player, "Faction system is disabled in server.properties.");
+				showPanel(player, "Faction system is disabled.");
 				return;
 			}
 			
+			final int page = parsePage(st);
+			final int filterFaction = parseCount(st, 0);
+			final int objectId = parseObjectId(st, player, page, filterFaction);
+			if (objectId <= 0)
+				return;
+			
 			if (!st.hasMoreTokens())
 			{
-				showPanel(player, "Usage: phantom_faction &lt;factionId|0&gt; (0 = remove faction)");
+				showOnline(player, page, filterFaction, "Usage: faction " + page + " " + filterFaction + " " + objectId + " <factionId|0>");
 				return;
 			}
 			
@@ -188,35 +216,51 @@ public class AdminPhantom implements IAdminCommandHandler
 			}
 			catch (NumberFormatException e)
 			{
-				showPanel(player, "Invalid factionId.");
+				showOnline(player, page, filterFaction, "Invalid factionId.");
 				return;
 			}
 			
-			if (factionId != 0 && FactionData.getInstance().getFaction(factionId) == null)
+			final Player phantom = PhantomEngine.getActivePhantom(objectId);
+			if (phantom == null)
 			{
-				showPanel(player, "Faction " + factionId + " not found in faction.xml.");
+				showOnline(player, page, filterFaction, "Phantom " + objectId + " is not active.");
 				return;
 			}
 			
-			final List<Player> phantoms = PhantomEngine.getActivePhantomsSorted();
-			int updated = 0;
-			for (Player phantom : phantoms)
+			if (factionId == 0)
 			{
-				if (phantom == null)
-					continue;
-				
+				phantom.setFactionId(0);
+				FactionData.getInstance().removeData(phantom);
+				showOnline(player, page, filterFaction, phantom.getName() + " removed from faction.");
+			}
+			else
+			{
+				final Faction faction = FactionData.getInstance().getFaction(factionId);
+				if (faction == null)
+				{
+					showOnline(player, page, filterFaction, "Faction " + factionId + " not found in faction.xml.");
+					return;
+				}
 				phantom.setFactionId(factionId);
-				if (factionId == 0)
-					FactionData.getInstance().removeData(phantom);
-				else
-					FactionData.getInstance().storeData(phantom);
-				updated++;
+				FactionData.getInstance().storeData(phantom);
+				showOnline(player, page, filterFaction, phantom.getName() + " -> " + faction.getName() + ".");
 			}
-			
-			final String msg = (factionId == 0) ? "Removed faction from " + updated + " phantoms." : "Assigned faction " + factionId + " to " + updated + " phantoms.";
-			showPanel(player, msg);
 			return;
 		}
+	}
+	
+	private static List<Player> filterByFaction(List<Player> phantoms, int factionId)
+	{
+		if (factionId <= 0)
+			return phantoms;
+		
+		final List<Player> filtered = new ArrayList<>();
+		for (Player p : phantoms)
+		{
+			if (p != null && p.getFactionId() == factionId)
+				filtered.add(p);
+		}
+		return filtered;
 	}
 	
 	private static int parsePage(StringTokenizer st)
@@ -234,11 +278,11 @@ public class AdminPhantom implements IAdminCommandHandler
 		}
 	}
 	
-	private static int parseObjectId(StringTokenizer st, Player player, int page)
+	private static int parseObjectId(StringTokenizer st, Player player, int page, int filterFaction)
 	{
 		if (!st.hasMoreTokens())
 		{
-			showOnline(player, page, "Missing objectId.");
+			showOnline(player, page, filterFaction, "Missing objectId.");
 			return 0;
 		}
 		
@@ -248,7 +292,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		}
 		catch (NumberFormatException e)
 		{
-			showOnline(player, page, "Invalid objectId.");
+			showOnline(player, page, filterFaction, "Invalid objectId.");
 			return 0;
 		}
 	}
@@ -260,7 +304,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		
 		try
 		{
-			return Math.max(1, Math.min(50, Integer.parseInt(st.nextToken())));
+			return Math.max(0, Math.min(50, Integer.parseInt(st.nextToken())));
 		}
 		catch (NumberFormatException e)
 		{
@@ -305,37 +349,89 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("AI: ").append(PhantomConfig.aiEnabled()).append(" | Tick: ").append(PhantomConfig.aiTickMs()).append("ms | Zone: ").append(PhantomConfig.levelZoneProfile()).append("<br>");
 		sb.append("Skills: ").append(PhantomConfig.advancedSkillUsage()).append(" | Mage no melee: ").append(PhantomConfig.mageNeverMelee()).append(" | Herbs: ").append(PhantomConfig.autoLootHerbs()).append("<br>");
 		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat AI: ").append(PhantomConfig.phantomChatEnabled()).append("<br>");
-		sb.append("Faction system: ").append(Config.ENABLE_FACTION_SYSTEM).append("<br><br>");
+		sb.append("Faction system: ").append(Config.ENABLE_FACTION_SYSTEM).append("<br>");
 		
+		if (Config.ENABLE_FACTION_SYSTEM)
+		{
+			final Map<Integer, Integer> counts = countByFaction();
+			sb.append("<br><font color=B0C4DE>Factions:</font> ");
+			for (Map.Entry<Integer, Integer> entry : counts.entrySet())
+			{
+				if (entry.getKey() == 0)
+					sb.append("None:<font color=LEVEL>").append(entry.getValue()).append("</font> ");
+				else
+					sb.append("Fct").append(entry.getKey()).append(":<font color=LEVEL>").append(entry.getValue()).append("</font> ");
+			}
+			sb.append("<br>");
+		}
+		
+		sb.append("<br>");
 		buttonRow(sb, "Restore", "admin_phantom start", "New 1", "admin_phantom create 1", "New 10", "admin_phantom create 10");
 		buttonRow(sb, "AI On", "admin_phantom ai on", "AI Off", "admin_phantom ai off", "Set Home", "admin_phantom ai home");
 		buttonRow(sb, "Online", "admin_phantom online 0", "Bring", "admin_phantom bring", "Radar", "admin_phantom radar phantoms");
 		buttonRow(sb, "Reload", "admin_phantom reload", "Stop All", "admin_phantom stop", "Clear", "admin_phantom radar clear");
 		
-		sb.append("<br><font color=808080>Restore levanta IDs guardados. New crea personajes nuevos.</font>");
+		if (Config.ENABLE_FACTION_SYSTEM)
+		{
+			final Map<Integer, Integer> counts = countByFaction();
+			final StringBuilder factionRow = new StringBuilder();
+			factionRow.append("<table width=300><tr>");
+			factionRow.append("<td><button value=\"All\" action=\"bypass -h admin_phantom online 0\" width=55 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+			for (Map.Entry<Integer, Integer> entry : counts.entrySet())
+			{
+				if (entry.getKey() == 0)
+					continue;
+				factionRow.append("<td><button value=\"Fct").append(entry.getKey()).append("\" action=\"bypass -h admin_phantom factions ").append(entry.getKey()).append(" 0\" width=55 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+			}
+			factionRow.append("</tr></table>");
+			sb.append(factionRow);
+		}
+		
+		sb.append("<br><font color=808080>Restore = saved IDs. New = new chars. Fct button = change faction.</font>");
 		sb.append("</body></html>");
 		sendHtml(player, sb);
 	}
 	
-	private static void showOnline(Player player, int page)
+	private static Map<Integer, Integer> countByFaction()
 	{
-		showOnline(player, page, null);
+		final Map<Integer, Integer> counts = new HashMap<>();
+		for (Player phantom : PhantomEngine.getActivePhantoms())
+		{
+			if (phantom == null)
+				continue;
+			
+			final int fId = phantom.getFactionId();
+			counts.merge(fId, 1, Integer::sum);
+		}
+		return counts;
 	}
 	
-	private static void showOnline(Player player, int page, String message)
+	private static void showOnline(Player player, int page, int filterFaction, String message)
 	{
-		final List<Player> phantoms = PhantomEngine.getActivePhantomsSorted();
+		List<Player> phantoms = PhantomEngine.getActivePhantomsSorted();
+		final String title;
+		if (filterFaction > 0)
+		{
+			phantoms = filterByFaction(phantoms, filterFaction);
+			final Faction f = FactionData.getInstance().getFaction(filterFaction);
+			title = "Phantoms - Faction " + filterFaction + (f != null ? " (" + f.getName() + ")" : "");
+		}
+		else
+		{
+			title = "Phantoms Online";
+		}
+		
 		final int maxPage = phantoms.isEmpty() ? 0 : (phantoms.size() - 1) / PAGE_SIZE;
 		page = Math.max(0, Math.min(page, maxPage));
 		
 		final StringBuilder sb = new StringBuilder(8192);
-		sb.append("<html><body><center><font color=LEVEL>Phantoms Online</font></center><br>");
+		sb.append("<html><body><center><font color=LEVEL>").append(title).append("</font></center><br>");
 		if (message != null)
 			sb.append("<font color=99FF99>").append(message).append("</font><br1>");
 		
-		sb.append("Online: <font color=LEVEL>").append(phantoms.size()).append("</font> | Page: ").append(page + 1).append("/").append(maxPage + 1).append("<br1>");
-		sb.append("<table width=300>");
-		sb.append("<tr><td width=66>Name</td><td width=18>Lv</td><td width=24>Fct</td><td width=28>Mode</td><td width=48>State</td><td width=34>K</td><td width=38>Stop</td><td width=34>Del</td></tr>");
+		sb.append("Count: <font color=LEVEL>").append(phantoms.size()).append("</font> | Page: ").append(page + 1).append("/").append(maxPage + 1).append("<br1>");
+		sb.append("<table width=310>");
+		sb.append("<tr><td width=60>Name</td><td width=16>Lv</td><td width=22>Fct</td><td width=26>Mode</td><td width=44>State</td><td width=22>K</td><td width=30>Stop</td><td width=22>Del</td><td width=28>Fct</td></tr>");
 		
 		final int start = page * PAGE_SIZE;
 		final int end = Math.min(start + PAGE_SIZE, phantoms.size());
@@ -345,21 +441,36 @@ public class AdminPhantom implements IAdminCommandHandler
 			final int objectId = phantom.getObjectId();
 			final int fId = phantom.getFactionId();
 			final String factionTag = (Config.ENABLE_FACTION_SYSTEM && fId > 0) ? String.valueOf(fId) : "-";
-			sb.append("<tr><td>").append(shortText(phantom.getName(), 10)).append("</td><td>").append(phantom.getStatus().getLevel()).append("</td><td>").append(factionTag).append("</td><td>").append(shortText(PhantomState.label(objectId), 5)).append("</td><td>").append(shortText(PhantomAI.getLastAction(phantom), 7)).append("</td>");
+			sb.append("<tr><td>").append(shortText(phantom.getName(), 10)).append("</td><td>").append(phantom.getStatus().getLevel()).append("</td><td>").append(factionTag).append("</td><td>").append(shortText(PhantomState.label(objectId), 5)).append("</td><td>").append(shortText(PhantomAI.getLastAction(phantom), 6)).append("</td>");
 			sb.append("<td>");
-			miniButton(sb, "K", "admin_phantom kill " + page + " " + objectId, 34);
+			miniButton(sb, "K", "admin_phantom kill " + page + " " + filterFaction + " " + objectId, 22);
 			sb.append("</td><td>");
-			miniButton(sb, "Stop", "admin_phantom stop " + page + " " + objectId, 40);
+			miniButton(sb, "S", "admin_phantom stop " + page + " " + filterFaction + " " + objectId, 30);
 			sb.append("</td><td>");
-			miniButton(sb, "Del", "admin_phantom delete " + page + " " + objectId, 34);
+			miniButton(sb, "X", "admin_phantom delete " + page + " " + filterFaction + " " + objectId, 22);
+			sb.append("</td><td>");
+			if (Config.ENABLE_FACTION_SYSTEM)
+			{
+				final int nextFaction = (fId == 0) ? 1 : (fId >= countByFaction().size()) ? 0 : fId + 1;
+				miniButton(sb, (fId == 0) ? "+" : String.valueOf(fId), "admin_phantom faction " + page + " " + filterFaction + " " + objectId + " " + nextFaction, 28);
+			}
 			sb.append("</td></tr>");
 		}
 		sb.append("</table><br>");
 		
 		sb.append("<table width=300><tr>");
-		button(sb, "Prev", "admin_phantom online " + Math.max(0, page - 1));
-		button(sb, "Main", "admin_phantom");
-		button(sb, "Next", "admin_phantom online " + Math.min(maxPage, page + 1));
+		if (filterFaction > 0)
+		{
+			button(sb, "Prev", "admin_phantom factions " + filterFaction + " " + Math.max(0, page - 1));
+			button(sb, "All", "admin_phantom online 0");
+			button(sb, "Next", "admin_phantom factions " + filterFaction + " " + Math.min(maxPage, page + 1));
+		}
+		else
+		{
+			button(sb, "Prev", "admin_phantom online " + Math.max(0, page - 1));
+			button(sb, "Main", "admin_phantom");
+			button(sb, "Next", "admin_phantom online " + Math.min(maxPage, page + 1));
+		}
 		sb.append("</tr></table>");
 		sb.append("</body></html>");
 		sendHtml(player, sb);
@@ -397,7 +508,8 @@ public class AdminPhantom implements IAdminCommandHandler
 	{
 		sb.append("<button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=").append(width).append(" height=17 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\">");
 	}
-		private static void link(StringBuilder sb, String label, String bypass)
+	
+	private static void link(StringBuilder sb, String label, String bypass)
 	{
 		sb.append("<a action=\"bypass -h ").append(bypass).append("\">").append(label).append("</a>");
 	}
