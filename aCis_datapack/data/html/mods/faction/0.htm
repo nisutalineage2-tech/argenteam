@@ -1,9 +1,32 @@
-<html>
-<body>
-<b>Faction Manager</b><br><br>
-Choose your faction wisely. Once you join, you will be teleported to your base and cannot interact with enemy players.<br><br>
-<a action="bypass -h npc_%objectId%_joinFaction 1">Join Order of the Elites</a><br>
-<a action="bypass -h npc_%objectId%_joinFaction 2">Join Shadow Legion</a><br><br>
-<a action="bypass -h npc_%objectId%_leaveFaction">Leave my Faction</a>
-</body>
-</html>
+<html><title>Faction Manager</title><body>
+<table width=290>
+	<tr>
+		<td width="290" height="28" align="center"><font color=LEVEL>Faction Manager</font></td>
+	</tr>
+</table>
+<img src="L2UI.SquareGray" width="290" height="1">
+<table width=290 height=45 bgcolor="000000">
+	<tr>
+		<td width="32" height="32"><img src="icon.etc_adena_i00" width=32 height=32></td>
+		<td width="255">Order of the Elites<br1><font color="808080">Home: Gludio</font></td>
+		<td width="55"><button value="" action="bypass -h npc_%objectId%_joinFaction 1" width="32" height="22" back="L2UI_CH3.Minimap.mapbutton_zoomin1_over" fore="L2UI_CH3.Minimap.mapbutton_zoomin1"></td>
+	</tr>
+</table>
+<img src="L2UI.SquareGray" width="290" height="1">
+<table width=290 height=45>
+	<tr>
+		<td width="32" height="32"><img src="icon.etc_adena_i00" width=32 height=32></td>
+		<td width="255">Shadow Legion<br1><font color="808080">Home: Giran</font></td>
+		<td width="55"><button value="" action="bypass -h npc_%objectId%_joinFaction 2" width="32" height="22" back="L2UI_CH3.Minimap.mapbutton_zoomin1_over" fore="L2UI_CH3.Minimap.mapbutton_zoomin1"></td>
+	</tr>
+</table>
+<img src="L2UI.SquareGray" width="290" height="1">
+<table width=290 height=45 bgcolor="000000">
+	<tr>
+		<td width="32" height="32"><img src="icon.etc_adena_i00" width=32 height=32></td>
+		<td width="255"><font color=FF6666>Leave Faction</font></td>
+		<td width="55"><button value="" action="bypass -h npc_%objectId%_leaveFaction" width="32" height="22" back="L2UI_CH3.Minimap.mapbutton_zoomin1_over" fore="L2UI_CH3.Minimap.mapbutton_zoomin1"></td>
+	</tr>
+</table>
+<img src="L2UI.SquareGray" width="290" height="1">
+</body></html>
