@@ -12,7 +12,7 @@ public class Faction
 	private final int _titleColor;
 	private final Location _homeLocation;
 	
-	public Faction(StatsSet set)
+	public Faction(StatSet set)
 	{
 		_id = set.getInteger("id");
 		_name = set.getString("name");

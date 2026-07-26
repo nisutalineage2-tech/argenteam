@@ -3,7 +3,7 @@ package net.sf.l2j.gameserver.factionwar;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.sf.l2j.commons.data.ExProperties;
+import net.sf.l2j.commons.config.ExProperties;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.model.location.Location;
 

@@ -43,7 +43,7 @@ public class FactionData implements IXmlReader
 	{
 		forEach(doc, "list", listNode -> forEach(listNode, "faction", factionNode ->
 		{
-			final StatsSet set = parseAttributes(factionNode);
+			final StatSet set = parseAttributes(factionNode);
 			_factions.put(set.getInteger("id"), new Faction(set));
 		}));
 	}

@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.event;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
@@ -9,11 +10,11 @@ import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.enums.SayType;
+import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
-import net.sf.l2j.gameserver.world.World;
 
 public abstract class AbstractEvent
 {
@@ -116,8 +117,8 @@ public abstract class AbstractEvent
 		_state = State.RUNNING;
 		
 		assignTeams();
-	_teleportPlayers();
-	 onStartMatch();
+		teleportPlayers();
+		onStartMatch();
 		
 		broadcastEvent("[Event] " + _data.getEventName() + " has started! Good luck!");
 		
@@ -234,7 +235,7 @@ public abstract class AbstractEvent
 	protected void assignTeams()
 	{
 		final List<EventPlayer> shuffled = new ArrayList<>(_allPlayers);
-		Rnd.shuffle(shuffled);
+		Collections.shuffle(shuffled);
 		
 		for (int i = 0; i < shuffled.size(); i++)
 		{
@@ -333,7 +334,7 @@ public abstract class AbstractEvent
 			{
 				final int itemId = Integer.parseInt(parts[0].trim());
 				final int count = Integer.parseInt(parts[1].trim());
-				player.getInventory().addItem("EventReward", itemId, count, player, null);
+				player.getInventory().addItem(itemId, count);
 				player.sendMessage("[Event] Received " + count + "x item " + itemId + ".");
 			}
 			catch (NumberFormatException e)

@@ -8,6 +8,7 @@ import net.sf.l2j.gameserver.model.group.Party;
 import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.AskJoinParty;
 import net.sf.l2j.gameserver.network.serverpackets.SystemMessage;
+import net.sf.l2j.Config;
 
 public final class RequestJoinParty extends L2GameClientPacket
 {
