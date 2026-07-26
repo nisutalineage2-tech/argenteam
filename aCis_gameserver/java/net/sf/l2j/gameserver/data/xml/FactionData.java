@@ -53,6 +53,11 @@ public class FactionData implements IXmlReader
 		return _factions.get(id);
 	}
 	
+	public int getFactionCount()
+	{
+		return _factions.size();
+	}
+	
 	public void onPlayerEnter(Player player)
 	{
 		if (!Config.ENABLE_FACTION_SYSTEM)

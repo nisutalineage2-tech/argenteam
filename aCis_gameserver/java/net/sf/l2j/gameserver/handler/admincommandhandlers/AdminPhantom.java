@@ -340,70 +340,98 @@ public class AdminPhantom implements IAdminCommandHandler
 	
 	private static void showPanel(Player player, String message)
 	{
-		final StringBuilder sb = new StringBuilder(4096);
+		final List<Player> allPhantoms = PhantomEngine.getActivePhantomsSorted();
+		final StringBuilder sb = new StringBuilder(16384);
 		sb.append("<html><body><center><font color=LEVEL>Phantom Manager</font></center><br>");
 		if (message != null)
 			sb.append("<font color=99FF99>").append(message).append("</font><br1>");
 		
-		sb.append("Active: <font color=LEVEL>").append(PhantomEngine.size()).append("</font> | Config IDs: <font color=LEVEL>").append(PhantomConfig.getPhantomIds().size()).append("</font><br>");
+		sb.append("Active: <font color=LEVEL>").append(allPhantoms.size()).append("</font> | Config IDs: <font color=LEVEL>").append(PhantomConfig.getPhantomIds().size()).append("</font><br>");
 		sb.append("AI: ").append(PhantomConfig.aiEnabled()).append(" | Tick: ").append(PhantomConfig.aiTickMs()).append("ms | Zone: ").append(PhantomConfig.levelZoneProfile()).append("<br>");
-		sb.append("Skills: ").append(PhantomConfig.advancedSkillUsage()).append(" | Mage no melee: ").append(PhantomConfig.mageNeverMelee()).append(" | Herbs: ").append(PhantomConfig.autoLootHerbs()).append("<br>");
-		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat AI: ").append(PhantomConfig.phantomChatEnabled()).append("<br>");
-		sb.append("Faction system: ").append(Config.ENABLE_FACTION_SYSTEM).append("<br>");
-		
-		if (Config.ENABLE_FACTION_SYSTEM)
-		{
-			final Map<Integer, Integer> counts = countByFaction();
-			sb.append("<br><font color=B0C4DE>Factions:</font> ");
-			for (Map.Entry<Integer, Integer> entry : counts.entrySet())
-			{
-				if (entry.getKey() == 0)
-					sb.append("None:<font color=LEVEL>").append(entry.getValue()).append("</font> ");
-				else
-					sb.append("Fct").append(entry.getKey()).append(":<font color=LEVEL>").append(entry.getValue()).append("</font> ");
-			}
-			sb.append("<br>");
-		}
+		sb.append("Skills: ").append(PhantomConfig.advancedSkillUsage()).append(" | Mage: ").append(PhantomConfig.mageNeverMelee()).append(" | Herbs: ").append(PhantomConfig.autoLootHerbs()).append("<br>");
+		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat: ").append(PhantomConfig.phantomChatEnabled()).append("<br>");
+		sb.append("Factions: ").append(Config.ENABLE_FACTION_SYSTEM).append("<br>");
 		
 		sb.append("<br>");
 		buttonRow(sb, "Restore", "admin_phantom start", "New 1", "admin_phantom create 1", "New 10", "admin_phantom create 10");
 		buttonRow(sb, "AI On", "admin_phantom ai on", "AI Off", "admin_phantom ai off", "Set Home", "admin_phantom ai home");
-		buttonRow(sb, "Online", "admin_phantom online 0", "Bring", "admin_phantom bring", "Radar", "admin_phantom radar phantoms");
-		buttonRow(sb, "Reload", "admin_phantom reload", "Stop All", "admin_phantom stop", "Clear", "admin_phantom radar clear");
+		buttonRow(sb, "Bring", "admin_phantom bring", "Radar", "admin_phantom radar phantoms", "Reload", "admin_phantom reload");
+		buttonRow(sb, "Stop All", "admin_phantom stop", "Clear", "admin_phantom radar clear", "Online", "admin_phantom online 0");
 		
-		if (Config.ENABLE_FACTION_SYSTEM)
+		if (allPhantoms.isEmpty())
 		{
-			final Map<Integer, Integer> counts = countByFaction();
-			final StringBuilder factionRow = new StringBuilder();
-			factionRow.append("<table width=300><tr>");
-			factionRow.append("<td><button value=\"All\" action=\"bypass -h admin_phantom online 0\" width=55 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
-			for (Map.Entry<Integer, Integer> entry : counts.entrySet())
+			sb.append("<br><center><font color=808080>No phantoms active.</font></center>");
+		}
+		else
+		{
+			final Map<Integer, List<Player>> groups = groupByFaction(allPhantoms);
+			final List<Integer> sortedKeys = new ArrayList<>(groups.keySet().stream().sorted().toList());
+			sb.append("<br><font color=B0C4DE>--- Phantoms by Faction ---</font><br>");
+			
+			for (int fKey : sortedKeys)
 			{
-				if (entry.getKey() == 0)
-					continue;
-				factionRow.append("<td><button value=\"Fct").append(entry.getKey()).append("\" action=\"bypass -h admin_phantom factions ").append(entry.getKey()).append(" 0\" width=55 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+				final List<Player> list = groups.get(fKey);
+				final Faction faction = (Config.ENABLE_FACTION_SYSTEM && fKey > 0) ? FactionData.getInstance().getFaction(fKey) : null;
+				
+				sb.append("<br><font color=FFD700> ");
+				if (fKey == 0)
+					sb.append("No Faction");
+				else
+					sb.append("Faction ").append(fKey).append(faction != null ? " (" + faction.getName() + ")" : "");
+				sb.append(" [").append(list.size()).append("]</font><br>");
+				
+				sb.append("<table width=310>");
+				for (Player phantom : list)
+				{
+					final int oid = phantom.getObjectId();
+					final int nextFaction = nextFactionId(fKey);
+					sb.append("<tr><td width=90>").append(shortText(phantom.getName(), 10)).append("</td>");
+					sb.append("<td width=18>L").append(phantom.getStatus().getLevel()).append("</td>");
+					sb.append("<td width=50>").append(shortText(PhantomState.label(oid), 6)).append("</td>");
+					sb.append("<td width=22>");
+					miniButton(sb, "K", "admin_phantom kill 0 0 " + oid, 22);
+					sb.append("</td><td width=22>");
+					miniButton(sb, "S", "admin_phantom stop 0 0 " + oid, 22);
+					sb.append("</td><td width=22>");
+					miniButton(sb, "X", "admin_phantom delete 0 0 " + oid, 22);
+					sb.append("</td><td width=28>");
+					if (Config.ENABLE_FACTION_SYSTEM)
+						miniButton(sb, String.valueOf(nextFaction == 0 ? "-" : nextFaction), "admin_phantom faction 0 0 " + oid + " " + nextFaction, 28);
+					sb.append("</td></tr>");
+				}
+				sb.append("</table>");
 			}
-			factionRow.append("</tr></table>");
-			sb.append(factionRow);
 		}
 		
-		sb.append("<br><font color=808080>Restore = saved IDs. New = new chars. Fct button = change faction.</font>");
+		sb.append("<br><font color=808080>K=Kill S=Stop X=Del Fct=Cycle faction</font>");
 		sb.append("</body></html>");
 		sendHtml(player, sb);
 	}
 	
-	private static Map<Integer, Integer> countByFaction()
+	private static Map<Integer, List<Player>> groupByFaction(List<Player> phantoms)
 	{
-		final Map<Integer, Integer> counts = new HashMap<>();
-		for (Player phantom : PhantomEngine.getActivePhantoms())
+		final Map<Integer, List<Player>> groups = new HashMap<>();
+		for (Player p : phantoms)
 		{
-			if (phantom == null)
+			if (p == null)
 				continue;
-			
-			final int fId = phantom.getFactionId();
-			counts.merge(fId, 1, Integer::sum);
+			final int fId = p.getFactionId();
+			groups.computeIfAbsent(fId, k -> new ArrayList<>()).add(p);
 		}
-		return counts;
+		return groups;
+	}
+	
+	private static int nextFactionId(int current)
+	{
+		final int maxFaction = FactionData.getInstance().getFactionCount();
+		if (!Config.ENABLE_FACTION_SYSTEM || maxFaction <= 0)
+			return 0;
+		
+		if (current < 1)
+			return 1;
+		if (current >= maxFaction)
+			return 0;
+		return current + 1;
 	}
 	
 	private static void showOnline(Player player, int page, int filterFaction, String message)
