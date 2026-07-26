@@ -381,7 +381,7 @@ public class FactionWarManager
 	public void broadcast(String msg)
 	{
 		final CreatureSay cs = new CreatureSay(0, SayType.ALL, "FactionWar", msg);
-		for (Player player : World.getInstance().getAllPlayers())
+		for (Player player : World.getInstance().getPlayers())
 		{
 			if (player != null && player.isOnline())
 				player.sendPacket(cs);

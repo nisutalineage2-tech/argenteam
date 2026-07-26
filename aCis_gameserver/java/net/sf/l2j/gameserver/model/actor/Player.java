@@ -2624,6 +2624,18 @@ public final class Player extends Playable
 				net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().onPvpKill(pk.getFactionId(), getFactionId());
 			}
 			
+			// Event PvP scoring
+			if (pk != null && net.sf.l2j.gameserver.event.EventEngine.getInstance().isPlayerInAnyEvent(getObjectId()))
+			{
+				net.sf.l2j.gameserver.event.EventEngine.getInstance().onPlayerDie(this, pk);
+			}
+			
+			// Event kill scoring
+			if (pk != null && net.sf.l2j.gameserver.event.EventEngine.getInstance().isPlayerInAnyEvent(pk.getObjectId()))
+			{
+				net.sf.l2j.gameserver.event.EventEngine.getInstance().onPlayerKill(pk, this);
+			}
+			
 			// Clear resurrect xp calculation
 			setExpBeforeDeath(0);
 			

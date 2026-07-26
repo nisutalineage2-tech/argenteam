@@ -154,4 +154,35 @@
 		<set name="aggroRange" val="0"/>
 		<set name="seedable" val="false"/>
 	</npc>
+	
+	<npc id="9999" name="Event Manager" title="Mini Events" alias="event_manager">
+		<set name="type" val="EventManagerNpc"/>
+		<set name="level" val="80"/>
+		<set name="radius" val="8.0"/>
+		<set name="height" val="24.0"/>
+		<set name="exp" val="0"/>
+		<set name="sp" val="0"/>
+		<set name="hp" val="999999"/>
+		<set name="mp" val="1"/>
+		<set name="hpRegen" val="999"/>
+		<set name="mpRegen" val="0"/>
+		<set name="baseAttackRange" val="40"/>
+		<set name="baseDamageRange" val="0;0;0;0"/>
+		<set name="baseRandomDamage" val="0"/>
+		<set name="pAtk" val="1"/>
+		<set name="pDef" val="9999"/>
+		<set name="mAtk" val="1"/>
+		<set name="mDef" val="9999"/>
+		<set name="crit" val="1.0"/>
+		<set name="atkSpd" val="200"/>
+		<set name="walkSpd" val="0"/>
+		<set name="runSpd" val="0"/>
+		<set name="canSeeThrough" val="true"/>
+		<set name="canBeAttacked" val="false"/>
+		<set name="canMove" val="false"/>
+		<set name="corpseTime" val="0"/>
+		<set name="noSleepMode" val="true"/>
+		<set name="aggroRange" val="0"/>
+		<set name="seedable" val="false"/>
+	</npc>
 </list>

@@ -6,6 +6,9 @@ import java.util.logging.Logger;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.SayType;
+import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.event.EventConfig;
+import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.handler.ChatHandler;
 import net.sf.l2j.gameserver.handler.IChatHandler;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -118,6 +121,12 @@ public final class Say2 extends L2GameClientPacket
 		
 		_text = _text.replaceAll("\\\\n", "");
 		
+		if (_text.startsWith(".") && type == SayType.ALL)
+		{
+			handlePlayerCommand(player, _text);
+			return;
+		}
+		
 		final IChatHandler handler = ChatHandler.getInstance().getHandler(type);
 		if (handler == null)
 		{
@@ -126,6 +135,108 @@ public final class Say2 extends L2GameClientPacket
 		}
 		
 		handler.handleChat(type, player, _target, _text);
+	}
+	
+	private static void handlePlayerCommand(Player player, String text)
+	{
+		final String[] parts = text.split(" ", 3);
+		final String cmd = parts[0].toLowerCase();
+		
+		if (cmd.equals(".event"))
+		{
+			if (!EventConfig.isEnabled())
+			{
+				player.sendMessage("[Event] Events are disabled.");
+				return;
+			}
+			
+			if (parts.length < 2)
+			{
+				player.sendMessage("[Event] Usage: .event join <id> | .event leave | .event list");
+				return;
+			}
+			
+			final String action = parts[1].toLowerCase();
+			
+			switch (action)
+			{
+				case "join":
+				{
+					if (parts.length < 3)
+					{
+						player.sendMessage("[Event] Usage: .event join <event_id>");
+						return;
+					}
+					
+					final int eventId;
+					try
+					{
+						eventId = Integer.parseInt(parts[2]);
+					}
+					catch (NumberFormatException e)
+					{
+						player.sendMessage("[Event] Invalid event id.");
+						return;
+					}
+					
+					final AbstractEvent event = EventEngine.getInstance().getEvent(eventId);
+					if (event == null || event.getState() != AbstractEvent.State.REGISTER)
+					{
+						player.sendMessage("[Event] This event is not available for registration.");
+						return;
+					}
+					
+					if (EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId()))
+					{
+						player.sendMessage("[Event] You are already in an event.");
+						return;
+					}
+					
+					if (event.registerPlayer(player))
+						player.sendMessage("[Event] You joined " + event.getData().getEventName() + "!");
+					else
+						player.sendMessage("[Event] Cannot join. Check your level.");
+					break;
+				}
+				case "leave":
+				{
+					final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(player.getObjectId());
+					if (event == null)
+					{
+						player.sendMessage("[Event] You are not in any event.");
+						return;
+					}
+					
+					if (event.getState() == AbstractEvent.State.REGISTER)
+					{
+						event.unregisterPlayer(player.getObjectId());
+						player.sendMessage("[Event] You left the event.");
+					}
+					else
+					{
+						player.sendMessage("[Event] You cannot leave during an active event.");
+					}
+					break;
+				}
+				case "list":
+				{
+					player.sendMessage("[Event] Available events:");
+					for (EventConfig.EventData data : EventConfig.getEvents())
+					{
+						if (!data.isEnabled())
+							continue;
+						final AbstractEvent event = EventEngine.getInstance().getEvent(data.getId());
+						final String status = event != null ? event.getState().name() : "N/A";
+						player.sendMessage("[Event] " + data.getId() + ". " + data.getEventName() + " [" + status + "]");
+					}
+					break;
+				}
+				default:
+					player.sendMessage("[Event] Usage: .event join <id> | .event leave | .event list");
+					break;
+			}
+			return;
+		}
 	}
 	
 	private static boolean checkBot(String text)

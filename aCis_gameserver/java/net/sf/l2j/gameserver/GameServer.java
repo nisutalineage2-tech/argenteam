@@ -258,6 +258,9 @@ public class GameServer
 		if (Config.ALLOW_FISH_CHAMPIONSHIP)
 			FishingChampionshipManager.getInstance();
 		
+		net.sf.l2j.gameserver.event.EventConfig.load();
+		net.sf.l2j.gameserver.event.EventEngine.getInstance().init();
+		
 		StringUtil.printSection("Spawns");
 		SpawnManager.getInstance().spawn();
 		

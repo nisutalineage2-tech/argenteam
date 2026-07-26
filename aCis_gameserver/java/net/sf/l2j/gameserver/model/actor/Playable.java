@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.data.SkillTable.FrequentSkill;
 import net.sf.l2j.gameserver.data.manager.CastleManager;
 import net.sf.l2j.gameserver.enums.AiEventType;
@@ -398,6 +399,11 @@ public abstract class Playable extends Creature
 		
 		// Faction check: same faction members cannot attack each other.
 		if (Config.ENABLE_FACTION_SYSTEM && getActingPlayer().getFactionId() != 0 && targetPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() == targetPlayer.getFactionId())
+			return false;
+		
+		// Event check: same event teammates cannot attack each other.
+		final AbstractEvent event = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(getActingPlayer().getObjectId());
+		if (event != null && event.areTeammates(getActingPlayer().getObjectId(), targetPlayer.getObjectId()))
 			return false;
 		
 		final boolean sameParty = isInSameParty(targetPlayer);
