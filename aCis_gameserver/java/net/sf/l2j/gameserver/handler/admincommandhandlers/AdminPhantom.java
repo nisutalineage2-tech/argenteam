@@ -3,7 +3,10 @@ package net.sf.l2j.gameserver.handler.admincommandhandlers;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.handler.IAdminCommandHandler;
+import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -29,7 +32,8 @@ public class AdminPhantom implements IAdminCommandHandler
 		"admin_phantom_delete",
 		"admin_phantom_bring",
 		"admin_phantom_online",
-		"admin_phantom_status"
+		"admin_phantom_status",
+		"admin_phantom_faction"
 	};
 	
 	@Override
@@ -162,6 +166,70 @@ public class AdminPhantom implements IAdminCommandHandler
 			
 			showPanel(player, "Stopped phantoms: " + PhantomEngine.stopAll() + ".");
 		}
+		
+		if (cmd.equals("admin_phantom_faction"))
+		{
+			if (!Config.ENABLE_FACTION_SYSTEM)
+			{
+				showPanel(player, "Faction system is disabled in server.properties.");
+				return;
+			}
+			
+			if (!st.hasMoreTokens())
+			{
+				showOnline(player, 0, "Usage: phantom_faction <page> <objectId> <factionId|0>");
+				return;
+			}
+			
+			final int page = parsePage(st);
+			final int objectId = parseObjectId(st, player, page);
+			if (objectId <= 0)
+				return;
+			
+			if (!st.hasMoreTokens())
+			{
+				showOnline(player, page, "Usage: phantom_faction " + page + " " + objectId + " <factionId|0>");
+				return;
+			}
+			
+			final int factionId;
+			try
+			{
+				factionId = Integer.parseInt(st.nextToken());
+			}
+			catch (NumberFormatException e)
+			{
+				showOnline(player, page, "Invalid factionId.");
+				return;
+			}
+			
+			final Player phantom = PhantomEngine.getActivePhantom(objectId);
+			if (phantom == null)
+			{
+				showOnline(player, page, "Phantom " + objectId + " is not active.");
+				return;
+			}
+			
+			if (factionId == 0)
+			{
+				phantom.setFactionId(0);
+				FactionData.getInstance().removeData(phantom);
+				showOnline(player, page, "Phantom " + phantom.getName() + " removed from faction.");
+			}
+			else
+			{
+				final Faction faction = FactionData.getInstance().getFaction(factionId);
+				if (faction == null)
+				{
+					showOnline(player, page, "Faction " + factionId + " not found in faction.xml.");
+					return;
+				}
+				phantom.setFactionId(factionId);
+				FactionData.getInstance().storeData(phantom);
+				showOnline(player, page, "Phantom " + phantom.getName() + " assigned to " + faction.getName() + ".");
+			}
+			return;
+		}
 	}
 	
 	private static int parsePage(StringTokenizer st)
@@ -249,7 +317,8 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("Active: <font color=LEVEL>").append(PhantomEngine.size()).append("</font> | Config IDs: <font color=LEVEL>").append(PhantomConfig.getPhantomIds().size()).append("</font><br>");
 		sb.append("AI: ").append(PhantomConfig.aiEnabled()).append(" | Tick: ").append(PhantomConfig.aiTickMs()).append("ms | Zone: ").append(PhantomConfig.levelZoneProfile()).append("<br>");
 		sb.append("Skills: ").append(PhantomConfig.advancedSkillUsage()).append(" | Mage no melee: ").append(PhantomConfig.mageNeverMelee()).append(" | Herbs: ").append(PhantomConfig.autoLootHerbs()).append("<br>");
-		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat AI: ").append(PhantomConfig.phantomChatEnabled()).append("<br><br>");
+		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat AI: ").append(PhantomConfig.phantomChatEnabled()).append("<br>");
+		sb.append("Faction system: ").append(Config.ENABLE_FACTION_SYSTEM).append("<br><br>");
 		
 		buttonRow(sb, "Restore", "admin_phantom start", "New 1", "admin_phantom create 1", "New 10", "admin_phantom create 10");
 		buttonRow(sb, "AI On", "admin_phantom ai on", "AI Off", "admin_phantom ai off", "Set Home", "admin_phantom ai home");
@@ -279,7 +348,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		
 		sb.append("Online: <font color=LEVEL>").append(phantoms.size()).append("</font> | Page: ").append(page + 1).append("/").append(maxPage + 1).append("<br1>");
 		sb.append("<table width=300>");
-		sb.append("<tr><td width=76>Name</td><td width=20>Lv</td><td width=32>Mode</td><td width=54>State</td><td width=38>Kill</td><td width=42>Stop</td><td width=38>Del</td></tr>");
+		sb.append("<tr><td width=66>Name</td><td width=18>Lv</td><td width=24>Fct</td><td width=28>Mode</td><td width=48>State</td><td width=34>K</td><td width=38>Stop</td><td width=34>Del</td></tr>");
 		
 		final int start = page * PAGE_SIZE;
 		final int end = Math.min(start + PAGE_SIZE, phantoms.size());
@@ -287,7 +356,9 @@ public class AdminPhantom implements IAdminCommandHandler
 		{
 			final Player phantom = phantoms.get(i);
 			final int objectId = phantom.getObjectId();
-			sb.append("<tr><td>").append(shortText(phantom.getName(), 11)).append("</td><td>").append(phantom.getStatus().getLevel()).append("</td><td>").append(shortText(PhantomState.label(objectId), 5)).append("</td><td>").append(shortText(PhantomAI.getLastAction(phantom), 8)).append("</td>");
+			final int fId = phantom.getFactionId();
+			final String factionTag = (Config.ENABLE_FACTION_SYSTEM && fId > 0) ? String.valueOf(fId) : "-";
+			sb.append("<tr><td>").append(shortText(phantom.getName(), 10)).append("</td><td>").append(phantom.getStatus().getLevel()).append("</td><td>").append(factionTag).append("</td><td>").append(shortText(PhantomState.label(objectId), 5)).append("</td><td>").append(shortText(PhantomAI.getLastAction(phantom), 7)).append("</td>");
 			sb.append("<td>");
 			miniButton(sb, "K", "admin_phantom kill " + page + " " + objectId, 34);
 			sb.append("</td><td>");

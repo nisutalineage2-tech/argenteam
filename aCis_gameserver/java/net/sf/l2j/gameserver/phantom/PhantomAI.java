@@ -7,16 +7,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.data.manager.SpawnManager;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.RestartPointData;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.enums.skills.SkillType;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
+import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.WorldObject;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Npc;
@@ -173,6 +176,16 @@ public final class PhantomAI
 				return;
 			}
 			
+			if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0)
+			{
+				final Player factionTarget = findEnemyFactionPlayer(phantom);
+				if (factionTarget != null)
+				{
+					attackPlayer(phantom, factionTarget, "Faction war ");
+					return;
+				}
+			}
+			
 			final Player visiblePkTarget = PhantomCombat.findVisiblePk(phantom);
 			if (visiblePkTarget != null)
 			{
@@ -273,9 +286,21 @@ public final class PhantomAI
 			if (phantom == null || !phantom.isOnline())
 				return;
 			
-			Location town = RestartPointData.getInstance().getLocationToTeleport(phantom, RestartType.TOWN);
+			Location town = null;
+			
+			if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0)
+			{
+				final Faction faction = FactionData.getInstance().getFaction(phantom.getFactionId());
+				if (faction != null && faction.getHomeLocation() != null)
+					town = faction.getHomeLocation();
+			}
+			
 			if (town == null)
-				town = RestartPointData.getInstance().getNearestRestartLocation(phantom);
+			{
+				town = RestartPointData.getInstance().getLocationToTeleport(phantom, RestartType.TOWN);
+				if (town == null)
+					town = RestartPointData.getInstance().getNearestRestartLocation(phantom);
+			}
 			
 			if (phantom.isDead())
 				phantom.doRevive();
@@ -286,7 +311,7 @@ public final class PhantomAI
 			final Location home = new Location(phantom.getX(), phantom.getY(), phantom.getZ());
 			HOMES.put(phantom.getObjectId(), home);
 			PATROL_POINTS.put(phantom.getObjectId(), nextPatrolPoint(phantom));
-			LAST_ACTIONS.put(phantom.getObjectId(), "Respawn town");
+			LAST_ACTIONS.put(phantom.getObjectId(), "Respawn " + (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 ? "faction base" : "town"));
 			phantom.store();
 			
 			if (PhantomConfig.returnToLevelZoneAfterDeath() && PhantomConfig.useLevelZones())
@@ -789,6 +814,36 @@ public final class PhantomAI
 		
 		LAST_ACTIONS.put(phantom.getObjectId(), "Wander");
 		moveTo(phantom, destination, "Wander");
+	}
+	
+	private static Player findEnemyFactionPlayer(Player phantom)
+	{
+		final int myFaction = phantom.getFactionId();
+		if (myFaction <= 0)
+			return null;
+		
+		final Player[] nearest = new Player[1];
+		final double[] nearestDistance = { Double.MAX_VALUE };
+		
+		phantom.forEachKnownTypeInRadius(Player.class, PhantomConfig.aggroRange(), player ->
+		{
+			if (player == null || player == phantom || player.isDead() || !player.isVisible())
+				return;
+			
+			if (player.getFactionId() <= 0 || player.getFactionId() == myFaction)
+				return;
+			
+			if (PhantomEngine.isPhantom(player.getObjectId()))
+				return;
+			
+			final double distance = phantom.distance3D(player);
+			if (distance < nearestDistance[0])
+			{
+				nearest[0] = player;
+				nearestDistance[0] = distance;
+			}
+		});
+		return nearest[0];
 	}
 	
 	private static void claimTarget(Player phantom, Monster monster)

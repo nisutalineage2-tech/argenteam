@@ -3,6 +3,7 @@ package net.sf.l2j.gameserver.phantom;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.enums.SayType;
@@ -56,10 +57,14 @@ public final class PhantomSocial
 	
 	private static Player findNearbyRealPlayer(Player phantom)
 	{
+		final int myFaction = phantom.getFactionId();
 		final Player[] result = new Player[1];
 		phantom.forEachKnownTypeInRadius(Player.class, PhantomConfig.socialChatRange(), player ->
 		{
 			if (result[0] != null || player == null || player == phantom || player.isDead() || !player.isVisible() || PhantomEngine.isPhantom(player.getObjectId()))
+				return;
+			
+			if (Config.ENABLE_FACTION_SYSTEM && myFaction > 0 && player.getFactionId() != myFaction)
 				return;
 			
 			result[0] = player;
