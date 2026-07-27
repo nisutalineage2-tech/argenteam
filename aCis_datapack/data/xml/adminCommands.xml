@@ -158,4 +158,20 @@
 
 	<!-- ZONE -->
 	<aCar name="admin_zone" accessLevel="7" params="[show - all|clear|id]" desc="Show the zone panel, or the zone visually."/>
+
+	<!-- PHANTOM -->
+	<aCar name="admin_phantom" accessLevel="7" params="[page]" desc="Open the Phantom Manager panel."/>
+	<aCar name="admin_phantom_reload" accessLevel="7" params="" desc="Reload phantom configuration."/>
+	<aCar name="admin_phantom_start" accessLevel="7" params="" desc="Restore saved phantoms."/>
+	<aCar name="admin_phantom_load" accessLevel="7" params="objectId [here|db]" desc="Load a saved phantom."/>
+	<aCar name="admin_phantom_create" accessLevel="7" params="[count]" desc="Create new racial phantoms."/>
+	<aCar name="admin_phantom_ai" accessLevel="7" params="[on|off|home]" desc="Start/stop AI or update homes."/>
+	<aCar name="admin_phantom_stop" accessLevel="7" params="[objectId]" desc="Stop a specific phantom or all."/>
+	<aCar name="admin_phantom_kill" accessLevel="7" params="objectId" desc="Kill a phantom."/>
+	<aCar name="admin_phantom_delete" accessLevel="7" params="objectId" desc="Delete a phantom from config."/>
+	<aCar name="admin_phantom_bring" accessLevel="7" params="" desc="Bring all phantoms to you."/>
+	<aCar name="admin_phantom_online" accessLevel="7" params="[page]" desc="Show online phantoms."/>
+	<aCar name="admin_phantom_status" accessLevel="7" params="" desc="Open the phantom status panel."/>
+	<aCar name="admin_phantom_faction" accessLevel="7" params="objectId factionId" desc="Set a phantom's faction."/>
+	<aCar name="admin_phantom_factions" accessLevel="7" params="[factionId] [page]" desc="Show phantoms filtered by faction."/>
 </list>
