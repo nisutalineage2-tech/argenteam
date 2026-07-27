@@ -152,10 +152,16 @@ public final class Say2 extends L2GameClientPacket
 			
 			if (cmd.equals(".eventjoin"))
 			{
-				// .eventjoin <id>
+				// .eventjoin alone -> auto-join active event
 				if (parts.length < 2)
 				{
-					player.sendMessage("[Event] Usage: .eventjoin <event_id> | .eventjoin leave | .eventjoin list");
+					final AbstractEvent active = EventEngine.getInstance().getActiveEvent();
+					if (active == null)
+					{
+						player.sendMessage("[Event] No events are open. Use .eventjoin list to see available events.");
+						return;
+					}
+					handleEventJoin(player, active.getData().getId());
 					return;
 				}
 				
