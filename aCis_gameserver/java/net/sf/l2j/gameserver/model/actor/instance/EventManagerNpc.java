@@ -3,6 +3,7 @@ package net.sf.l2j.gameserver.model.actor.instance;
 import java.util.StringTokenizer;
 
 import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.event.EventBuffer;
 import net.sf.l2j.gameserver.event.EventConfig;
 import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -22,7 +23,28 @@ public class EventManagerNpc extends Folk
 		StringTokenizer st = new StringTokenizer(command, " ");
 		String currentCommand = st.nextToken();
 		
-		if (currentCommand.startsWith("event_"))
+		if (currentCommand.startsWith("event_buff_clear"))
+		{
+			EventBuffer.getInstance().clearBuffs(player);
+			EventBuffer.getInstance().showBufferPage(player, getObjectId());
+		}
+		else if (currentCommand.startsWith("event_buff"))
+		{
+			if (st.hasMoreTokens())
+			{
+				try
+				{
+					final int skillId = Integer.parseInt(st.nextToken());
+					EventBuffer.getInstance().toggleBuff(player, skillId);
+				}
+				catch (NumberFormatException e)
+				{
+					player.sendMessage("Invalid buff ID.");
+				}
+			}
+			EventBuffer.getInstance().showBufferPage(player, getObjectId());
+		}
+		else if (currentCommand.startsWith("event_"))
 		{
 			if (!st.hasMoreTokens())
 				return;

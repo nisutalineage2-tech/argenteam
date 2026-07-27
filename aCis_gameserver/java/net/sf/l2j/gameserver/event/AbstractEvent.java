@@ -124,6 +124,16 @@ public abstract class AbstractEvent
 		teleportPlayers();
 		onStartMatch();
 		
+		// Apply event buffs to all participants
+		if (EventConfig.isEventBufferEnabled())
+		{
+			for (EventPlayer ep : _allPlayers)
+			{
+				if (ep.isOnline())
+					EventBuffer.getInstance().applyBuffs(ep.getPlayer());
+			}
+		}
+		
 		broadcastEvent("[Event] " + _data.getEventName() + " has started! Good luck!");
 		
 		// Start scorebar updates every 30 seconds
@@ -163,6 +173,10 @@ public abstract class AbstractEvent
 		_state = State.ENDED;
 		
 		final EventTeam winner = determineWinner();
+		
+		// Persist stats to database
+		final int winnerTeamId = (winner != null) ? winner.getId() : -1;
+		EventStats.getInstance().onEventEnd(_data.getId(), _allPlayers, winnerTeamId);
 		
 		// Send ranking before clearing
 		final String ranking = buildRanking();

@@ -136,6 +136,10 @@ public enum SkillType
 	
 	CHANGE_APPEARANCE(L2SkillAppearance.class),
 	
+	// Event skills
+	BOMB,
+	CAPTURE,
+	
 	// Skill is done within the core.
 	COREDONE,
 	
