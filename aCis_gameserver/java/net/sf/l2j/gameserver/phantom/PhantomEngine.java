@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.random.Rnd;
 
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.NewbieBuffData;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.model.World;
@@ -61,6 +63,26 @@ public final class PhantomEngine
 			PhantomLog.warn("Couldn't restore phantom character " + objectId + ".");
 			return null;
 		}
+		
+		// Try restoring faction data first (for phantoms that were already assigned)
+		FactionData.getInstance().restoreData(phantom);
+		
+		// If still no faction and faction system is enabled, assign a random one
+		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() <= 0)
+		{
+			final int[] factionIds = FactionData.getInstance().getFactionIds();
+			if (factionIds.length > 0)
+			{
+				final int randomFactionId = factionIds[Rnd.get(factionIds.length)];
+				phantom.setFactionId(randomFactionId);
+				FactionData.getInstance().storeData(phantom);
+				PhantomLog.info("Assigned random faction " + randomFactionId + " to phantom " + phantom.getName() + " (" + objectId + ").");
+			}
+		}
+		
+		// Apply faction visuals (name color, title color)
+		if (Config.ENABLE_FACTION_SYSTEM)
+			FactionData.getInstance().onPlayerEnter(phantom);
 		
 		phantom.setOnlineStatus(true, true);
 		phantom.setRunning(true);

@@ -58,6 +58,11 @@ public class FactionData implements IXmlReader
 		return _factions.size();
 	}
 	
+	public int[] getFactionIds()
+	{
+		return _factions.keySet().stream().mapToInt(Integer::intValue).toArray();
+	}
+	
 	public void onPlayerEnter(Player player)
 	{
 		if (!Config.ENABLE_FACTION_SYSTEM)

@@ -7,7 +7,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.random.Rnd;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.sql.PlayerInfoTable;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.PlayerData;
 import net.sf.l2j.gameserver.data.xml.ScriptData;
 import net.sf.l2j.gameserver.enums.QuestStatus;
@@ -115,6 +117,19 @@ public final class PhantomFactory
 			
 			if (skill.getId() == 1216)
 				phantom.getShortcutList().addShortcut(new Shortcut(9, 0, ShortcutType.SKILL, skill.getId(), 1, 1), false);
+		}
+		
+		// Assign random faction if faction system is enabled
+		if (Config.ENABLE_FACTION_SYSTEM)
+		{
+			final int[] factionIds = FactionData.getInstance().getFactionIds();
+			if (factionIds.length > 0)
+			{
+				final int randomFactionId = factionIds[Rnd.get(factionIds.length)];
+				phantom.setFactionId(randomFactionId);
+				FactionData.getInstance().storeData(phantom);
+				LOGGER.info("Assigned random faction {} to new phantom {} ({}).", randomFactionId, phantom.getName(), phantom.getObjectId());
+			}
 		}
 		
 		final Quest tutorial = ScriptData.getInstance().getQuest("Tutorial");
