@@ -105,6 +105,8 @@ echo Installing empty character-related tables.
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/items_on_ground.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mdt_bets.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mdt_history.sql
+%mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mods_faction.sql
+%mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mods_factionwar.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mods_wedding.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/olympiad_fights.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/olympiad_nobles_eom.sql
