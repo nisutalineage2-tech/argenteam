@@ -60,7 +60,7 @@ $JAVAC = "$JAVA_HOME\bin\javac.exe"
 $JAR = "$JAVA_HOME\bin\jar.exe"
 
 # Deploy target
-$DEPLOY_DIR = "$env:USERPROFILE\Desktop\server"
+$DEPLOY_DIR = "C:\server"
 
 $SRC           = "$GS_DIR\java"
 $LIB           = "$GS_DIR\lib"
@@ -171,7 +171,7 @@ Write-Host "  Datapack build: $DP_BUILD\gameserver\data" -ForegroundColor White
 # ============================================================
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  STEP 3: Deploy to Desktop\\server" -ForegroundColor Cyan
+Write-Host "  STEP 3: Deploy to C:\server" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
