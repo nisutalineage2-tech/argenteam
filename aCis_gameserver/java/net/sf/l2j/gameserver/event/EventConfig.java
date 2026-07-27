@@ -2,7 +2,9 @@ package net.sf.l2j.gameserver.event;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.sf.l2j.commons.config.ExProperties;
 import net.sf.l2j.commons.logging.CLogger;
@@ -74,6 +76,16 @@ public final class EventConfig
 			if (!posRed.isEmpty()) data.setPositionRed(parseLoc(posRed));
 			if (!rewardWinner.isEmpty()) data.setRewardWinner(rewardWinner);
 			if (!rewardLoser.isEmpty()) data.setRewardLoser(rewardLoser);
+			
+			// Load custom properties for this event
+			final String[] customKeys = {"ChestInterval","MaxChests","ExplodeChance","ChestRewardId","ChestRewardCount","ZoneRadius","PointsPerTick","TickInterval","Zone1","Zone2","MutantSkillId","ChestCount","RoundTime","InitialZombies","ZombieSkillId","HumanBowId","BowId","PlayersPerRound","BossNpcId","BossSpawnDelay","TotalChests","SpawnRadius"};
+			for (String key : customKeys)
+			{
+				final String val = props.getProperty("Event_" + i + "_" + key);
+				if (val != null && !val.isEmpty())
+					data.setCustom(key, val);
+			}
+			
 			_events.add(data);
 		}
 		
@@ -148,6 +160,7 @@ public final class EventConfig
 		private int _positionRadius = 300;
 		private String _rewardWinner = "57,1000";
 		private String _rewardLoser = "57,10";
+		private final Map<String, String> _custom = new HashMap<>();
 		
 		public EventData(int id, String shortName, String eventName, int minLvl, int maxLvl, int matchTime, int minPlayers, boolean allowPotions, boolean allowMagic, boolean removeBuffs, boolean enabled)
 		{
@@ -188,5 +201,27 @@ public final class EventConfig
 		public void setPositionRadius(int radius) { _positionRadius = radius; }
 		public void setRewardWinner(String s) { _rewardWinner = s; }
 		public void setRewardLoser(String s) { _rewardLoser = s; }
+		
+		/** Store a custom property value. */
+		public void setCustom(String key, String value) { _custom.put(key, value); }
+		/** @return Custom property as String, or defaultVal if missing. */
+		public String getCustom(String key, String defaultVal) { return _custom.getOrDefault(key, defaultVal); }
+		/** @return Custom property as int, or defaultVal if missing/parse error. */
+		public int getCustomInt(String key, int defaultVal)
+		{
+			final String val = _custom.get(key);
+			if (val == null) return defaultVal;
+			try { return Integer.parseInt(val); } catch (NumberFormatException e) { return defaultVal; }
+		}
+		/** @return Custom property as Location (x,y,z), or null if missing. */
+		public Location getCustomLoc(String key)
+		{
+			final String val = _custom.get(key);
+			if (val == null || val.isEmpty()) return null;
+			final String[] p = val.split(",");
+			if (p.length < 3) return null;
+			try { return new Location(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), Integer.parseInt(p[2].trim())); }
+			catch (NumberFormatException e) { return null; }
+		}
 	}
 }

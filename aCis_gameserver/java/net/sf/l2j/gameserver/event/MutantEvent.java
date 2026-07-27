@@ -40,7 +40,7 @@ public class MutantEvent extends AbstractEvent
 		{
 			if (killer.isOnline())
 			{
-				killer.getPlayer().setTitle("[Mutant] " + killer.getKills() + " kills");
+				killer.getPlayer().setTitle("[Mut] " + killer.getKills() + "k");
 				killer.getPlayer().broadcastTitleInfo();
 			}
 			broadcastToPlayers("[Mutant] The Mutant " + killer.getName() + " killed " + (victim != null ? victim.getName() : "someone") + "!");
@@ -119,7 +119,7 @@ public class MutantEvent extends AbstractEvent
 		if (_currentMutant.isOnline())
 		{
 			final Player p = _currentMutant.getPlayer();
-			p.setTitle("[Mutant] Kills: 0");
+			p.setTitle("[Mut] 0k");
 			p.broadcastTitleInfo();
 			
 			// Apply mutant buff skill

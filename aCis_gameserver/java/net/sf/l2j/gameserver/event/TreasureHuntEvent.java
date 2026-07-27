@@ -41,7 +41,7 @@ public class TreasureHuntEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Treasure] 0 found");
+				ep.getPlayer().setTitle("[Find] 0fd");
 				ep.getPlayer().broadcastTitleInfo();
 				ep.getPlayer().sendMessage("[Treasure] Find treasure chests hidden in the ruins! First finder wins big!");
 			}
@@ -118,8 +118,7 @@ public class TreasureHuntEvent extends AbstractEvent
 		_chests.remove(chestIndex);
 		
 		if (ep.isOnline())
-		{
-			ep.getPlayer().setTitle("[Treasure] " + ep.getKills() + " found");
+		{				ep.getPlayer().setTitle("[Find] " + ep.getKills() + "fd");
 			ep.getPlayer().broadcastTitleInfo();
 		}
 	}

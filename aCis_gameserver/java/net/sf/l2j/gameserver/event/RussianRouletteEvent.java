@@ -93,7 +93,7 @@ public class RussianRouletteEvent extends AbstractEvent
 				final Player p = ep.getPlayer();
 				p.setIsImmobilized(true);
 				p.setIsParalyzed(true);
-				p.setTitle("[Roulette] Dead (Round " + (_eliminated.size()) + ")");
+				p.setTitle("[Roulet] Out R" + (_eliminated.size()));
 				p.broadcastTitleInfo();
 				p.sendMessage("[Roulette] You chose the wrong chest! You're out!");
 				broadcastToPlayers("[Roulette] " + ep.getName() + " was eliminated!");

@@ -41,7 +41,7 @@ public class LuckyChestsEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Chests] " + ep.getKills() + " opened");
+				ep.getPlayer().setTitle("[Chest] " + ep.getKills() + "opnd");
 				ep.getPlayer().broadcastTitleInfo();
 				ep.getPlayer().sendMessage("[Chests] Find and open chests for rewards! But beware of exploding ones!");
 			}
@@ -128,7 +128,7 @@ public class LuckyChestsEvent extends AbstractEvent
 			player.getInventory().addItem(_chestRewardId, _chestRewardCount);
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Chests] " + ep.getKills() + " opened");
+				ep.getPlayer().setTitle("[Chest] " + ep.getKills() + "opnd");
 				ep.getPlayer().broadcastTitleInfo();
 			}
 			player.sendMessage("[Chests] You got " + _chestRewardCount + " rewards from the chest!");

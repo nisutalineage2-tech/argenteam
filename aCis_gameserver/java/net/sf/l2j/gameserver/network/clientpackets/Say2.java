@@ -9,6 +9,7 @@ import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.event.EventConfig;
 import net.sf.l2j.gameserver.event.EventEngine;
+import net.sf.l2j.gameserver.event.SimonSaysEvent;
 import net.sf.l2j.gameserver.handler.ChatHandler;
 import net.sf.l2j.gameserver.handler.IChatHandler;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -229,7 +230,16 @@ public final class Say2 extends L2GameClientPacket
 					player.sendMessage("[Event] Usage: .event join <id> | .event leave | .event list");
 					break;
 				}
-			}
+			return;
+		}
+		
+		// Simon Says command
+		if (cmd.equals(".simon") && parts.length >= 2)
+		{
+			final String word = parts[1].trim();
+			final AbstractEvent active = EventEngine.getInstance().getActiveEvent();
+			if (active instanceof SimonSaysEvent simon)
+				simon.onPlayerSay(word, player);
 			return;
 		}
 	}

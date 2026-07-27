@@ -214,7 +214,7 @@ public class KoreanTvTEvent extends AbstractEvent
 				final Player p = ep.getPlayer();
 				p.setIsImmobilized(true);
 				p.setIsParalyzed(true);
-				p.setTitle("[KTvT] Eliminated");
+				p.setTitle("[KTvT] Out!");
 				p.broadcastTitleInfo();
 			}
 		}
