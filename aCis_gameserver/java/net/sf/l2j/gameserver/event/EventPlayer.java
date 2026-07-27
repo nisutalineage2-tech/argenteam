@@ -11,6 +11,7 @@ public class EventPlayer
 	private int _deaths;
 	private Location _originalLocation;
 	private final String _originalTitle;
+	private final int _originalFactionId;
 	
 	public EventPlayer(Player player)
 	{
@@ -20,6 +21,7 @@ public class EventPlayer
 		_deaths = 0;
 		_originalLocation = new Location(player.getX(), player.getY(), player.getZ());
 		_originalTitle = player.getTitle();
+		_originalFactionId = player.getFactionId();
 	}
 	
 	public Player getPlayer() { return _player; }
@@ -37,6 +39,7 @@ public class EventPlayer
 	
 	public Location getOriginalLocation() { return _originalLocation; }
 	public String getOriginalTitle() { return _originalTitle; }
+	public int getOriginalFactionId() { return _originalFactionId; }
 	
 	public boolean isOnline() { return _player != null && _player.isOnline(); }
 	
@@ -45,8 +48,16 @@ public class EventPlayer
 		if (_player == null || !_player.isOnline())
 			return;
 		
-		// Restore original title before anything else
+		// Restore original title
 		_player.setTitle(_originalTitle);
+		
+		// Restore original faction (removed during event registration for neutrality)
+		if (_originalFactionId > 0 && _player.getFactionId() != _originalFactionId)
+		{
+			_player.setFactionId(_originalFactionId);
+			net.sf.l2j.gameserver.data.xml.FactionData.getInstance().storeData(_player);
+			net.sf.l2j.gameserver.data.xml.FactionData.getInstance().onPlayerEnter(_player);
+		}
 		
 		if (_player.getAccessLevel().getLevel() < 1)
 		{

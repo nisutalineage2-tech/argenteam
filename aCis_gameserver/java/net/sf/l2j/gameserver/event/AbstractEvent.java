@@ -13,10 +13,12 @@ import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
+import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.ConfirmDlg;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
+import net.sf.l2j.gameserver.phantom.PhantomEngine;
 
 public abstract class AbstractEvent
 {
@@ -89,6 +91,7 @@ public abstract class AbstractEvent
 		
 		broadcastEvent("[Event] " + _data.getEventName() + " registration open! Visit the Event Manager or use .eventjoin " + _data.getId() + " to join.");
 		sendEventPopup();
+		autoRegisterPhantoms();
 		
 		_registerTask = ThreadPool.schedule(this::startCountdown, EventConfig.getRegisterTime() * 60000L);
 		
@@ -213,10 +216,56 @@ public abstract class AbstractEvent
 		final EventPlayer ep = new EventPlayer(player);
 		_allPlayers.add(ep);
 		
+		// Remove faction during event for neutrality (save original in EventPlayer)
+		if (player.getFactionId() > 0)
+		{
+			player.setFactionId(0);
+			player.broadcastUserInfo();
+		}
+		
 		player.sendMessage("[Event] You joined " + _data.getEventName() + "! (" + _allPlayers.size() + " players)");
 		broadcastEvent("[Event] " + player.getName() + " joined " + _data.getEventName() + "! (" + _allPlayers.size() + " players)");
 		
 		return true;
+	}
+	
+	/**
+	 * Automatically registers all eligible phantoms (bots) to this event.
+	 * Phantoms are neutral during events (no faction), their original faction
+	 * is restored when the event ends via EventPlayer.restoreLocation().
+	 */
+	private void autoRegisterPhantoms()
+	{
+		int registered = 0;
+		for (Player phantom : PhantomEngine.getActivePhantoms())
+		{
+			if (phantom == null || !phantom.isOnline() || phantom.isDead())
+				continue;
+			
+			if (isParticipating(phantom.getObjectId()))
+				continue;
+			
+			// Respect event level requirements
+			final int level = phantom.getStatus().getLevel();
+			if (level < _data.getMinLvl() || level > _data.getMaxLvl())
+				continue;
+			
+			// Create EventPlayer (saves original faction, location, title)
+			final EventPlayer ep = new EventPlayer(phantom);
+			_allPlayers.add(ep);
+			
+			// Remove faction during event for neutrality
+			if (phantom.getFactionId() > 0)
+			{
+				phantom.setFactionId(0);
+				phantom.broadcastUserInfo();
+			}
+			
+			registered++;
+		}
+		
+		if (registered > 0)
+			LOGGER.info("Auto-registered {} phantoms to event {}.", registered, _data.getEventName());
 	}
 	
 	public final boolean unregisterPlayer(int objectId)

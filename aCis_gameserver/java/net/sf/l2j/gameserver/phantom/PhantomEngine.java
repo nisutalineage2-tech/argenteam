@@ -14,6 +14,8 @@ import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.NewbieBuffData;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
+import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.World;
@@ -118,6 +120,18 @@ public final class PhantomEngine
 						phantom.onTeleported();
 					PhantomLog.info("Phantom " + phantom.getName() + " teleported to faction war on load.");
 				}
+			}
+		}
+		
+		// If an event is in REGISTER state, auto-join this phantom
+		final AbstractEvent activeEvent = EventEngine.getInstance().getActiveEvent();
+		if (activeEvent != null && activeEvent.getState() == AbstractEvent.State.REGISTER)
+		{
+			final int level = phantom.getStatus().getLevel();
+			if (level >= activeEvent.getData().getMinLvl() && level <= activeEvent.getData().getMaxLvl())
+			{
+				if (activeEvent.registerPlayer(phantom))
+					PhantomLog.info("Phantom " + phantom.getName() + " auto-joined event " + activeEvent.getData().getEventName() + " on load.");
 			}
 		}
 		
