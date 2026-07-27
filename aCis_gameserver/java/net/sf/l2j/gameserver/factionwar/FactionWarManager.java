@@ -122,10 +122,12 @@ public class FactionWarManager
 			_eventEndTask = ThreadPool.schedule(() -> stop(), durationMinutes * 60000L);
 		}
 		
+		final int teleported = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
+		
 		if (FactionWarConfig.isAnnounceStart())
 			broadcast("[Faction War] La guerra ha comenzado! Score to win: " + scoreToWin);
 		
-		LOGGER.info("Faction War started. Score to win: {}", scoreToWin);
+		LOGGER.info("Faction War started. Score to win: {}. Teleported {} phantoms to war.", scoreToWin, teleported);
 	}
 	
 	public void stop()
@@ -145,6 +147,8 @@ public class FactionWarManager
 		despawnRegistrar();
 		_checkpoints.despawn();
 		
+		final int returned = net.sf.l2j.gameserver.phantom.PhantomEngine.returnPhantomsFromWar();
+		
 		if (FactionWarConfig.isAnnounceEnd())
 		{
 			final int goodScore = getScore(FactionWarConfig.getGoodFactionId());
@@ -160,7 +164,7 @@ public class FactionWarManager
 			broadcast("[Faction War] La guerra ha terminado! " + winner + " [" + goodScore + " - " + evilScore + "]");
 		}
 		
-		LOGGER.info("Faction War stopped.");
+		LOGGER.info("Faction War stopped. Returned {} phantoms to faction bases.", returned);
 	}
 	
 	public void onFlagKilled(int killerFactionId)

@@ -14,8 +14,11 @@ import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.NewbieBuffData;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
+import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.model.records.NewbieBuff;
 import net.sf.l2j.gameserver.scripting.Quest;
 
@@ -100,6 +103,24 @@ public final class PhantomEngine
 		}
 		
 		applyStartupFeatures(phantom);
+		
+		// If faction war is running, teleport this phantom to the war map
+		if (Config.ENABLE_FACTION_SYSTEM && FactionWarManager.getInstance().isRunning())
+		{
+			final int factionId = phantom.getFactionId();
+			if (factionId > 0)
+			{
+				final Location warSpawn = FactionWarManager.getInstance().getFactionSpawn(factionId);
+				if (warSpawn != null)
+				{
+					phantom.teleportTo(warSpawn, 20);
+					if (phantom.isTeleporting())
+						phantom.onTeleported();
+					PhantomLog.info("Phantom " + phantom.getName() + " teleported to faction war on load.");
+				}
+			}
+		}
+		
 		phantom.broadcastUserInfo();
 		ACTIVE_PHANTOMS.put(objectId, phantom);
 		PhantomState.register(objectId);
@@ -290,7 +311,8 @@ public final class PhantomEngine
 		}
 		return moved;
 	}
-		public static int startAi()
+	
+	public static int startAi()
 	{
 		int started = 0;
 		for (Player phantom : ACTIVE_PHANTOMS.values())
@@ -325,6 +347,88 @@ public final class PhantomEngine
 		return updated;
 	}
 	
+	/**
+	 * Teleports all active phantoms with valid faction IDs to the faction war map.
+	 * Dead phantoms are revived first so everyone participates.
+	 */
+	public static int teleportPhantomsToWar()
+	{
+		int moved = 0;
+		for (Player phantom : ACTIVE_PHANTOMS.values())
+		{
+			if (phantom == null || !phantom.isOnline())
+				continue;
+			
+			final int factionId = phantom.getFactionId();
+			if (factionId <= 0)
+				continue;
+			
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			if (!fwm.isRunning())
+				continue;
+			
+			final Location spawn = fwm.getFactionSpawn(factionId);
+			if (spawn == null)
+				continue;
+			
+			// Revive dead phantoms so they can participate in war
+			if (phantom.isDead())
+			{
+				phantom.doRevive();
+				phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+				phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
+				PhantomAI.clearDeathFlag(phantom.getObjectId());
+			}
+			
+			phantom.teleportTo(spawn, 20);
+			if (phantom.isTeleporting())
+				phantom.onTeleported();
+			
+			PhantomAI.setHome(phantom);
+			moved++;
+		}
+		return moved;
+	}
+	
+	/**
+	 * Returns all phantoms from the war map to their faction home locations.
+	 * Dead phantoms are revived first.
+	 */
+	public static int returnPhantomsFromWar()
+	{
+		int moved = 0;
+		for (Player phantom : ACTIVE_PHANTOMS.values())
+		{
+			if (phantom == null || !phantom.isOnline())
+				continue;
+			
+			final int factionId = phantom.getFactionId();
+			if (factionId <= 0)
+				continue;
+			
+			final Faction faction = FactionData.getInstance().getFaction(factionId);
+			if (faction == null || faction.getHomeLocation() == null)
+				continue;
+			
+			// Revive dead phantoms before returning them
+			if (phantom.isDead())
+			{
+				phantom.doRevive();
+				phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+				phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
+				PhantomAI.clearDeathFlag(phantom.getObjectId());
+			}
+			
+			phantom.teleportTo(faction.getHomeLocation(), 20);
+			if (phantom.isTeleporting())
+				phantom.onTeleported();
+			
+			PhantomAI.setHome(phantom);
+			moved++;
+		}
+		return moved;
+	}
+	
 	public static int size()
 	{
 		return ACTIVE_PHANTOMS.size();
@@ -352,7 +456,8 @@ public final class PhantomEngine
 		}
 		return null;
 	}
-		public static Collection<Player> getActivePhantoms()
+	
+	public static Collection<Player> getActivePhantoms()
 	{
 		return ACTIVE_PHANTOMS.values();
 	}
