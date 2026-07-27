@@ -96,10 +96,10 @@ public class AdminPhantom implements IAdminCommandHandler
 			int loaded = 0;
 			for (Player phantom : PhantomFactory.create(count))
 			{
-				if (PhantomEngine.load(phantom.getObjectId(), player, false) != null)
+				if (PhantomEngine.load(phantom.getObjectId(), player, true) != null)
 					loaded++;
 			}
-			showPanel(player, "Created NEW racial phantoms: " + loaded + ".");
+			showPanel(player, "Created NEW phantoms: " + loaded + ".");
 			return;
 		}
 		
