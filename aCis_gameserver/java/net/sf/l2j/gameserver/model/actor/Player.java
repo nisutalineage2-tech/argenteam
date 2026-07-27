@@ -387,6 +387,7 @@ public final class Player extends Playable
 	private boolean _wantsPeace;
 	
 	private int _factionId;
+	private int _factionPoints;
 	
 	private int _deathPenaltyBuffLevel;
 	
@@ -2651,6 +2652,14 @@ public final class Player extends Playable
 			if (pk != null && pk.getFactionId() > 0 && getFactionId() > 0 && pk.getFactionId() != getFactionId())
 			{
 				net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().onPvpKill(pk.getFactionId(), getFactionId());
+				
+				// Faction kill reward points (like Corvus mod)
+				final int rewardPoints = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getKillRewardPoints();
+				if (rewardPoints > 0)
+				{
+					pk.addFactionPoints(rewardPoints);
+					pk.sendMessage("[Faction] +" + rewardPoints + " faction point(s) for killing an enemy!");
+				}
 			}
 			
 			// Event PvP scoring
@@ -7220,6 +7229,21 @@ public final class Player extends Playable
 	public int getFactionId()
 	{
 		return _factionId;
+	}
+	
+	public void setFactionPoints(int points)
+	{
+		_factionPoints = Math.max(0, points);
+	}
+	
+	public int getFactionPoints()
+	{
+		return _factionPoints;
+	}
+	
+	public void addFactionPoints(int points)
+	{
+		_factionPoints += points;
 	}
 	
 	public void stopToFight()

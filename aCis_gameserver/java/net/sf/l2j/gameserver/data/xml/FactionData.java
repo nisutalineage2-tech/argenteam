@@ -12,16 +12,19 @@ import net.sf.l2j.commons.pool.ConnectionPool;
 import net.sf.l2j.commons.data.StatSet;
 
 import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.location.Location;
 
 import org.w3c.dom.Document;
 
 public class FactionData implements IXmlReader
 {
-	private static final String INSERT_CHARACTER_FACTION = "INSERT INTO mods_faction (char_id,factionId) VALUES (?,?)";
+	private static final String INSERT_CHARACTER_FACTION = "INSERT INTO mods_faction (char_id,factionId,factionPoints) VALUES (?,?,?)";
 	private static final String DELETE_CHARACTER_FACTION = "DELETE FROM mods_faction WHERE char_id=?";
-	private static final String RESTORE_CHARACTER_FACTION = "SELECT factionId FROM mods_faction WHERE char_id=?";
+	private static final String RESTORE_CHARACTER_FACTION = "SELECT factionId, factionPoints FROM mods_faction WHERE char_id=?";
+	private static final String UPDATE_CHARACTER_FACTION_POINTS = "UPDATE mods_faction SET factionPoints=? WHERE char_id=?";
 	
 	private final Map<Integer, Faction> _factions = new HashMap<>();
 	
@@ -76,6 +79,21 @@ public class FactionData implements IXmlReader
 			player.getAppearance().setNameColor(faction.getNameColor());
 			player.getAppearance().setTitleColor(faction.getTitleColor());
 			player.setTitle(faction.getName());
+			
+			// Town restriction: if player is near enemy base, teleport to own base
+			if (FactionWarConfig.isEnabled() && FactionWarConfig.isTownRestriction() && faction.getHomeLocation() != null)
+			{
+				final int playerFactionId = player.getFactionId();
+				final int enemyFactionId = (playerFactionId == FactionWarConfig.getGoodFactionId()) ? FactionWarConfig.getEvilFactionId() : FactionWarConfig.getGoodFactionId();
+				final Location enemyBase = (enemyFactionId == FactionWarConfig.getGoodFactionId()) ? FactionWarConfig.getGoodSpawnLoc() : FactionWarConfig.getEvilSpawnLoc();
+				final int radius = FactionWarConfig.getTownRestrictionRadius();
+				
+				if (enemyBase != null && player.getPosition().distance3D(enemyBase) < radius)
+				{
+					player.teleportTo(faction.getHomeLocation(), 0);
+					player.sendMessage("You were teleported to your faction base. Enemy territory is restricted.");
+				}
+			}
 		}
 	}
 	
@@ -94,6 +112,7 @@ public class FactionData implements IXmlReader
 		{
 			ps.setInt(1, player.getObjectId());
 			ps.setInt(2, player.getFactionId());
+			ps.setInt(3, player.getFactionPoints());
 			ps.executeUpdate();
 		}
 		catch (Exception e)
@@ -129,7 +148,10 @@ public class FactionData implements IXmlReader
 			try (ResultSet rs = ps.executeQuery())
 			{
 				if (rs.next())
+				{
 					player.setFactionId(rs.getInt("factionId"));
+					player.setFactionPoints(rs.getInt("factionPoints"));
+				}
 			}
 		}
 		catch (Exception e)

@@ -243,6 +243,13 @@ public final class Say2 extends L2GameClientPacket
 				simon.onPlayerSay(word, player);
 			return;
 		}
+		
+		// Faction commands
+		if (cmd.equals(".charge") || cmd.equals(".finfo") || cmd.equals(".fhelp"))
+		{
+			handleFactionCommands(player, cmd, parts);
+			return;
+		}
 	}
 	
 	private static void handleEventJoin(Player player, int eventId)
@@ -297,6 +304,63 @@ public final class Say2 extends L2GameClientPacket
 			final AbstractEvent event = EventEngine.getInstance().getEvent(data.getId());
 			final String status = event != null ? event.getState().name() : "N/A";
 			player.sendMessage("[Event] " + data.getId() + ". " + data.getEventName() + " [" + status + "]");
+		}
+	}
+	
+	private static void handleFactionCommands(Player player, String cmd, String[] parts)
+	{
+		if (!Config.ENABLE_FACTION_SYSTEM)
+		{
+			player.sendMessage("[Faction] Faction system is disabled.");
+			return;
+		}
+		
+		switch (cmd)
+		{
+			case ".charge":
+			{
+				final int points = player.getFactionPoints();
+				if (points > 0)
+				{
+					player.getInventory().addItem(57, points);
+					player.sendMessage("[Faction] " + points + " faction points converted to adena!");
+					player.setFactionPoints(0);
+				}
+				else
+					player.sendMessage("[Faction] You have no faction points to charge.");
+				break;
+			}
+			case ".finfo":
+			{
+				final int factionId = player.getFactionId();
+				final String factionName = switch (factionId)
+				{
+					case 1 -> "Good";
+					case 2 -> "Evil";
+					default -> "None";
+				};
+				int onlineGood = 0, onlineEvil = 0;
+				for (Player p : net.sf.l2j.gameserver.model.World.getInstance().getPlayers())
+				{
+					if (p != null && p.isOnline())
+					{
+						if (p.getFactionId() == 1) onlineGood++;
+						else if (p.getFactionId() == 2) onlineEvil++;
+					}
+				}
+				player.sendMessage("[Faction] ---- " + factionName + " ----");
+				player.sendMessage("[Faction] Points: " + player.getFactionPoints());
+				player.sendMessage("[Faction] Good online: " + onlineGood + " | Evil online: " + onlineEvil);
+				break;
+			}
+			case ".fhelp":
+			{
+				player.sendMessage("[Faction] Available commands:");
+				player.sendMessage("[Faction] .charge - Convert faction points to adena");
+				player.sendMessage("[Faction] .finfo - Show faction info");
+				player.sendMessage("[Faction] .fhelp - Show this help");
+				break;
+			}
 		}
 	}
 	

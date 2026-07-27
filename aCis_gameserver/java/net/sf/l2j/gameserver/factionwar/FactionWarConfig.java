@@ -36,6 +36,9 @@ public class FactionWarConfig
 	private static boolean _announcePvpKill;
 	private static boolean _announceScore;
 	private static boolean _announceMapSwitch;
+	private static int _killRewardPoints;
+	private static boolean _townRestriction;
+	private static int _townRestrictionRadius;
 	
 	public static void load()
 	{
@@ -63,6 +66,9 @@ public class FactionWarConfig
 		_announcePvpKill = props.getProperty("AnnouncePvpKill", false);
 		_announceScore = props.getProperty("AnnounceScore", true);
 		_announceMapSwitch = props.getProperty("AnnounceMapSwitch", true);
+		_killRewardPoints = props.getProperty("KillRewardPoints", 1);
+		_townRestriction = props.getProperty("TownRestriction", false);
+		_townRestrictionRadius = props.getProperty("TownRestrictionRadius", 1500);
 		
 		_goodGuardLoc = parseLoc(props.getProperty("GoodGuardLoc", "-84318,244579,-792"));
 		_evilGuardLoc = parseLoc(props.getProperty("EvilGuardLoc", "82218,148561,-3472"));
@@ -131,6 +137,9 @@ public class FactionWarConfig
 	public static boolean isAnnouncePvpKill() { return _announcePvpKill; }
 	public static boolean isAnnounceScore() { return _announceScore; }
 	public static boolean isAnnounceMapSwitch() { return _announceMapSwitch; }
+	public static int getKillRewardPoints() { return _killRewardPoints; }
+	public static boolean isTownRestriction() { return _townRestriction; }
+	public static int getTownRestrictionRadius() { return _townRestrictionRadius; }
 	
 		static
 	{
