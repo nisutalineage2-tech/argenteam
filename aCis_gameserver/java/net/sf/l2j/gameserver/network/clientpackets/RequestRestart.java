@@ -52,6 +52,13 @@ public final class RequestRestart extends L2GameClientPacket
 			return;
 		}
 		
+		if (net.sf.l2j.gameserver.event.EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId()))
+		{
+			player.sendMessage("You cannot restart while participating in an event.");
+			sendPacket(RestartResponse.valueOf(false));
+			return;
+		}
+		
 		player.removeFromBossZone();
 		
 		final GameClient client = getClient();

@@ -3,8 +3,10 @@ package net.sf.l2j.gameserver.event;
 import java.util.List;
 
 import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
 
 public class TvTEvent extends AbstractEvent
 {
@@ -29,7 +31,8 @@ public class TvTEvent extends AbstractEvent
 			if (!ep.isOnline())
 				continue;
 			
-			ep.getPlayer().setTitle("[TvT] Kills: 0");
+			final String teamName = ep.getTeamId() == 0 ? getData().getTeam1Name() : getData().getTeam2Name();
+			ep.getPlayer().setTitle("[" + teamName + "] Kills: 0");
 			ep.getPlayer().broadcastTitleInfo();
 		}
 	}
@@ -51,8 +54,21 @@ public class TvTEvent extends AbstractEvent
 		// Update killer's title with current kill count
 		if (killer.isOnline())
 		{
-			killer.getPlayer().setTitle("[TvT] Kills: " + killer.getKills());
+			final String teamName = killer.getTeamId() == 0 ? getData().getTeam1Name() : getData().getTeam2Name();
+			killer.getPlayer().setTitle("[" + teamName + "] Kills: " + killer.getKills());
 			killer.getPlayer().broadcastTitleInfo();
+		}
+		
+		// Kill streak rewards
+		if (getData().isKillStreakMilestone(killer.getKillStreak()) && killer.isOnline())
+		{
+			final String rewardStr = getData().getKillStreakReward();
+			if (!rewardStr.isEmpty())
+			{
+				grantReward(killer.getPlayer(), rewardStr);
+				killer.getPlayer().sendPacket(new ExShowScreenMessage("[TvT] Kill Streak x" + killer.getKillStreak() + "! Reward received!", 5000, ExShowScreenMessage.SMPOS.MIDDLE_CENTER, true));
+			}
+			broadcastEvent("[TvT] " + killer.getName() + " reached " + killer.getKillStreak() + " kill streak!");
 		}
 		
 		for (EventTeam team : getTeams())
@@ -69,15 +85,41 @@ public class TvTEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[TvT] You died! Respawning...");
+		player.sendMessage("[TvT] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
 		
-		final EventTeam team = getTeam(victim.getTeamId());
-		if (team != null && team.getSpawnLocation() != null)
-		{
-			player.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
-		}
-		
+		// Disable skills and immobilize during respawn delay
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
 		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		
+		// Schedule respawn with revive + full heal
+		final EventTeam team = getTeam(victim.getTeamId());
+		final int respawnX = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getX() : player.getX();
+		final int respawnY = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getY() : player.getY();
+		final int respawnZ = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getZ() : player.getZ();
+		
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			// Revive and full heal
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			
+			// Remove abnormal effects
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			
+			// Enable skills
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			// Teleport to team spawn
+			player.teleportTo(respawnX, respawnY, respawnZ, 0);
+			player.sendMessage("[TvT] You have been revived and healed!");
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override
@@ -94,6 +136,6 @@ public class TvTEvent extends AbstractEvent
 		
 		final EventTeam blue = teams.get(0);
 		final EventTeam red = teams.get(1);
-		return "[TvT] " + blue.getName() + ": " + blue.getScore() + " - " + red.getName() + ": " + red.getScore();
+		return blue.getName() + ": " + blue.getScore() + " - " + red.getName() + ": " + red.getScore();
 	}
 }

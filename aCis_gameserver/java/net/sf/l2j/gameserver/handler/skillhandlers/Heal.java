@@ -42,6 +42,14 @@ public class Heal implements ISkillHandler
 			if (!targetCreature.canBeHealed())
 				continue;
 			
+			// Block healing others during events when HealBlocked is configured
+			if (creature instanceof Player healer && targetCreature instanceof Player targetPlayer && healer != targetPlayer)
+			{
+				final net.sf.l2j.gameserver.event.AbstractEvent healerEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(healer.getObjectId());
+				if (healerEvent != null && healerEvent.getData().isHealBlocked())
+					continue;
+			}
+			
 			final double amount = targetCreature.getStatus().addHp(healAmount * targetCreature.getStatus().calcStat(Stats.HEAL_EFFECTIVNESS, 100, null, null) / 100.);
 			
 			if (target instanceof Player targetPlayer)

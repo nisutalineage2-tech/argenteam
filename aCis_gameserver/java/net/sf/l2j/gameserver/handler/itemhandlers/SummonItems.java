@@ -57,6 +57,12 @@ public class SummonItems implements IItemHandler
 			return;
 		}
 		
+		if (net.sf.l2j.gameserver.event.EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId()))
+		{
+			player.sendMessage("You cannot use summon items during an event.");
+			return;
+		}
+		
 		final NpcTemplate npcTemplate = NpcData.getInstance().getTemplate(sitem.getId());
 		if (npcTemplate == null)
 			return;

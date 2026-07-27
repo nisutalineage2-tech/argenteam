@@ -9,6 +9,8 @@ public class EventPlayer
 	private int _teamId;
 	private int _kills;
 	private int _deaths;
+	private int _killStreak;
+	private int _bestKillStreak;
 	private Location _originalLocation;
 	private final String _originalTitle;
 	private final int _originalFactionId;
@@ -19,6 +21,8 @@ public class EventPlayer
 		_teamId = -1;
 		_kills = 0;
 		_deaths = 0;
+		_killStreak = 0;
+		_bestKillStreak = 0;
 		_originalLocation = new Location(player.getX(), player.getY(), player.getZ());
 		_originalTitle = player.getTitle();
 		_originalFactionId = player.getFactionId();
@@ -32,10 +36,23 @@ public class EventPlayer
 	public void setTeamId(int teamId) { _teamId = teamId; }
 	
 	public int getKills() { return _kills; }
-	public void addKill() { _kills++; }
+	public void addKill()
+	{
+		_kills++;
+		_killStreak++;
+		if (_killStreak > _bestKillStreak)
+			_bestKillStreak = _killStreak;
+	}
 	
 	public int getDeaths() { return _deaths; }
-	public void addDeath() { _deaths++; }
+	public void addDeath()
+	{
+		_deaths++;
+		_killStreak = 0;
+	}
+	
+	public int getKillStreak() { return _killStreak; }
+	public int getBestKillStreak() { return _bestKillStreak; }
 	
 	public Location getOriginalLocation() { return _originalLocation; }
 	public String getOriginalTitle() { return _originalTitle; }

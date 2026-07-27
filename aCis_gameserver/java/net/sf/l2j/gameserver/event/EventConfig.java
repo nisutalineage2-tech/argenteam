@@ -8,6 +8,7 @@ import java.util.Map;
 
 import net.sf.l2j.commons.config.ExProperties;
 import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.model.location.Location;
 
@@ -78,7 +79,7 @@ public final class EventConfig
 			if (!rewardLoser.isEmpty()) data.setRewardLoser(rewardLoser);
 			
 			// Load custom properties for this event
-			final String[] customKeys = {"ChestInterval","MaxChests","ExplodeChance","ChestRewardId","ChestRewardCount","ZoneRadius","PointsPerTick","TickInterval","Zone1","Zone2","MutantSkillId","ChestCount","RoundTime","InitialZombies","ZombieSkillId","HumanBowId","BowId","PlayersPerRound","BossNpcId","BossSpawnDelay","TotalChests","SpawnRadius"};
+			final String[] customKeys = {"ChestInterval","MaxChests","ExplodeChance","ChestRewardId","ChestRewardCount","ZoneRadius","PointsPerTick","TickInterval","Zone1","Zone2","MutantSkillId","ChestCount","RoundTime","InitialZombies","ZombieSkillId","HumanBowId","BowId","PlayersPerRound","BossNpcId","BossSpawnDelay","TotalChests","SpawnRadius","KillStreakReward","KillStreakThresholds","RespawnDelay","PotionsAllowed","TargetTeammatesAllowed","HealBlocked","BackCoordinates","Team1Name","Team2Name"};
 			for (String key : customKeys)
 			{
 				final String val = props.getProperty("Event_" + i + "_" + key);
@@ -222,6 +223,76 @@ public final class EventConfig
 			if (p.length < 3) return null;
 			try { return new Location(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), Integer.parseInt(p[2].trim())); }
 			catch (NumberFormatException e) { return null; }
+		}
+		
+		/** Returns the kill streak thresholds as an int array (e.g. "3,7,10" -> [3,7,10]). */
+		public int[] getKillStreakThresholds()
+		{
+			final String val = _custom.get("KillStreakThresholds");
+			if (val == null || val.isEmpty())
+				return new int[0];
+			final String[] parts = val.split(",");
+			final int[] result = new int[parts.length];
+			for (int i = 0; i < parts.length; i++)
+			{
+				try { result[i] = Integer.parseInt(parts[i].trim()); }
+				catch (NumberFormatException e) { result[i] = 0; }
+			}
+			return result;
+		}
+		
+		/** Returns the reward for a kill streak threshold (format: "itemId,count" or "itemId1,count1;itemId2,count2"). */
+		public String getKillStreakReward()
+		{
+			return _custom.getOrDefault("KillStreakReward", "");
+		}
+		
+		/** Returns true if the given kill streak matches one of the thresholds and should be rewarded. */
+		public boolean isKillStreakMilestone(int killStreak)
+		{
+			if (killStreak <= 0) return false;
+			for (int threshold : getKillStreakThresholds())
+			{
+				if (killStreak == threshold)
+					return true;
+			}
+			return false;
+		}
+		
+		/** Returns respawn delay in seconds. Default 5. */
+		public int getRespawnDelay()
+		{
+			return getCustomInt("RespawnDelay", 5);
+		}
+		
+		/** Returns true if potions are allowed during the event. */
+		public boolean isPotionsAllowed()
+		{
+			return "true".equalsIgnoreCase(_custom.getOrDefault("PotionsAllowed", "false"));
+		}
+		
+		/** Returns true if targeting teammates is allowed. */
+		public boolean isTargetTeammatesAllowed()
+		{
+			return "true".equalsIgnoreCase(_custom.getOrDefault("TargetTeammatesAllowed", "true"));
+		}
+		
+		/** Returns true if healing other players is blocked during the event. */
+		public boolean isHealBlocked()
+		{
+			return "true".equalsIgnoreCase(_custom.getOrDefault("HealBlocked", "false"));
+		}
+		
+		/** Returns team 1 name. */
+		public String getTeam1Name()
+		{
+			return _custom.getOrDefault("Team1Name", "Blue");
+		}
+		
+		/** Returns team 2 name. */
+		public String getTeam2Name()
+		{
+			return _custom.getOrDefault("Team2Name", "Red");
 		}
 	}
 }

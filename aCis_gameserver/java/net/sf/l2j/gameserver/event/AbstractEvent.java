@@ -37,6 +37,7 @@ public abstract class AbstractEvent
 	private ScheduledFuture<?> _matchTask;
 	private ScheduledFuture<?> _startTask;
 	private ScheduledFuture<?> _scorebarTask;
+	private final List<ScheduledFuture<?>> _countdownTasks = new ArrayList<>();
 	private long _matchStartTime;
 	private long _matchDurationMs;
 	
@@ -159,6 +160,9 @@ public abstract class AbstractEvent
 		}
 		_scorebarTask = ThreadPool.scheduleAtFixedRate(this::broadcastScorebar, 10000, 10000);
 		
+		// Schedule countdown announcements
+		scheduleCountdowns();
+		
 		if (_data.getMatchTime() > 0)
 			_matchTask = ThreadPool.schedule(this::endMatch, _matchDurationMs);
 		
@@ -171,6 +175,7 @@ public abstract class AbstractEvent
 		cancelTask(_matchTask);
 		cancelTask(_startTask);
 		cancelTask(_scorebarTask);
+		cancelCountdowns();
 		
 		restoreAllPlayers();
 		
@@ -189,6 +194,7 @@ public abstract class AbstractEvent
 			return;
 		
 		cancelTask(_scorebarTask);
+		cancelCountdowns();
 		
 		_state = State.ENDED;
 		
@@ -463,7 +469,7 @@ public abstract class AbstractEvent
 		}
 	}
 	
-	private void grantReward(Player player, String rewardStr)
+	protected void grantReward(Player player, String rewardStr)
 	{
 		if (rewardStr == null || rewardStr.isEmpty())
 			return;
@@ -574,6 +580,46 @@ public abstract class AbstractEvent
 	{
 		if (task != null && !task.isDone())
 			task.cancel(false);
+	}
+	
+	/**
+	 * Schedules countdown announcements at key time milestones during the match.
+	 * Announces at: 10min, 5min, 3min, 2min, 1min, 30s, 10s, 5s, 4, 3, 2, 1
+	 */
+	private void scheduleCountdowns()
+	{
+		if (_matchDurationMs <= 0)
+			return;
+		
+		final int matchSeconds = (int) (_matchDurationMs / 1000);
+		final int[] milestones = {600, 300, 180, 120, 60, 30, 10, 5, 4, 3, 2, 1};
+		
+		for (int sec : milestones)
+		{
+			if (sec >= matchSeconds)
+				continue;
+			
+			final long delayMs = (_matchDurationMs - (sec * 1000L));
+			final int announcementSec = sec;
+			final String timeStr = sec >= 60 ? (sec / 60) + " minute(s)" : sec + " second(s)";
+			
+			_countdownTasks.add(ThreadPool.schedule(() ->
+			{
+				if (_state != State.RUNNING)
+					return;
+				broadcastEvent("[Event] " + _data.getEventName() + ": " + timeStr + " remaining!");
+			}, delayMs));
+		}
+	}
+	
+	private void cancelCountdowns()
+	{
+		for (ScheduledFuture<?> task : _countdownTasks)
+		{
+			if (task != null && !task.isDone())
+				task.cancel(false);
+		}
+		_countdownTasks.clear();
 	}
 	
 	protected abstract void onStartRegistering();
