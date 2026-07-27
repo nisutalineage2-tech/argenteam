@@ -84,6 +84,12 @@ public final class EventEngine
 	{
 		try
 		{
+			if (isAnyEventActive())
+			{
+				LOGGER.debug("Scheduler skipped: an event is already active.");
+				return;
+			}
+			
 			for (AbstractEvent event : _events)
 			{
 				if (event.getState() == AbstractEvent.State.IDLE)
@@ -101,6 +107,28 @@ public final class EventEngine
 	}
 	
 	public boolean isEnabled() { return _enabled; }
+	
+	public boolean isAnyEventActive()
+	{
+		for (AbstractEvent event : _events)
+		{
+			final AbstractEvent.State state = event.getState();
+			if (state == AbstractEvent.State.REGISTER || state == AbstractEvent.State.STARTING || state == AbstractEvent.State.RUNNING)
+				return true;
+		}
+		return false;
+	}
+	
+	public AbstractEvent getActiveEvent()
+	{
+		for (AbstractEvent event : _events)
+		{
+			final AbstractEvent.State state = event.getState();
+			if (state == AbstractEvent.State.REGISTER || state == AbstractEvent.State.STARTING || state == AbstractEvent.State.RUNNING)
+				return event;
+		}
+		return null;
+	}
 	
 	public AbstractEvent getEvent(int id)
 	{

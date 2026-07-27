@@ -84,7 +84,7 @@ public abstract class AbstractEvent
 		
 		onStartRegistering();
 		
-		broadcastEvent("[Event] " + _data.getEventName() + " registration open! Use .event join " + _data.getId() + " to join.");
+		broadcastEvent("[Event] " + _data.getEventName() + " registration open! Visit the Event Manager or use .eventjoin " + _data.getId() + " to join.");
 		
 		_registerTask = ThreadPool.schedule(this::startCountdown, EventConfig.getRegisterTime() * 60000L);
 		

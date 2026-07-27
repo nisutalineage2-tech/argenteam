@@ -60,6 +60,12 @@ public class AdminEvent implements IAdminCommandHandler
 					player.sendMessage("[Event] Event is not idle.");
 					return;
 				}
+				if (EventEngine.getInstance().isAnyEventActive())
+				{
+					final AbstractEvent active = EventEngine.getInstance().getActiveEvent();
+					player.sendMessage("[Event] Cannot start - " + active.getData().getEventName() + " is already in progress.");
+					return;
+				}
 				event.startRegistering();
 				showPanel(player, "Event " + event.getData().getEventName() + " registration opened.");
 				break;
