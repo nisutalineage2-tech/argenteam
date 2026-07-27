@@ -35,6 +35,9 @@ public class AdminPhantom implements IAdminCommandHandler
 		"admin_phantom_kill",
 		"admin_phantom_delete",
 		"admin_phantom_bring",
+		"admin_phantom_bringfaction",
+		"admin_phantom_resurrect",
+		"admin_phantom_deleteall",
 		"admin_phantom_online",
 		"admin_phantom_status",
 		"admin_phantom_faction",
@@ -106,6 +109,27 @@ public class AdminPhantom implements IAdminCommandHandler
 		if (cmd.equals("admin_phantom_bring"))
 		{
 			showPanel(player, "Brought phantoms: " + PhantomEngine.bringAll(player) + ".");
+			return;
+		}
+		
+		if (cmd.equals("admin_phantom_bringfaction"))
+		{
+			final int factionId = parseCount(st, 0);
+			final String label = (factionId > 0) ? ("Faction " + factionId) : "all";
+			showPanel(player, "Brought " + label + " phantoms: " + PhantomEngine.bringFaction(player, factionId) + ".");
+			return;
+		}
+		
+		if (cmd.equals("admin_phantom_resurrect"))
+		{
+			showPanel(player, "Resurrected phantoms: " + PhantomEngine.resurrectAll() + ".");
+			return;
+		}
+		
+		if (cmd.equals("admin_phantom_deleteall"))
+		{
+			final int deleted = PhantomEngine.deleteAll();
+			showPanel(player, "Deleted ALL phantoms: " + deleted + ".");
 			return;
 		}
 		
@@ -370,7 +394,36 @@ public class AdminPhantom implements IAdminCommandHandler
 		buttonRow(sb, "Restore", "admin_phantom start", "New 1", "admin_phantom create 1", "New 10", "admin_phantom create 10");
 		buttonRow(sb, "AI On", "admin_phantom ai on", "AI Off", "admin_phantom ai off", "Set Home", "admin_phantom ai home");
 		buttonRow(sb, "Bring", "admin_phantom bring", "Radar", "admin_phantom radar phantoms", "Reload", "admin_phantom reload");
-		buttonRow(sb, "Stop All", "admin_phantom stop", "Clear", "admin_phantom radar clear", "Online", "admin_phantom online 0");
+		
+		// Faction bring buttons (auto-detect available factions)
+		if (FactionWarConfig.isEnabled() && FactionData.getInstance().getFactionCount() > 0)
+		{
+			final int[] factionIds = FactionData.getInstance().getFactionIds();
+			int col = 0;
+			sb.append("<table width=300><tr>");
+			for (int fid : factionIds)
+			{
+				final Faction f = FactionData.getInstance().getFaction(fid);
+				final String label = (f != null) ? f.getName() : ("F" + fid);
+				final String shortLabel = (label.length() > 6) ? label.substring(0, 6) : label;
+				button(sb, "Bring " + shortLabel, "admin_phantom bringfaction " + fid);
+				if (++col % 3 == 0)
+					sb.append("</tr></table><table width=300><tr>");
+			}
+			while (col % 3 != 0)
+			{
+				sb.append("<td width=90></td>");
+				col++;
+			}
+			sb.append("</tr></table>");
+		}
+		else
+		{
+			buttonRow(sb, "Bring All", "admin_phantom bringfaction 0", "", "", "", "");
+		}
+		
+		buttonRow(sb, "Resurrect", "admin_phantom resurrect", "Stop All", "admin_phantom stop", "Clear", "admin_phantom radar clear");
+		buttonRow(sb, "Online", "admin_phantom online 0", "Delete ALL", "admin_phantom deleteall", "", "");
 		if (FactionWarConfig.isEnabled())
 			buttonRow(sb, "War Panel", "admin_factionwar", "War Start", "admin_factionwar start", "War Stop", "admin_factionwar stop");
 		

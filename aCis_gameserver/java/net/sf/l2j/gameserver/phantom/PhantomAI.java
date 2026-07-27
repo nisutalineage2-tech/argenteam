@@ -875,6 +875,11 @@ public final class PhantomAI
 		TARGET_CLAIMS.entrySet().removeIf(entry -> now - entry.getValue().time > PhantomConfig.targetClaimMs());
 	}
 	
+	public static void clearDeathFlag(int objectId)
+	{
+		DEATH_HANDLING.remove(objectId);
+	}
+	
 	private static void clearClaims(int phantomId)
 	{
 		TARGET_CLAIMS.entrySet().removeIf(entry -> entry.getValue().phantomId == phantomId);

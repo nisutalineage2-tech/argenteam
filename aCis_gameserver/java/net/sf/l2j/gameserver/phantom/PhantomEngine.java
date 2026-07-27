@@ -193,6 +193,48 @@ public final class PhantomEngine
 		return true;
 	}
 	
+	public static int resurrectAll()
+	{
+		int revived = 0;
+		for (Player phantom : ACTIVE_PHANTOMS.values())
+		{
+			if (phantom == null || !phantom.isOnline())
+				continue;
+			
+			if (phantom.isDead())
+			{
+				phantom.doRevive();
+				phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+				phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
+				phantom.broadcastUserInfo();
+				PhantomAI.clearDeathFlag(phantom.getObjectId());
+				revived++;
+			}
+		}
+		return revived;
+	}
+	
+	public static int deleteAll()
+	{
+		int deleted = 0;
+		for (int objectId : new ArrayList<>(ACTIVE_PHANTOMS.keySet()))
+		{
+			final Player phantom = ACTIVE_PHANTOMS.remove(objectId);
+			if (phantom != null)
+			{
+				PhantomAI.stop(objectId);
+				NEXT_BUFFS.remove(objectId);
+				phantom.deleteMe();
+				deleted++;
+			}
+		}
+		PhantomAI.stopAll();
+		NEXT_BUFFS.clear();
+		ACTIVE_PHANTOMS.clear();
+		PhantomLog.warn("Admin deleted ALL phantoms: " + deleted + ".");
+		return deleted;
+	}
+	
 	public static boolean deleteConfigured(int objectId)
 	{
 		final Player phantom = ACTIVE_PHANTOMS.remove(objectId);
@@ -218,6 +260,11 @@ public final class PhantomEngine
 	
 	public static int bringAll(Player gm)
 	{
+		return bringFaction(gm, 0);
+	}
+	
+	public static int bringFaction(Player gm, int factionId)
+	{
 		if (gm == null)
 			return 0;
 		
@@ -227,11 +274,13 @@ public final class PhantomEngine
 			if (phantom == null || !phantom.isOnline() || phantom.isDead())
 				continue;
 			
+			if (factionId > 0 && phantom.getFactionId() != factionId)
+				continue;
+			
 			final int x = gm.getX() + Rnd.get(-180, 180);
 			final int y = gm.getY() + Rnd.get(-180, 180);
 			phantom.teleportTo(x, y, gm.getZ(), 20);
 			
-			// Force onTeleported for phantoms with null client (otherwise _isTeleporting stays true forever)
 			if (phantom.isTeleporting())
 				phantom.onTeleported();
 			
