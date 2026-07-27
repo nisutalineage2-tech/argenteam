@@ -286,41 +286,28 @@
 		<set name="castRange" val="400" />
 		<set name="effectRange" val="900" />
 	</skill>
-	<skill id="5219" levels="1" name="Huge Pig Stun" >
-		<set name="magicLvl" val="-1" />
-		<set name="lvlDepend" val="1" />
-		<set name="power" val="50" />
-		<set name="mpConsume" val="43" />
-		<set name="target" val="AREA" />
-		<set name="skillRadius" val="200" />
-		<set name="hitTime" val="6000" />
-		<set name="coolTime" val="2000" />
-		<set name="reuseDelay" val="6000" />
-		<set name="skillType" val="STUN" />
+	<skill id="5219" levels="1" name="Capture">
+		<set name="mpInitialConsume" val="50" />
+		<set name="target" val="TARGET_ONE" />
+		<set name="reuseDelay" val="10000" />
+		<set name="hitTime" val="5000" />
+		<set name="staticReuse" val="true" />
+		<set name="staticHitTime" val="true" />
+		<set name="skillType" val="CAPTURE" />
 		<set name="operateType" val="ACTIVE" />
-		<set name="isDebuff" val="true" />
-		<set name="castRange" val="600" />
-		<set name="effectRange" val="1100" />
-		<for>
-			<effect name="Stun" time="9" val="0" stackOrder="1" stackType="stun" />
-		</for>
+		<set name="castRange" val="85" />
+		<set name="effectRange" val="400" />
 	</skill>
-	<skill id="5220" levels="1" name="Huge Pig Fear" >
-		<set name="magicLvl" val="-1" />
-		<set name="mpConsume" val="43" />
-		<set name="power" val="50" />
-		<set name="target" val="AREA" />
-		<set name="skillRadius" val="200" />
-		<set name="reuseDelay" val="6000" />
-		<set name="hitTime" val="6000" />
-		<set name="skillType" val="FEAR" />
-		<set name="coolTime" val="2000" />
-		<set name="isDebuff" val="true" />
+	<skill id="5220" levels="1" name="Bomb">
+		<set name="mpInitialConsume" val="50" />
+		<set name="target" val="TARGET_SELF" />
+		<set name="reuseDelay" val="10000" />
+		<set name="hitTime" val="1000" />
+		<set name="staticReuse" val="true" />
+		<set name="staticHitTime" val="true" />
+		<set name="skillType" val="BOMB" />
 		<set name="operateType" val="ACTIVE" />
-		<set name="castRange" val="600" />
-		<set name="effectRange" val="1100" />
-		<for>
-			<effect count="5" name="Fear" time="1" val="0" stackOrder="1" stackType="turn_flee" />
-		</for>
+		<set name="castRange" val="85" />
+		<set name="effectRange" val="400" />
 	</skill>
 </list>

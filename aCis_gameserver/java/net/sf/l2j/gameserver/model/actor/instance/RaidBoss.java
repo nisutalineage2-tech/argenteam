@@ -4,6 +4,8 @@ import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.data.manager.HeroManager;
 import net.sf.l2j.gameserver.data.manager.RaidPointManager;
+import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
@@ -54,6 +56,11 @@ public class RaidBoss extends Monster
 			final Player player = killer.getActingPlayer();
 			if (player != null)
 			{
+				// Notify event engine of raid boss kill (for "Raid in the Middle" event)
+				final AbstractEvent event = EventEngine.getInstance().getActiveEvent();
+				if (event != null && event.getData().getId() == 16)
+					event.stop();
+				
 				broadcastPacket(SystemMessage.getSystemMessage(SystemMessageId.RAID_WAS_SUCCESSFUL));
 				broadcastPacket(new PlaySound("systemmsg_e.1209"));
 				

@@ -3,6 +3,7 @@ package net.sf.l2j.gameserver.network.clientpackets;
 import net.sf.l2j.commons.lang.StringUtil;
 
 import net.sf.l2j.gameserver.enums.PrivilegeType;
+import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.pledge.ClanMember;
 import net.sf.l2j.gameserver.network.SystemMessageId;
@@ -30,6 +31,13 @@ public class RequestGiveNickName extends L2GameClientPacket
 		if (!StringUtil.isValidString(_title, "^[a-zA-Z0-9 !@#$&()\\-`.+,/\"]*{0,16}$"))
 		{
 			player.sendPacket(SystemMessageId.NOT_WORKING_PLEASE_TRY_AGAIN_LATER);
+			return;
+		}
+		
+		// Cannot change title while participating in an event
+		if (EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId()))
+		{
+			player.sendMessage("You cannot change your title while participating in an event.");
 			return;
 		}
 		

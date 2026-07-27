@@ -159,6 +159,14 @@
 	<!-- ZONE -->
 	<aCar name="admin_zone" accessLevel="7" params="[show - all|clear|id]" desc="Show the zone panel, or the zone visually."/>
 
+	<!-- EVENTS -->
+	<aCar name="admin_events" accessLevel="7" params="" desc="Open the Event Manager panel."/>
+	<aCar name="admin_enableEvent" accessLevel="7" params="eventId 0|1" desc="Enable or disable an event."/>
+	<aCar name="admin_configureEvent" accessLevel="7" params="eventId" desc="Configure an event."/>
+	<aCar name="admin_event_set" accessLevel="7" params="eventId key value" desc="Set an event configuration property."/>
+	<aCar name="admin_event_start" accessLevel="7" params="eventId" desc="Start an event manually."/>
+	<aCar name="admin_event_finish" accessLevel="7" params="" desc="Finish the current running event."/>
+
 	<!-- FACTION WAR -->
 	<aCar name="admin_factionwar" accessLevel="7" params="[start|stop|score|reload]" desc="Manage Faction War events."/>
 
