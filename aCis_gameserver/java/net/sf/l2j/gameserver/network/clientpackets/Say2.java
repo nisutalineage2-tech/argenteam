@@ -230,6 +230,7 @@ public final class Say2 extends L2GameClientPacket
 					player.sendMessage("[Event] Usage: .event join <id> | .event leave | .event list");
 					break;
 				}
+			}
 			return;
 		}
 		
