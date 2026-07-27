@@ -29,6 +29,7 @@ public class FactionWarConfig
 	private static Location _evilGuardLoc;
 	private static Location _goodSpawnLoc;
 	private static Location _evilSpawnLoc;
+	private static Location _neutralSpawnLoc;
 	private static boolean _announceStart;
 	private static boolean _announceEnd;
 	private static boolean _announceFlagKill;
@@ -55,6 +56,7 @@ public class FactionWarConfig
 		_checkpointCount = props.getProperty("CheckpointCount", 3);
 		_checkpointRadius = props.getProperty("CheckpointRadius", 2000);
 		_mapRotationMinutes = props.getProperty("MapRotationMinutes", 30);
+		_neutralSpawnLoc = parseLoc(props.getProperty("NeutralSpawnLoc", "-84300,243000,-3450"));
 		_announceStart = props.getProperty("AnnounceStart", true);
 		_announceEnd = props.getProperty("AnnounceEnd", true);
 		_announceFlagKill = props.getProperty("AnnounceFlagKill", true);
@@ -122,12 +124,18 @@ public class FactionWarConfig
 	public static Location getEvilGuardLoc() { return _evilGuardLoc; }
 	public static Location getGoodSpawnLoc() { return _goodSpawnLoc; }
 	public static Location getEvilSpawnLoc() { return _evilSpawnLoc; }
+	public static Location getNeutralSpawnLoc() { return _neutralSpawnLoc; }
 	public static boolean isAnnounceStart() { return _announceStart; }
 	public static boolean isAnnounceEnd() { return _announceEnd; }
 	public static boolean isAnnounceFlagKill() { return _announceFlagKill; }
 	public static boolean isAnnouncePvpKill() { return _announcePvpKill; }
 	public static boolean isAnnounceScore() { return _announceScore; }
 	public static boolean isAnnounceMapSwitch() { return _announceMapSwitch; }
+	
+		static
+	{
+		load();
+	}
 	
 	public static class WarMap
 	{

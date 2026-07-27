@@ -4,6 +4,7 @@ import net.sf.l2j.commons.lang.StringUtil;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.sql.PlayerInfoTable;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.data.xml.NpcData;
 import net.sf.l2j.gameserver.data.xml.PlayerData;
 import net.sf.l2j.gameserver.data.xml.ScriptData;
@@ -134,7 +135,7 @@ public final class RequestCharacterCreate extends L2GameClientPacket
 		
 		World.getInstance().addObject(player);
 		
-		player.getPosition().set(Config.ENABLE_FACTION_SYSTEM ? new net.sf.l2j.gameserver.model.location.Location(-84300, 243000, -3450) : template.getRandomSpawn());
+		player.getPosition().set(Config.ENABLE_FACTION_SYSTEM ? FactionWarConfig.getNeutralSpawnLoc() : template.getRandomSpawn());
 		player.setTitle("");
 		
 		// Register shortcuts.
