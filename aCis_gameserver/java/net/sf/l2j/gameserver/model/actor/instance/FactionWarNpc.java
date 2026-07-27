@@ -116,6 +116,12 @@ public class FactionWarNpc extends Folk
 		return "data/html/mods/factionwar/" + npcId + ".htm";
 	}
 	
+	@Override
+	public void showChatWindow(Player player, int val)
+	{
+		showPanel(player, null);
+	}
+	
 	public void showPanel(Player player, String message)
 	{
 		final StringBuilder sb = new StringBuilder(4096);

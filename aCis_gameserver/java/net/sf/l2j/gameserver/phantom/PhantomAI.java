@@ -833,9 +833,6 @@ public final class PhantomAI
 			if (player.getFactionId() <= 0 || player.getFactionId() == myFaction)
 				return;
 			
-			if (PhantomEngine.isPhantom(player.getObjectId()))
-				return;
-			
 			final double distance = phantom.distance3D(player);
 			if (distance < nearestDistance[0])
 			{

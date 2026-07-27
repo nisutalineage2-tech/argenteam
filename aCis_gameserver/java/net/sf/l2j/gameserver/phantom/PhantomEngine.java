@@ -123,18 +123,6 @@ public final class PhantomEngine
 			}
 		}
 		
-		// If an event is in REGISTER state, auto-join this phantom
-		final AbstractEvent activeEvent = EventEngine.getInstance().getActiveEvent();
-		if (activeEvent != null && activeEvent.getState() == AbstractEvent.State.REGISTER)
-		{
-			final int level = phantom.getStatus().getLevel();
-			if (level >= activeEvent.getData().getMinLvl() && level <= activeEvent.getData().getMaxLvl())
-			{
-				if (activeEvent.registerPlayer(phantom))
-					PhantomLog.info("Phantom " + phantom.getName() + " auto-joined event " + activeEvent.getData().getEventName() + " on load.");
-			}
-		}
-		
 		phantom.broadcastUserInfo();
 		ACTIVE_PHANTOMS.put(objectId, phantom);
 		PhantomState.register(objectId);
