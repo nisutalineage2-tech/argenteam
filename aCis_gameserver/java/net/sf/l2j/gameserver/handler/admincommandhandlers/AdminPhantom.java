@@ -342,7 +342,7 @@ public class AdminPhantom implements IAdminCommandHandler
 	private static void showPanel(Player player, String message)
 	{
 		final List<Player> allPhantoms = PhantomEngine.getActivePhantomsSorted();
-		final StringBuilder sb = new StringBuilder(16384);
+		final StringBuilder sb = new StringBuilder(8192);
 		sb.append("<html><body><center><font color=LEVEL>Phantom Manager</font></center><br>");
 		if (message != null)
 			sb.append("<font color=99FF99>").append(message).append("</font><br1>");
@@ -374,52 +374,31 @@ public class AdminPhantom implements IAdminCommandHandler
 		if (FactionWarConfig.isEnabled())
 			buttonRow(sb, "War Panel", "admin_factionwar", "War Start", "admin_factionwar start", "War Stop", "admin_factionwar stop");
 		
-		if (allPhantoms.isEmpty())
-		{
-			sb.append("<br><center><font color=808080>No phantoms active.</font></center>");
-		}
-		else
+		if (!allPhantoms.isEmpty())
 		{
 			final Map<Integer, List<Player>> groups = groupByFaction(allPhantoms);
 			final List<Integer> sortedKeys = new ArrayList<>(groups.keySet().stream().sorted().toList());
-			sb.append("<br><font color=B0C4DE>--- Phantoms by Faction ---</font><br>");
+			sb.append("<br><font color=B0C4DE>--- Summary by Faction ---</font><br>");
 			
 			for (int fKey : sortedKeys)
 			{
 				final List<Player> list = groups.get(fKey);
 				final Faction faction = (FactionWarConfig.isEnabled() && fKey > 0) ? FactionData.getInstance().getFaction(fKey) : null;
 				
-				sb.append("<br><font color=FFD700> ");
+				sb.append("<table width=300><tr><td width=220><font color=FFD700>");
 				if (fKey == 0)
 					sb.append("No Faction");
 				else
 					sb.append("Faction ").append(fKey).append(faction != null ? " (" + faction.getName() + ")" : "");
-				sb.append(" [").append(list.size()).append("]</font><br>");
-				
-				sb.append("<table width=310>");
-				for (Player phantom : list)
-				{
-					final int oid = phantom.getObjectId();
-					final int nextFaction = nextFactionId(fKey);
-					sb.append("<tr><td width=90>").append(shortText(phantom.getName(), 10)).append("</td>");
-					sb.append("<td width=18>L").append(phantom.getStatus().getLevel()).append("</td>");
-					sb.append("<td width=50>").append(shortText(PhantomState.label(oid), 6)).append("</td>");
-					sb.append("<td width=22>");
-					miniButton(sb, "K", "admin_phantom kill 0 0 " + oid, 22);
-					sb.append("</td><td width=22>");
-					miniButton(sb, "S", "admin_phantom stop 0 0 " + oid, 22);
-					sb.append("</td><td width=22>");
-					miniButton(sb, "X", "admin_phantom delete 0 0 " + oid, 22);
-					sb.append("</td><td width=28>");
-					if (FactionWarConfig.isEnabled())
-						miniButton(sb, String.valueOf(nextFaction == 0 ? "-" : nextFaction), "admin_phantom faction 0 0 " + oid + " " + nextFaction, 28);
-					sb.append("</td></tr>");
-				}
-				sb.append("</table>");
+				sb.append("</font></td><td width=40 align=center><font color=00FF00>").append(list.size()).append("</font></td><td width=40><a action=\"bypass -h admin_phantom factions ").append(fKey).append(" 0\">View</a></td></tr></table>");
 			}
+			sb.append("<br><font color=808080>Use 'Online' button for full management.</font>");
+		}
+		else
+		{
+			sb.append("<br><center><font color=808080>No phantoms active.</font></center>");
 		}
 		
-		sb.append("<br><font color=808080>K=Kill S=Stop X=Del Fct=Cycle faction</font>");
 		sb.append("</body></html>");
 		sendHtml(player, sb);
 	}
@@ -435,19 +414,6 @@ public class AdminPhantom implements IAdminCommandHandler
 			groups.computeIfAbsent(fId, k -> new ArrayList<>()).add(p);
 		}
 		return groups;
-	}
-	
-	private static int nextFactionId(int current)
-	{
-		final int maxFaction = FactionData.getInstance().getFactionCount();
-		if (!FactionWarConfig.isEnabled() || maxFaction <= 0)
-			return 0;
-		
-		if (current < 1)
-			return 1;
-		if (current >= maxFaction)
-			return 0;
-		return current + 1;
 	}
 	
 	private static void showOnline(Player player, int page, int filterFaction, String message)

@@ -157,7 +157,15 @@ public final class PhantomConfig
 			_phantomLogBackupOnStartup = props.getProperty("PhantomLogBackupOnStartup", false);
 			PhantomLog.init();
 			
-			_phantomIds = parseUniqueIds(props.getProperty("PhantomIds", new int[0]));
+			try
+			{
+				_phantomIds = parseUniqueIds(props.getProperty("PhantomIds", new int[0]));
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warn("Invalid PhantomIds value, resetting to empty.");
+				_phantomIds = Collections.emptyList();
+			}
 			_spawnAtGm = props.getProperty("SpawnAtGm", true);
 			_aiEnabled = props.getProperty("AIEnabled", true);
 			_aiTickMs = Math.max(1000, props.getProperty("AITickMs", 3500));
@@ -501,6 +509,19 @@ public final class PhantomConfig
 		try
 		{
 			final File file = new File(CONFIG_FILE);
+			
+			// Don't write empty PhantomIds to avoid NumberFormatException on next load
+			if (ids.isEmpty())
+			{
+				if (file.exists())
+				{
+					final List<String> lines = java.nio.file.Files.readAllLines(file.toPath());
+					lines.removeIf(l -> l.trim().startsWith("PhantomIds"));
+					java.nio.file.Files.write(file.toPath(), lines);
+				}
+				return;
+			}
+			
 			final StringBuilder sb = new StringBuilder();
 			for (int id : ids)
 			{

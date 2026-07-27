@@ -159,6 +159,9 @@
 	<!-- ZONE -->
 	<aCar name="admin_zone" accessLevel="7" params="[show - all|clear|id]" desc="Show the zone panel, or the zone visually."/>
 
+	<!-- FACTION WAR -->
+	<aCar name="admin_factionwar" accessLevel="7" params="[start|stop|score|reload]" desc="Manage Faction War events."/>
+
 	<!-- PHANTOM -->
 	<aCar name="admin_phantom" accessLevel="7" params="[page]" desc="Open the Phantom Manager panel."/>
 	<aCar name="admin_phantom_reload" accessLevel="7" params="" desc="Reload phantom configuration."/>
