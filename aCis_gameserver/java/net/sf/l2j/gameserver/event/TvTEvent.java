@@ -1,5 +1,7 @@
 package net.sf.l2j.gameserver.event;
 
+import java.util.List;
+
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -47,9 +49,11 @@ public class TvTEvent extends AbstractEvent
 			victimTeam.addScore(-1);
 		
 		// Update killer's title with current kill count
-		final Player killerPlayer = killer.getPlayer();
-		killerPlayer.setTitle("[TvT] Kills: " + killer.getKills());
-		killerPlayer.broadcastTitleInfo();
+		if (killer.isOnline())
+		{
+			killer.getPlayer().setTitle("[TvT] Kills: " + killer.getKills());
+			killer.getPlayer().broadcastTitleInfo();
+		}
 		
 		for (EventTeam team : getTeams())
 		{
@@ -79,5 +83,17 @@ public class TvTEvent extends AbstractEvent
 	@Override
 	protected void onStop()
 	{
+	}
+	
+	@Override
+	protected String getScorebar()
+	{
+		final List<EventTeam> teams = getTeams();
+		if (teams.size() < 2)
+			return null;
+		
+		final EventTeam blue = teams.get(0);
+		final EventTeam red = teams.get(1);
+		return "[TvT] " + blue.getName() + ": " + blue.getScore() + " - " + red.getName() + ": " + red.getScore();
 	}
 }

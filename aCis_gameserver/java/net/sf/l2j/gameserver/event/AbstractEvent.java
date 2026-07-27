@@ -31,6 +31,7 @@ public abstract class AbstractEvent
 	private ScheduledFuture<?> _registerTask;
 	private ScheduledFuture<?> _matchTask;
 	private ScheduledFuture<?> _startTask;
+	private ScheduledFuture<?> _scorebarTask;
 	
 	public AbstractEvent(EventConfig.EventData data)
 	{
@@ -125,6 +126,9 @@ public abstract class AbstractEvent
 		
 		broadcastEvent("[Event] " + _data.getEventName() + " has started! Good luck!");
 		
+		// Start scorebar updates every 30 seconds
+		_scorebarTask = ThreadPool.scheduleAtFixedRate(this::broadcastScorebar, 30000, 30000);
+		
 		if (_data.getMatchTime() > 0)
 			_matchTask = ThreadPool.schedule(this::endMatch, _data.getMatchTime() * 60000L);
 		
@@ -136,6 +140,7 @@ public abstract class AbstractEvent
 		cancelTask(_registerTask);
 		cancelTask(_matchTask);
 		cancelTask(_startTask);
+		cancelTask(_scorebarTask);
 		
 		restoreAllPlayers();
 		
@@ -153,9 +158,15 @@ public abstract class AbstractEvent
 		if (_state != State.RUNNING)
 			return;
 		
+		cancelTask(_scorebarTask);
+		
 		_state = State.ENDED;
 		
 		final EventTeam winner = determineWinner();
+		
+		// Send ranking before clearing
+		final String ranking = buildRanking();
+		broadcastToPlayers(ranking);
 		broadcastEvent("[Event] " + _data.getEventName() + " ended! Winner: " + (winner != null ? winner.getName() + "!" : "Draw!"));
 		
 		if (winner != null)
@@ -276,6 +287,48 @@ public abstract class AbstractEvent
 		}
 	}
 	
+	protected void broadcastScorebar()
+	{
+		if (_state != State.RUNNING)
+			return;
+		
+		final String score = getScorebar();
+		if (score == null || score.isEmpty())
+			return;
+		
+		// Send to all event participants
+		for (EventPlayer ep : _allPlayers)
+		{
+			if (ep.isOnline())
+				ep.getPlayer().sendMessage(score);
+		}
+	}
+	
+	/** Override in subclasses to return a live score string (e.g. "Blue: 5 - Red: 3 | Time: 45:30") */
+	protected String getScorebar()
+	{
+		return null;
+	}
+	
+	protected String buildRanking()
+	{
+		final List<EventPlayer> sorted = new ArrayList<>(_allPlayers);
+		sorted.removeIf(ep -> !ep.isOnline());
+		sorted.sort((a, b) -> Integer.compare(b.getKills(), a.getKills()));
+		
+		final StringBuilder sb = new StringBuilder();
+		sb.append("[Event] Top Kills:");
+		int rank = 1;
+		for (EventPlayer ep : sorted)
+		{
+			if (rank > 5)
+				break;
+			sb.append(" #").append(rank).append(" ").append(ep.getName()).append(" (").append(ep.getKills()).append("k/").append(ep.getDeaths()).append("d)");
+			rank++;
+		}
+		return sb.toString();
+	}
+	
 	protected void restoreAllPlayers()
 	{
 		for (EventPlayer ep : _allPlayers)
@@ -375,6 +428,15 @@ public abstract class AbstractEvent
 		{
 			if (player != null && player.isOnline())
 				player.sendPacket(cs);
+		}
+	}
+	
+	protected void broadcastToPlayers(String msg)
+	{
+		for (EventPlayer ep : _allPlayers)
+		{
+			if (ep.isOnline())
+				ep.getPlayer().sendMessage(msg);
 		}
 	}
 	

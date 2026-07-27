@@ -23,6 +23,15 @@ public class DMEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
+		// Set each player's title to show initial kill count
+		for (EventPlayer ep : getAllPlayers())
+		{
+			if (!ep.isOnline())
+				continue;
+			
+			ep.getPlayer().setTitle("[DM] Kills: 0");
+			ep.getPlayer().broadcastTitleInfo();
+		}
 	}
 	
 	@Override
@@ -30,6 +39,13 @@ public class DMEvent extends AbstractEvent
 	{
 		if (killer == null)
 			return;
+		
+		// Update killer's title with current kill count
+		if (killer.isOnline())
+		{
+			killer.getPlayer().setTitle("[DM] Kills: " + killer.getKills());
+			killer.getPlayer().broadcastTitleInfo();
+		}
 		
 		for (EventPlayer ep : getAllPlayers())
 		{
@@ -63,5 +79,23 @@ public class DMEvent extends AbstractEvent
 	@Override
 	protected void onStop()
 	{
+	}
+	
+	@Override
+	protected String getScorebar()
+	{
+		EventPlayer top = null;
+		int maxKills = 0;
+		for (EventPlayer ep : getAllPlayers())
+		{
+			if (!ep.isOnline())
+				continue;
+			if (ep.getKills() > maxKills)
+			{
+				maxKills = ep.getKills();
+				top = ep;
+			}
+		}
+		return "[DM] Leader: " + (top != null ? top.getName() + " (" + maxKills + ")" : "-") + " | Players: " + getAllPlayers().size();
 	}
 }
