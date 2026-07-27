@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.event;
 
 import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.location.Location;
 
 public class EventPlayer
 {
@@ -8,8 +9,7 @@ public class EventPlayer
 	private int _teamId;
 	private int _kills;
 	private int _deaths;
-	private boolean _saved;
-	private boolean _teleported;
+	private Location _originalLocation;
 	
 	public EventPlayer(Player player)
 	{
@@ -17,8 +17,7 @@ public class EventPlayer
 		_teamId = -1;
 		_kills = 0;
 		_deaths = 0;
-		_saved = false;
-		_teleported = false;
+		_originalLocation = new Location(player.getX(), player.getY(), player.getZ());
 	}
 	
 	public Player getPlayer() { return _player; }
@@ -34,21 +33,26 @@ public class EventPlayer
 	public int getDeaths() { return _deaths; }
 	public void addDeath() { _deaths++; }
 	
-	public boolean isSaved() { return _saved; }
-	public void setSaved(boolean saved) { _saved = saved; }
-	
-	public boolean isTeleported() { return _teleported; }
-	public void setTeleported(boolean teleported) { _teleported = teleported; }
+	public Location getOriginalLocation() { return _originalLocation; }
 	
 	public boolean isOnline() { return _player != null && _player.isOnline(); }
 	
 	public void restoreLocation()
 	{
-		if (_saved && _player != null && _player.getAccessLevel().getLevel() < 1)
+		if (_player == null || !_player.isOnline())
+			return;
+		
+		if (_player.getAccessLevel().getLevel() < 1)
 		{
 			_player.enableAllSkills();
 			_player.setIsImmobilized(false);
 			_player.setIsParalyzed(false);
 		}
+		
+		// Teleport back to original location
+		if (_originalLocation != null)
+			_player.teleportTo(_originalLocation.getX(), _originalLocation.getY(), _originalLocation.getZ(), 0);
+		
+		_player.broadcastUserInfo();
 	}
 }

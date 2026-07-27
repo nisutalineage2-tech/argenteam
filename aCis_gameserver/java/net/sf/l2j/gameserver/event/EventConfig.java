@@ -69,6 +69,7 @@ public final class EventConfig
 			
 			final EventData data = new EventData(i, shortName, eventName, minLvl, maxLvl, matchTime, minPlayers, allowPotions, allowMagic, removeBuffs, eventEnabled);
 			data.setPositionAll(parseLoc(posAll));
+			data.setPositionRadius(parseLocRadius(posAll));
 			if (!posBlue.isEmpty()) data.setPositionBlue(parseLoc(posBlue));
 			if (!posRed.isEmpty()) data.setPositionRed(parseLoc(posRed));
 			if (!rewardWinner.isEmpty()) data.setRewardWinner(rewardWinner);
@@ -85,6 +86,21 @@ public final class EventConfig
 		if (p.length < 3)
 			return new Location(-54478, -69506, -3371);
 		return new Location(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), Integer.parseInt(p[2].trim()));
+	}
+	
+	private static int parseLocRadius(String s)
+	{
+		final String[] p = s.split(",");
+		if (p.length < 4)
+			return 300;
+		try
+		{
+			return Math.max(0, Integer.parseInt(p[3].trim()));
+		}
+		catch (NumberFormatException e)
+		{
+			return 300;
+		}
 	}
 	
 	public static boolean isEnabled() { return _enabled; }
@@ -129,6 +145,7 @@ public final class EventConfig
 		private Location _positionAll;
 		private Location _positionBlue;
 		private Location _positionRed;
+		private int _positionRadius = 300;
 		private String _rewardWinner = "57,1000";
 		private String _rewardLoser = "57,10";
 		
@@ -161,12 +178,14 @@ public final class EventConfig
 		public Location getPositionAll() { return _positionAll; }
 		public Location getPositionBlue() { return _positionBlue; }
 		public Location getPositionRed() { return _positionRed; }
+		public int getPositionRadius() { return _positionRadius; }
 		public String getRewardWinner() { return _rewardWinner; }
 		public String getRewardLoser() { return _rewardLoser; }
 		
 		public void setPositionAll(Location loc) { _positionAll = loc; }
 		public void setPositionBlue(Location loc) { _positionBlue = loc; }
 		public void setPositionRed(Location loc) { _positionRed = loc; }
+		public void setPositionRadius(int radius) { _positionRadius = radius; }
 		public void setRewardWinner(String s) { _rewardWinner = s; }
 		public void setRewardLoser(String s) { _rewardLoser = s; }
 	}

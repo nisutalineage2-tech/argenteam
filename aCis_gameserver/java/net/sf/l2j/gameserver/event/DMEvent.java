@@ -58,8 +58,6 @@ public class DMEvent extends AbstractEvent
 		}
 		
 		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
-		
-		victim.setTeleported(true);
 	}
 	
 	@Override

@@ -134,7 +134,6 @@ public abstract class AbstractEvent
 		cancelTask(_matchTask);
 		cancelTask(_startTask);
 		
-		teleportAllBack();
 		restoreAllPlayers();
 		
 		_state = State.IDLE;
@@ -161,7 +160,6 @@ public abstract class AbstractEvent
 		else
 			rewardAllPlayers();
 		
-		teleportAllBack();
 		restoreAllPlayers();
 		
 		_state = State.IDLE;
@@ -255,35 +253,23 @@ public abstract class AbstractEvent
 	{
 		for (EventTeam team : _teams)
 		{
+			final Location loc = team.getSpawnLocation();
+			final int radius = (loc != null) ? _data.getPositionRadius() : 300;
+			
 			for (EventPlayer ep : team.getPlayers())
 			{
 				if (!ep.isOnline())
 					continue;
 				
-				final Location loc = team.getSpawnLocation();
 				if (loc != null)
 				{
-					final int x = loc.getX() + Rnd.get(-300, 300);
-					final int y = loc.getY() + Rnd.get(-300, 300);
+					final int x = loc.getX() + Rnd.get(-radius, radius);
+					final int y = loc.getY() + Rnd.get(-radius, radius);
 					ep.getPlayer().teleportTo(x, y, loc.getZ(), 0);
 				}
 				
 				team.setColors(ep.getPlayer());
 			}
-		}
-	}
-	
-	protected void teleportAllBack()
-	{
-		for (EventPlayer ep : _allPlayers)
-		{
-			if (!ep.isOnline())
-				continue;
-			
-			if (ep.isTeleported())
-				continue;
-			
-			ep.getPlayer().teleportTo(0, 0, 0, 0);
 		}
 	}
 	
@@ -295,7 +281,6 @@ public abstract class AbstractEvent
 				continue;
 			
 			ep.restoreLocation();
-			ep.getPlayer().broadcastUserInfo();
 		}
 	}
 	
@@ -327,18 +312,24 @@ public abstract class AbstractEvent
 		if (rewardStr == null || rewardStr.isEmpty())
 			return;
 		
-		final String[] parts = rewardStr.split(",");
-		if (parts.length >= 2)
+		// Support multiple rewards separated by semicolon: "57,1000;1835,10;729,1"
+		final String[] rewards = rewardStr.split(";");
+		for (String single : rewards)
 		{
-			try
+			final String[] parts = single.split(",");
+			if (parts.length >= 2)
 			{
-				final int itemId = Integer.parseInt(parts[0].trim());
-				final int count = Integer.parseInt(parts[1].trim());
-				player.getInventory().addItem(itemId, count);
-				player.sendMessage("[Event] Received " + count + "x item " + itemId + ".");
-			}
-			catch (NumberFormatException e)
-			{
+				try
+				{
+					final int itemId = Integer.parseInt(parts[0].trim());
+					final int count = Integer.parseInt(parts[1].trim());
+					player.getInventory().addItem(itemId, count);
+					player.sendMessage("[Event] Received " + count + "x " + itemId + ".");
+				}
+				catch (NumberFormatException e)
+				{
+					LOGGER.warn("Invalid reward entry: {}.", single);
+				}
 			}
 		}
 	}
