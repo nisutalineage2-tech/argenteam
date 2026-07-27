@@ -10,6 +10,7 @@ public class EventPlayer
 	private int _kills;
 	private int _deaths;
 	private Location _originalLocation;
+	private final String _originalTitle;
 	
 	public EventPlayer(Player player)
 	{
@@ -18,6 +19,7 @@ public class EventPlayer
 		_kills = 0;
 		_deaths = 0;
 		_originalLocation = new Location(player.getX(), player.getY(), player.getZ());
+		_originalTitle = player.getTitle();
 	}
 	
 	public Player getPlayer() { return _player; }
@@ -34,6 +36,7 @@ public class EventPlayer
 	public void addDeath() { _deaths++; }
 	
 	public Location getOriginalLocation() { return _originalLocation; }
+	public String getOriginalTitle() { return _originalTitle; }
 	
 	public boolean isOnline() { return _player != null && _player.isOnline(); }
 	
@@ -41,6 +44,9 @@ public class EventPlayer
 	{
 		if (_player == null || !_player.isOnline())
 			return;
+		
+		// Restore original title before anything else
+		_player.setTitle(_originalTitle);
 		
 		if (_player.getAccessLevel().getLevel() < 1)
 		{
@@ -54,5 +60,6 @@ public class EventPlayer
 			_player.teleportTo(_originalLocation.getX(), _originalLocation.getY(), _originalLocation.getZ(), 0);
 		
 		_player.broadcastUserInfo();
+		_player.broadcastTitleInfo();
 	}
 }

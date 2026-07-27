@@ -21,6 +21,15 @@ public class TvTEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
+		// Set each player's title to show initial kill count
+		for (EventPlayer ep : getAllPlayers())
+		{
+			if (!ep.isOnline())
+				continue;
+			
+			ep.getPlayer().setTitle("[TvT] Kills: 0");
+			ep.getPlayer().broadcastTitleInfo();
+		}
 	}
 	
 	@Override
@@ -36,6 +45,11 @@ public class TvTEvent extends AbstractEvent
 			killerTeam.addScore(1);
 		if (victimTeam != null)
 			victimTeam.addScore(-1);
+		
+		// Update killer's title with current kill count
+		final Player killerPlayer = killer.getPlayer();
+		killerPlayer.setTitle("[TvT] Kills: " + killer.getKills());
+		killerPlayer.broadcastTitleInfo();
 		
 		for (EventTeam team : getTeams())
 		{
