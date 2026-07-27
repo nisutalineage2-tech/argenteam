@@ -74,7 +74,16 @@ public class AdminFactionWar implements IAdminCommandHandler
 		sb.append("Good Score: <font color=0000FF>").append(FactionWarManager.getInstance().getScore(FactionWarConfig.getGoodFactionId())).append("</font> | ");
 		sb.append("Evil Score: <font color=FF0000>").append(FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId())).append("</font><br>");
 		sb.append("Score to Win: ").append(FactionWarConfig.getScoreToWin()).append("<br>");
-		sb.append("Maps: ").append(FactionWarConfig.getMaps().size()).append("<br><br>");
+		sb.append("Maps: ").append(FactionWarConfig.getMaps().size()).append("<br>");
+		
+		if (running)
+		{
+			final String timeLeft = FactionWarManager.getInstance().getRemainingTimeStr();
+			if (!timeLeft.isEmpty())
+				sb.append("Time Left: <font color=FF6600>").append(timeLeft).append("</font><br>");
+		}
+		
+		sb.append("<br>");
 		
 		sb.append("<table width=290><tr>");
 		sb.append("<td><button value=\"Start\" action=\"bypass -h admin_factionwar start\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");

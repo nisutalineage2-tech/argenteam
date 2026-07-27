@@ -9,6 +9,7 @@ import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.random.Rnd;
 
+import net.sf.l2j.gameserver.enums.GaugeColor;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -16,7 +17,9 @@ import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.ConfirmDlg;
+import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
+import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 import net.sf.l2j.gameserver.phantom.PhantomEngine;
 
@@ -34,6 +37,8 @@ public abstract class AbstractEvent
 	private ScheduledFuture<?> _matchTask;
 	private ScheduledFuture<?> _startTask;
 	private ScheduledFuture<?> _scorebarTask;
+	private long _matchStartTime;
+	private long _matchDurationMs;
 	
 	public AbstractEvent(EventConfig.EventData data)
 	{
@@ -123,6 +128,10 @@ public abstract class AbstractEvent
 		
 		_state = State.RUNNING;
 		
+		// Record match start time for timer display
+		_matchStartTime = System.currentTimeMillis();
+		_matchDurationMs = _data.getMatchTime() * 60000L;
+		
 		assignTeams();
 		teleportPlayers();
 		onStartMatch();
@@ -139,11 +148,19 @@ public abstract class AbstractEvent
 		
 		broadcastEvent("[Event] " + _data.getEventName() + " has started! Good luck!");
 		
-		// Start scorebar updates every 30 seconds
-		_scorebarTask = ThreadPool.scheduleAtFixedRate(this::broadcastScorebar, 30000, 30000);
+		// Send SetupGauge bar to each player + start scorebar updates every 10 seconds
+		if (_matchDurationMs > 0)
+		{
+			for (EventPlayer ep : _allPlayers)
+			{
+				if (ep.isOnline())
+					ep.getPlayer().sendPacket(new SetupGauge(GaugeColor.CYAN, (int) _matchDurationMs));
+			}
+		}
+		_scorebarTask = ThreadPool.scheduleAtFixedRate(this::broadcastScorebar, 10000, 10000);
 		
 		if (_data.getMatchTime() > 0)
-			_matchTask = ThreadPool.schedule(this::endMatch, _data.getMatchTime() * 60000L);
+			_matchTask = ThreadPool.schedule(this::endMatch, _matchDurationMs);
 		
 		LOGGER.info("Event {} started with {} players.", _data.getEventName(), _allPlayers.size());
 	}
@@ -355,15 +372,35 @@ public abstract class AbstractEvent
 		if (_state != State.RUNNING)
 			return;
 		
-		final String score = getScorebar();
-		if (score == null || score.isEmpty())
-			return;
+		// Build remaining time string
+		String timeStr = "";
+		if (_matchDurationMs > 0 && _matchStartTime > 0)
+		{
+			final long elapsed = System.currentTimeMillis() - _matchStartTime;
+			final long remaining = Math.max(0, _matchDurationMs - elapsed);
+			final int mins = (int) (remaining / 60000);
+			final int secs = (int) ((remaining % 60000) / 1000);
+			timeStr = String.format(" | Time: %d:%02d", mins, secs);
+		}
 		
-		// Send to all event participants
+		// Get score string from subclass
+		final String score = getScorebar();
+		
+		// Build the on-screen message
+		final String eventName = _data.getEventName();
+		final String screenMsg;
+		if (score != null && !score.isEmpty())
+			screenMsg = "[ " + eventName + " ] " + score + timeStr;
+		else
+			screenMsg = "[ " + eventName + " ]" + timeStr;
+		
+		// Send ExShowScreenMessage to all event participants
 		for (EventPlayer ep : _allPlayers)
 		{
 			if (ep.isOnline())
-				ep.getPlayer().sendMessage(score);
+			{
+				ep.getPlayer().sendPacket(new ExShowScreenMessage(screenMsg, 10000, ExShowScreenMessage.SMPOS.TOP_LEFT, false));
+			}
 		}
 	}
 	

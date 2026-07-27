@@ -7,12 +7,15 @@ import java.util.concurrent.ScheduledFuture;
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
 
+import net.sf.l2j.gameserver.enums.GaugeColor;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.model.spawn.Spawn;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
+import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
+import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;
 import net.sf.l2j.gameserver.model.World;
 
 public class FactionWarManager
@@ -38,6 +41,9 @@ public class FactionWarManager
 	private ScheduledFuture<?> _flagRespawnTask;
 	private ScheduledFuture<?> _guardRespawnTask;
 	private ScheduledFuture<?> _eventEndTask;
+	private ScheduledFuture<?> _scoreboardTask;
+	private long _startTime;
+	private long _durationMs;
 	
 	private static class SingletonHolder
 	{
@@ -107,6 +113,10 @@ public class FactionWarManager
 		_scores.put(FactionWarConfig.getEvilFactionId(), 0);
 		_currentMapIndex = 0;
 		
+		// Record start time for timer display
+		_startTime = System.currentTimeMillis();
+		_durationMs = durationMinutes * 60000L;
+		
 		spawnFlag();
 		spawnGuards();
 		spawnRegistrar();
@@ -119,13 +129,17 @@ public class FactionWarManager
 		
 		if (durationMinutes > 0)
 		{
-			_eventEndTask = ThreadPool.schedule(() -> stop(), durationMinutes * 60000L);
+			_eventEndTask = ThreadPool.schedule(() -> stop(), _durationMs);
 		}
+		
+		// Send gauge bar to all faction players and start periodic scoreboard
+		sendGaugeToAllPlayers();
+		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 15000, 15000);
 		
 		final int teleported = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
 		
 		if (FactionWarConfig.isAnnounceStart())
-			broadcast("[Faction War] La guerra ha comenzado! Score to win: " + scoreToWin);
+			broadcast("[Faction War] La guerra ha comenzado! Score to win: " + scoreToWin + (durationMinutes > 0 ? " | Duration: " + durationMinutes + "min" : ""));
 		
 		LOGGER.info("Faction War started. Score to win: {}. Teleported {} phantoms to war.", scoreToWin, teleported);
 	}
@@ -141,6 +155,7 @@ public class FactionWarManager
 		cancelTask(_flagRespawnTask);
 		cancelTask(_guardRespawnTask);
 		cancelTask(_eventEndTask);
+		cancelTask(_scoreboardTask);
 		
 		despawnFlag();
 		despawnGuards();
@@ -380,6 +395,69 @@ public class FactionWarManager
 		if (factionId == FactionWarConfig.getEvilFactionId())
 			return FactionWarConfig.getEvilSpawnLoc();
 		return null;
+	}
+	
+	/**
+	 * Returns remaining time string, or empty if no duration set.
+	 */
+	public String getRemainingTimeStr()
+	{
+		if (_durationMs <= 0 || _startTime <= 0)
+			return "";
+		
+		final long elapsed = System.currentTimeMillis() - _startTime;
+		final long remaining = Math.max(0, _durationMs - elapsed);
+		final int hours = (int) (remaining / 3600000);
+		final int mins = (int) ((remaining % 3600000) / 60000);
+		final int secs = (int) ((remaining % 60000) / 1000);
+		
+		if (hours > 0)
+			return String.format("%d:%02d:%02d", hours, mins, secs);
+		return String.format("%d:%02d", mins, secs);
+	}
+	
+	/**
+	 * Sends a SetupGauge bar to all online players showing the war duration.
+	 */
+	private void sendGaugeToAllPlayers()
+	{
+		if (_durationMs <= 0)
+			return;
+		
+		final SetupGauge gauge = new SetupGauge(GaugeColor.RED, (int) _durationMs);
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player != null && player.isOnline())
+				player.sendPacket(gauge);
+		}
+	}
+	
+	/**
+	 * Periodic scoreboard broadcast with score + remaining time, sent via ExShowScreenMessage.
+	 */
+	public void broadcastScoreboardWithTime()
+	{
+		if (!_running)
+			return;
+		
+		final int goodScore = getScore(FactionWarConfig.getGoodFactionId());
+		final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
+		final String timeStr = getRemainingTimeStr();
+		
+		final StringBuilder sb = new StringBuilder();
+		sb.append("[ Faction War ] Good: ").append(goodScore).append(" vs Evil: ").append(evilScore);
+		sb.append(" | Win: ").append(FactionWarConfig.getScoreToWin());
+		if (!timeStr.isEmpty())
+			sb.append(" | Time: ").append(timeStr);
+		
+		final String msg = sb.toString();
+		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(msg, 15000, ExShowScreenMessage.SMPOS.TOP_LEFT, false);
+		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player != null && player.isOnline())
+				player.sendPacket(screenMsg);
+		}
 	}
 	
 	public void broadcast(String msg)
