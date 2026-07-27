@@ -1,0 +1,161 @@
+package net.sf.l2j.gameserver.event;
+
+import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.gameserver.data.SkillTable;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
+import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.location.Location;
+import net.sf.l2j.gameserver.skills.L2Skill;
+
+public class BattlefieldEvent extends AbstractEvent
+{
+	private static final CLogger LOGGER = new CLogger(BattlefieldEvent.class.getName());
+	
+	private static final int CAPTURE_SKILL_ID = 5219;
+	
+	private final java.util.List<Flag> _flags = new java.util.ArrayList<>();
+	private int _flagCount = 3;
+	
+	public BattlefieldEvent(EventConfig.EventData data)
+	{
+		super(data);
+	}
+	
+	@Override
+	protected void onStartRegistering()
+	{
+	}
+	
+	@Override
+	protected void onStartMatch()
+	{
+		// Give capture skill to all participants
+		for (EventPlayer ep : getAllPlayers())
+		{
+			if (!ep.isOnline())
+				continue;
+			final Player p = ep.getPlayer();
+			final L2Skill captureSkill = SkillTable.getInstance().getInfo(CAPTURE_SKILL_ID, 1);
+			if (captureSkill != null)
+				p.addSkill(captureSkill, false);
+			p.setTitle("[BF] Fight!");
+			p.broadcastTitleInfo();
+			p.sendMessage("[BF] Use the Capture skill on flags to capture them for your team!");
+		}
+		
+		// Spawn flags at strategic positions
+		final Location center = getData().getPositionAll();
+		if (center != null)
+		{
+			for (int i = 0; i < _flagCount; i++)
+			{
+				final double angle = (Math.PI * 2 / _flagCount) * i;
+				final int dist = 300 + net.sf.l2j.commons.random.Rnd.get(100);
+				final int fx = center.getX() + (int)(Math.cos(angle) * dist);
+				final int fy = center.getY() + (int)(Math.sin(angle) * dist);
+				_flags.add(new Flag(fx, fy, center.getZ()));
+			}
+		}
+	}
+	
+	// Called when a player uses the Capture skill on a flag
+	public void captureFlag(int flagIndex, Player captor)
+	{
+		if (getState() != State.RUNNING)
+			return;
+		
+		if (flagIndex < 0 || flagIndex >= _flags.size())
+			return;
+		
+		final Flag flag = _flags.get(flagIndex);
+		final EventPlayer ep = getEventPlayer(captor.getObjectId());
+		if (ep == null)
+			return;
+		
+		flag.setOwnerTeam(ep.getTeamId());
+		
+		final EventTeam team = getTeam(ep.getTeamId());
+		if (team != null)
+		{
+			team.addScore(10);
+			broadcastToPlayers("[BF] " + ep.getName() + " captured a flag for " + team.getName() + "!");
+		}
+	}
+	
+	@Override
+	protected void onEventKill(EventPlayer killer, EventPlayer victim)
+	{
+		if (killer == null || victim == null)
+			return;
+		
+		final EventTeam killerTeam = getTeam(killer.getTeamId());
+		if (killerTeam != null)
+			killerTeam.addScore(1);
+		
+		broadcastToPlayers("[BF] " + killer.getName() + " killed " + victim.getName() + "!");
+	}
+	
+	@Override
+	protected void onEventDie(EventPlayer victim, EventPlayer killer)
+	{
+		if (victim == null || !victim.isOnline())
+			return;
+		
+		final Player player = victim.getPlayer();
+		player.sendMessage("[BF] You died! Respawning...");
+		
+		final EventTeam team = getTeam(victim.getTeamId());
+		if (team != null && team.getSpawnLocation() != null)
+		{
+			player.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
+			player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		}
+	}
+	
+	@Override
+	protected void onStop()
+	{
+		_flags.clear();
+		
+		for (EventPlayer ep : getAllPlayers())
+		{
+			if (ep.isOnline())
+				ep.getPlayer().removeSkill(CAPTURE_SKILL_ID, false);
+		}
+	}
+	
+	@Override
+	protected String getScorebar()
+	{
+		final java.util.List<EventTeam> teams = getTeams();
+		if (teams.size() < 2)
+			return null;
+		
+		int blueFlags = 0, redFlags = 0;
+		for (Flag f : _flags)
+		{
+			if (f.getOwnerTeam() == 0) blueFlags++;
+			else if (f.getOwnerTeam() == 1) redFlags++;
+		}
+		return "[BF] Blue: " + teams.get(0).getScore() + " (" + blueFlags + " flags) | Red: " + teams.get(1).getScore() + " (" + redFlags + " flags)";
+	}
+	
+	public java.util.List<Flag> getFlags() { return _flags; }
+	
+	public static class Flag
+	{
+		private final int _x, _y, _z;
+		private int _ownerTeam = -1;
+		
+		public Flag(int x, int y, int z)
+		{
+			_x = x; _y = y; _z = z;
+		}
+		
+		public int getX() { return _x; }
+		public int getY() { return _y; }
+		public int getZ() { return _z; }
+		public int getOwnerTeam() { return _ownerTeam; }
+		public void setOwnerTeam(int team) { _ownerTeam = team; }
+	}
+}

@@ -68,6 +68,20 @@ public final class EventEngine
 			case 1: return new TvTEvent(data);
 			case 2: return new DMEvent(data);
 			case 3: return new CTFEvent(data);
+			case 4: return new BattlefieldEvent(data);
+			case 5: return new BombFightEvent(data);
+			case 6: return new LMSEvent(data);
+			case 7: return new LuckyChestsEvent(data);
+			case 8: return new DominationEvent(data);
+			case 9: return new DoubleDominationEvent(data);
+			case 10: return new MutantEvent(data);
+			case 11: return new RussianRouletteEvent(data);
+			case 12: return new SimonSaysEvent(data);
+			case 13: return new ZombieEvent(data);
+			case 14: return new HuntingGroundsEvent(data);
+			case 15: return new KoreanTvTEvent(data);
+			case 16: return new RaidInTheMiddleEvent(data);
+			case 17: return new TreasureHuntEvent(data);
 			default:
 				LOGGER.warn("Unknown event type: {}. Skipping.", data.getId());
 				return null;

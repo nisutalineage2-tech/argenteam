@@ -49,7 +49,7 @@ public final class EventConfig
 		_maxBuffNum = props.getProperty("MaxBuffNum", 2);
 		
 		_events.clear();
-		for (int i = 1; i <= 14; i++)
+		for (int i = 1; i <= 20; i++)
 		{
 			final boolean eventEnabled = props.getProperty("Event_" + i + "_Enabled", true);
 			final String shortName = props.getProperty("Event_" + i + "_ShortName", "");

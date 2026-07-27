@@ -58,8 +58,8 @@ public class RaidBoss extends Monster
 			{
 				// Notify event engine of raid boss kill (for "Raid in the Middle" event)
 				final AbstractEvent event = EventEngine.getInstance().getActiveEvent();
-				if (event != null && event.getData().getId() == 16)
-					event.stop();
+				if (event != null && event.getData().getId() == 16 && event instanceof net.sf.l2j.gameserver.event.RaidInTheMiddleEvent raidEvent)
+					raidEvent.onBossKilled(player);
 				
 				broadcastPacket(SystemMessage.getSystemMessage(SystemMessageId.RAID_WAS_SUCCESSFUL));
 				broadcastPacket(new PlaySound("systemmsg_e.1209"));
