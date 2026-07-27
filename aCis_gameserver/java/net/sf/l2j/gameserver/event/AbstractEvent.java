@@ -13,6 +13,8 @@ import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
+import net.sf.l2j.gameserver.network.SystemMessageId;
+import net.sf.l2j.gameserver.network.serverpackets.ConfirmDlg;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 
@@ -85,6 +87,7 @@ public abstract class AbstractEvent
 		onStartRegistering();
 		
 		broadcastEvent("[Event] " + _data.getEventName() + " registration open! Visit the Event Manager or use .eventjoin " + _data.getId() + " to join.");
+		sendEventPopup();
 		
 		_registerTask = ThreadPool.schedule(this::startCountdown, EventConfig.getRegisterTime() * 60000L);
 		
@@ -372,6 +375,36 @@ public abstract class AbstractEvent
 		{
 			if (player != null && player.isOnline())
 				player.sendPacket(cs);
+		}
+	}
+	
+	private void sendEventPopup()
+	{
+		final ConfirmDlg dlg = new ConfirmDlg(SystemMessageId.EVENT);
+		dlg.addString(_data.getEventName() + " - Want to register?");
+		dlg.addZoneName(_data.getPositionAll());
+		dlg.addTime(45000);
+		dlg.addRequesterId(_data.getId());
+		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline())
+				continue;
+			
+			// Check if already in an event
+			if (EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId()))
+				continue;
+			
+			// Check level requirements
+			final int level = player.getStatus().getLevel();
+			if (level < _data.getMinLvl() || level > _data.getMaxLvl())
+				continue;
+			
+			// Skip players in special states
+			if (player.isInOlympiadMode() || player.isInObserverMode() || player.isCursedWeaponEquipped())
+				continue;
+			
+			player.sendPacket(dlg);
 		}
 	}
 	

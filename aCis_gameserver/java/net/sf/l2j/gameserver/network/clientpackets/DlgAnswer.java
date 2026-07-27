@@ -1,5 +1,7 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
+import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.SystemMessageId;
 
@@ -34,5 +36,17 @@ public final class DlgAnswer extends L2GameClientPacket
 			player.activateGate(_answer, 1);
 		else if (_messageId == SystemMessageId.WOULD_YOU_LIKE_TO_CLOSE_THE_GATE.getId())
 			player.activateGate(_answer, 0);
+		else if (_messageId == SystemMessageId.EVENT.getId())
+		{
+			if (_answer == 1)
+			{
+				final AbstractEvent event = EventEngine.getInstance().getEvent(_requesterId);
+				if (event != null && event.getState() == AbstractEvent.State.REGISTER)
+				{
+					if (!EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId()))
+						event.registerPlayer(player);
+				}
+			}
+		}
 	}
 }
