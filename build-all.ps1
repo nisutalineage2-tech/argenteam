@@ -116,6 +116,11 @@ $DIST_GAME = "$GS_DIR\build\dist\gameserver"
 New-Item -ItemType Directory -Force -Path "$DIST_GAME\libs" | Out-Null
 Copy-Item "$BUILD\l2jserver.jar" "$DIST_GAME\libs\"
 Copy-Item "$LIB\*.jar" "$DIST_GAME\libs\"
+# Also copy config to build output (so deploy can source from build/ only)
+New-Item -ItemType Directory -Force -Path "$DIST_GAME\config" | Out-Null
+Copy-Item "$GS_DIR\config\*.properties" "$DIST_GAME\config\" -Force
+Write-Host "  Config copied to dist." -ForegroundColor Green
+
 Write-Host "  Gameserver dist ready at: $DIST_GAME" -ForegroundColor Green
 
 # ============================================================
