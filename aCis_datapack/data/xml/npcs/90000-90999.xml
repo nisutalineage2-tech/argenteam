@@ -1,6 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <list>
-	<npc id="90000" name="Faction War Flag" title="Capture!" alias="faction_war_flag">
+	<npc id="90000" idTemplate="35062" name="Faction War Flag" title="Capture!" alias="faction_war_flag">
+		<set name="usingServerSideName" val="true"/>
+		<set name="usingServerSideTitle" val="true"/>
 		<set name="type" val="FactionWarFlag"/>
 		<set name="level" val="80"/>
 		<set name="radius" val="20.0"/>
@@ -31,7 +33,9 @@
 		<set name="seedable" val="false"/>
 	</npc>
 	
-	<npc id="90001" name="Faction Guard" title="Defender" alias="faction_war_guard">
+	<npc id="90001" idTemplate="31228" name="Faction Guard" title="Defender" alias="faction_war_guard">
+		<set name="usingServerSideName" val="true"/>
+		<set name="usingServerSideTitle" val="true"/>
 		<set name="type" val="FactionWarGuard"/>
 		<set name="level" val="80"/>
 		<set name="radius" val="8.0"/>
@@ -62,11 +66,16 @@
 		<set name="seedable" val="false"/>
 	</npc>
 	
-	<npc id="90002" name="War Registrar" title="Faction War" alias="faction_war_npc">
+	<npc id="90002" idTemplate="31228" name="War Registrar" title="Faction War" alias="faction_war_npc">
+		<set name="usingServerSideName" val="true"/>
+		<set name="usingServerSideTitle" val="true"/>
 		<set name="type" val="FactionWarNpc"/>
 		<set name="level" val="80"/>
 		<set name="radius" val="8.0"/>
 		<set name="height" val="24.0"/>
+		<set name="hitTimeFactor" val="0.61"/>
+		<set name="rHand" val="0"/>
+		<set name="lHand" val="0"/>
 		<set name="exp" val="0"/>
 		<set name="sp" val="0"/>
 		<set name="hp" val="999999"/>
@@ -93,7 +102,9 @@
 		<set name="seedable" val="false"/>
 	</npc>
 	
-	<npc id="90003" name="Checkpoint" title="Teleport" alias="faction_war_checkpoint">
+	<npc id="90003" idTemplate="30519" name="Checkpoint" title="Teleport" alias="faction_war_checkpoint">
+		<set name="usingServerSideName" val="true"/>
+		<set name="usingServerSideTitle" val="true"/>
 		<set name="type" val="Folk"/>
 		<set name="level" val="80"/>
 		<set name="radius" val="12.0"/>
@@ -124,11 +135,16 @@
 		<set name="seedable" val="false"/>
 	</npc>
 	
-	<npc id="90004" name="Faction Manager" title="Choose Your Faction" alias="faction_npc">
+	<npc id="90004" idTemplate="31324" name="Faction Manager" title="Choose Your Faction" alias="faction_npc">
+		<set name="usingServerSideName" val="true"/>
+		<set name="usingServerSideTitle" val="true"/>
 		<set name="type" val="FactionNpc"/>
 		<set name="level" val="80"/>
 		<set name="radius" val="8.0"/>
 		<set name="height" val="24.0"/>
+		<set name="hitTimeFactor" val="0.61"/>
+		<set name="rHand" val="0"/>
+		<set name="lHand" val="0"/>
 		<set name="exp" val="0"/>
 		<set name="sp" val="0"/>
 		<set name="hp" val="999999"/>
@@ -155,11 +171,16 @@
 		<set name="seedable" val="false"/>
 	</npc>
 	
-	<npc id="9999" name="Event Manager" title="Mini Events" alias="event_manager">
+	<npc id="9999" idTemplate="31228" name="Event Manager" title="Mini Events" alias="event_manager">
+		<set name="usingServerSideName" val="true"/>
+		<set name="usingServerSideTitle" val="true"/>
 		<set name="type" val="EventManagerNpc"/>
 		<set name="level" val="80"/>
 		<set name="radius" val="8.0"/>
 		<set name="height" val="24.0"/>
+		<set name="hitTimeFactor" val="0.61"/>
+		<set name="rHand" val="0"/>
+		<set name="lHand" val="0"/>
 		<set name="exp" val="0"/>
 		<set name="sp" val="0"/>
 		<set name="hp" val="999999"/>
