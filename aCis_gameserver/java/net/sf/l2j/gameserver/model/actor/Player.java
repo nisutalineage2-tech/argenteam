@@ -27,6 +27,7 @@ import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.commons.util.ArraysUtil;
 
 import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.LoginServerThread;
 import net.sf.l2j.gameserver.communitybbs.CommunityBoard;
 import net.sf.l2j.gameserver.communitybbs.model.Forum;
@@ -838,7 +839,35 @@ public final class Player extends Playable
 					result |= RelationChanged.RELATION_MUTUAL_WAR;
 			}
 		}
+		
+		// Faction enemy: different factions show as enemy (red cursor) unless both are in an event.
+		if (Config.ENABLE_FACTION_SYSTEM && getFactionId() != 0 && target.getFactionId() != 0 && getFactionId() != target.getFactionId())
+		{
+			final AbstractEvent myEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(getObjectId());
+			final AbstractEvent targetEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(target.getObjectId());
+			if (myEvent == null || myEvent != targetEvent)
+				result |= RelationChanged.RELATION_ENEMY;
+		}
+		
 		return result;
+	}
+	
+	@Override
+	public boolean isAttackableWithoutForceBy(Playable attacker)
+	{
+		if (super.isAttackableWithoutForceBy(attacker))
+			return true;
+		
+		// Cross-faction: different factions can auto-attack each other (unless both in same event).
+		if (attacker instanceof Player attackerPlayer && Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() != 0 && getFactionId() != 0 && attackerPlayer.getFactionId() != getFactionId())
+		{
+			final AbstractEvent myEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(attackerPlayer.getObjectId());
+			final AbstractEvent targetEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(getObjectId());
+			if (myEvent == null || myEvent != targetEvent)
+				return true;
+		}
+		
+		return false;
 	}
 	
 	@Override
