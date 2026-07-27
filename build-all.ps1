@@ -57,7 +57,10 @@ if (-not $JAVA_HOME -or -not (Test-Path "$JAVA_HOME\bin\javac.exe")) {
 }
 
 $JAVAC = "$JAVA_HOME\bin\javac.exe"
-$JAR  = "$JAVA_HOME\bin\jar.exe"
+$JAR = "$JAVA_HOME\bin\jar.exe"
+
+# Deploy target
+$DEPLOY_DIR = "$env:USERPROFILE\Desktop\server"
 
 $SRC           = "$GS_DIR\java"
 $LIB           = "$GS_DIR\lib"
@@ -163,6 +166,46 @@ Write-Host ""
 Write-Host "  Gameserver JAR: $BUILD\l2jserver.jar" -ForegroundColor White
 Write-Host "  Gameserver dist: $DIST_GAME" -ForegroundColor White
 Write-Host "  Datapack build: $DP_BUILD\gameserver\data" -ForegroundColor White
+# ============================================================
+# 3. Deploy to Server Folder
+# ============================================================
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  STEP 3: Deploy to Desktop\\server" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+if (-not (Test-Path $DEPLOY_DIR)) {
+    New-Item -ItemType Directory -Force -Path $DEPLOY_DIR | Out-Null
+    Write-Host "  Created server directory." -ForegroundColor Yellow
+}
+
+Write-Host "  Copying JAR + libraries..." -ForegroundColor Green
+Copy-Item "$BUILD\l2jserver.jar" "$DEPLOY_DIR\" -Force
+New-Item -ItemType Directory -Force -Path "$DEPLOY_DIR\libs" | Out-Null
+Copy-Item "$LIB\*.jar" "$DEPLOY_DIR\libs\" -Force
+
+Write-Host "  Copying config files..." -ForegroundColor Green
+New-Item -ItemType Directory -Force -Path "$DEPLOY_DIR\config" | Out-Null
+Copy-Item "$GS_DIR\config\*.properties" "$DEPLOY_DIR\config\" -Force
+
+Write-Host "  Copying data files..." -ForegroundColor Green
+New-Item -ItemType Directory -Force -Path "$DEPLOY_DIR\data" | Out-Null
+Copy-Item "$DP_BUILD\gameserver\data\*" "$DEPLOY_DIR\data\" -Recurse -Force
+
+Write-Host "  Server deployed to: $DEPLOY_DIR" -ForegroundColor Green
+
+# ============================================================
+# Done
+# ============================================================
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  BUILD COMPLETE!" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Gameserver JAR: $BUILD\l2jserver.jar" -ForegroundColor White
+Write-Host "  Datapack build: $DP_BUILD\gameserver\data" -ForegroundColor White
+Write-Host "  Server deployed: $DEPLOY_DIR" -ForegroundColor White
 Write-Host ""
 
 # Keep window open when double-clicked
