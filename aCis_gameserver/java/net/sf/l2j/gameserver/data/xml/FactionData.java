@@ -99,8 +99,6 @@ public class FactionData implements IXmlReader
 	
 	public void removeData(Player player)
 	{
-		player.setFactionId(0);
-		
 		try (Connection con = ConnectionPool.getConnection();
 			PreparedStatement ps = con.prepareStatement(DELETE_CHARACTER_FACTION))
 		{

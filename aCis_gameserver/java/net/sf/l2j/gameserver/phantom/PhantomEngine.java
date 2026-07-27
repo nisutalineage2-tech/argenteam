@@ -208,6 +208,11 @@ public final class PhantomEngine
 			final int x = gm.getX() + Rnd.get(-180, 180);
 			final int y = gm.getY() + Rnd.get(-180, 180);
 			phantom.teleportTo(x, y, gm.getZ(), 20);
+			
+			// Force onTeleported for phantoms with null client (otherwise _isTeleporting stays true forever)
+			if (phantom.isTeleporting())
+				phantom.onTeleported();
+			
 			PhantomAI.setHome(phantom);
 			phantom.store();
 			moved++;
