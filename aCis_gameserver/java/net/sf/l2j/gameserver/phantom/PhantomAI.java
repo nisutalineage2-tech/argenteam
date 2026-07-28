@@ -19,6 +19,7 @@ import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.enums.skills.SkillType;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.WorldObject;
@@ -163,6 +164,38 @@ public final class PhantomAI
 				LAST_ACTIONS.put(phantom.getObjectId(), "Busy");
 				return;
 			}
+			
+			if (tryLootAny(phantom))
+				return;
+			
+			if (maybeMoveToFarmZoneStep(phantom))
+				return;
+			
+			final boolean warRunning = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
+			
+			// === FACTION WAR MODE: Skip farming/looting/patrol, focus on PvP ===
+			if (warRunning)
+			{
+				// Skip retaliation check — we directly search for enemies (includes recent attackers)
+				final Player warTarget = findEnemyFactionPlayerInWar(phantom);
+				if (warTarget != null)
+				{
+					attackPlayer(phantom, warTarget, "Faction war ");
+					return;
+				}
+				
+				// No enemies nearby — move toward the battle area (flag center or checkpoint)
+				if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+				{
+					moveToWarCenter(phantom);
+					return;
+				}
+				
+				LAST_ACTIONS.put(phantom.getObjectId(), "War scanning");
+				return;
+			}
+			
+			// === NORMAL MODE (no faction war) ===
 			
 			if (tryLootAny(phantom))
 				return;
@@ -850,6 +883,101 @@ public final class PhantomAI
 			}
 		});
 		return nearest[0];
+	}
+	
+	/**
+	 * Aggressive faction enemy search used during active Faction War.
+	 * Uses a larger search range (2x normal aggro range) and also checks
+	 * the war map flag/checkpoint areas for enemies to converge on the fight.
+	 * Always attacks with CTRL-pressed simulation for PvP without restrictions.
+	 */
+	private static Player findEnemyFactionPlayerInWar(Player phantom)
+	{
+		final int myFaction = phantom.getFactionId();
+		if (myFaction <= 0)
+			return null;
+		
+		// Don't attack in neutral zone
+		if (FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(phantom.getPosition()))
+			return null;
+		
+		final FactionWarManager fwm = FactionWarManager.getInstance();
+		if (!fwm.isRunning())
+			return null;
+		
+		// Use double the normal aggro range for war, min 1500
+		final int warRange = Math.max(1500, PhantomConfig.aggroRange() * 2);
+		
+		final Player[] nearest = new Player[1];
+		final double[] nearestDistance = { Double.MAX_VALUE };
+		
+		phantom.forEachKnownTypeInRadius(Player.class, warRange, player ->
+		{
+			if (player == null || player == phantom || player.isDead() || !player.isVisible())
+				return;
+			
+			if (player.getFactionId() <= 0 || player.getFactionId() == myFaction)
+				return;
+			
+			// Skip targets in neutral zone
+			if (FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(player.getPosition()))
+				return;
+			
+			final double distance = phantom.distance3D(player);
+			if (distance < nearestDistance[0])
+			{
+				nearest[0] = player;
+				nearestDistance[0] = distance;
+			}
+		});
+		return nearest[0];
+	}
+	
+	/**
+	 * Moves the phantom toward the war zone's flag center or a checkpoint.
+	 * This makes phantoms converge on the battle area when no enemies are nearby,
+	 * keeping the war dynamic and populated.
+	 */
+	private static void moveToWarCenter(Player phantom)
+	{
+		try
+		{
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			if (!fwm.isRunning())
+				return;
+			
+			final int myFaction = phantom.getFactionId();
+			if (myFaction <= 0)
+				return;
+			
+			// Get current map center (flag position)
+			final net.sf.l2j.gameserver.factionwar.FactionWarConfig.WarMap currentMap = FactionWarConfig.getMaps().isEmpty() ? null : FactionWarConfig.getMaps().get(fwm.getCurrentMapIndex());
+			if (currentMap == null)
+				return;
+			
+			// If phantom is already near the center, just patrol around
+			final Location center = currentMap.getCenter();
+			if (phantom.distance3D(center) <= 800)
+			{
+				// Already near center — patrol around the flag area
+				final Location patrolPoint = withSpread(phantom, center, 400);
+				LAST_ACTIONS.put(phantom.getObjectId(), "War patrol");
+				moveTo(phantom, patrolPoint, "War patrol");
+				return;
+			}
+			
+			// Move toward the flag center with some randomization to avoid clumping
+			final int offsetX = Rnd.get(-300, 300);
+			final int offsetY = Rnd.get(-300, 300);
+			final Location destination = new Location(center.getX() + offsetX, center.getY() + offsetY, center.getZ());
+			
+			LAST_ACTIONS.put(phantom.getObjectId(), "War advance");
+			moveTo(phantom, destination, "War advance");
+		}
+		catch (Exception e)
+		{
+			PhantomLog.warn("moveToWarCenter failed for " + phantom.getName() + ": " + e.getMessage());
+		}
 	}
 	
 	private static void claimTarget(Player phantom, Monster monster)
