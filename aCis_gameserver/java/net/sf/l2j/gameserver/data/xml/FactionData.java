@@ -85,11 +85,11 @@ public class FactionData implements IXmlReader
 			{
 				if (FactionWarManager.getInstance().isRunning())
 				{
-					final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
-					if (neutralLoc != null)
+					final Location warLoc = FactionWarManager.getInstance().getFactionSpawn(player.getFactionId());
+					if (warLoc != null)
 					{
-						player.teleportTo(neutralLoc, 50);
-						player.sendMessage("La Faction War esta activa. Te teletransportamos a la zona neutral.");
+						player.teleportTo(warLoc, 50);
+						player.sendMessage("La Faction War esta activa. Te teletransportamos al mapa de batalla.");
 					}
 				}
 				else if (FactionWarConfig.isTownRestriction() && faction.getHomeLocation() != null)

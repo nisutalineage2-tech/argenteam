@@ -261,6 +261,12 @@ public class GameServer
 		net.sf.l2j.gameserver.event.EventConfig.load();
 		net.sf.l2j.gameserver.event.EventEngine.getInstance().init();
 		
+		if (Config.ENABLE_FACTION_SYSTEM && net.sf.l2j.gameserver.factionwar.FactionWarConfig.isEnabled())
+		{
+			net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().start(net.sf.l2j.gameserver.factionwar.FactionWarConfig.getScoreToWin(), 0);
+			LOGGER.info("Faction War auto-started (default mode).");
+		}
+		
 		StringUtil.printSection("Spawns");
 		SpawnManager.getInstance().spawn();
 		

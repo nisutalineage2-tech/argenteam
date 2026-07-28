@@ -18,6 +18,7 @@ import net.sf.l2j.gameserver.data.xml.RestartPointData;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.enums.skills.SkillType;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.WorldObject;
@@ -822,6 +823,10 @@ public final class PhantomAI
 		if (myFaction <= 0)
 			return null;
 		
+		// No attacking in neutral zone
+		if (FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(phantom.getPosition()))
+			return null;
+		
 		final Player[] nearest = new Player[1];
 		final double[] nearestDistance = { Double.MAX_VALUE };
 		
@@ -831,6 +836,10 @@ public final class PhantomAI
 				return;
 			
 			if (player.getFactionId() <= 0 || player.getFactionId() == myFaction)
+				return;
+			
+			// Skip if target is in neutral zone
+			if (FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(player.getPosition()))
 				return;
 			
 			final double distance = phantom.distance3D(player);

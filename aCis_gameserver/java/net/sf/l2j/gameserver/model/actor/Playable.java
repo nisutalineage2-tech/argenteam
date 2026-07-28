@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.data.SkillTable.FrequentSkill;
 import net.sf.l2j.gameserver.data.manager.CastleManager;
 import net.sf.l2j.gameserver.enums.AiEventType;
@@ -482,6 +483,10 @@ public abstract class Playable extends Creature
 		
 		if (attacker instanceof Playable attackerPlayable)
 		{
+			// Neutral zone: no PvP allowed.
+			if (Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(getPosition()))
+				return false;
+			
 			// Faction check: same faction members cannot be attacked.
 			if (Config.ENABLE_FACTION_SYSTEM && attackerPlayable.getActingPlayer().getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayable.getActingPlayer().getFactionId() == getActingPlayer().getFactionId())
 				return false;
@@ -526,6 +531,10 @@ public abstract class Playable extends Creature
 		// No checks for players in Duel.
 		if (isInSameActiveDuel(attackerPlayer))
 			return true;
+		
+		// Neutral zone: no PvP allowed.
+		if (Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(getPosition()))
+			return false;
 		
 		// Faction check: same faction members cannot auto-attack each other.
 		if (Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayer.getFactionId() == getActingPlayer().getFactionId())

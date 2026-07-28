@@ -2,7 +2,6 @@ package net.sf.l2j.gameserver.scripting.script.factionwar;
 
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
-import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -33,8 +32,7 @@ public class WarRegistrar extends Quest
 		}
 		
 		FactionWarManager.getInstance().teleportToWarMap(player);
-		FactionWarRegistry.getInstance().register(player);
-		player.sendMessage("Te has unido a la Faction War! Buena suerte.");
+		player.sendMessage("Te teleportamos al mapa de batalla.");
 		
 		return null;
 	}
