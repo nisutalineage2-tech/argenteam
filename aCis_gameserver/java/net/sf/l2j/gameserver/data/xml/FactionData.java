@@ -13,6 +13,7 @@ import net.sf.l2j.commons.data.StatSet;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
@@ -80,22 +81,33 @@ public class FactionData implements IXmlReader
 			player.getAppearance().setTitleColor(faction.getTitleColor());
 			player.setTitle(faction.getName());
 			
-			// Town restriction: if player is near enemy base, teleport to own base
-			if (FactionWarConfig.isEnabled() && FactionWarConfig.isTownRestriction() && faction.getHomeLocation() != null)
+			if (FactionWarConfig.isEnabled())
 			{
-				final int playerFactionId = player.getFactionId();
-				final int enemyFactionId = (playerFactionId == FactionWarConfig.getGoodFactionId()) ? FactionWarConfig.getEvilFactionId() : FactionWarConfig.getGoodFactionId();
-				final Location enemyBase = net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().getFactionSpawn(enemyFactionId);
-				final int radius = FactionWarConfig.getTownRestrictionRadius();
-				
-				if (enemyBase != null && player.getPosition().distance3D(enemyBase) < radius)
+				if (FactionWarManager.getInstance().isRunning())
 				{
-					final Location ownBase = net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().getFactionSpawn(playerFactionId);
-					if (ownBase != null)
-						player.teleportTo(ownBase, 50);
-					else
-						player.teleportTo(faction.getHomeLocation(), 0);
-					player.sendMessage("Zona enemiga restringida. Regresaste a tu base.");
+					final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
+					if (neutralLoc != null)
+					{
+						player.teleportTo(neutralLoc, 50);
+						player.sendMessage("La Faction War esta activa. Te teletransportamos a la zona neutral.");
+					}
+				}
+				else if (FactionWarConfig.isTownRestriction() && faction.getHomeLocation() != null)
+				{
+					final int playerFactionId = player.getFactionId();
+					final int enemyFactionId = (playerFactionId == FactionWarConfig.getGoodFactionId()) ? FactionWarConfig.getEvilFactionId() : FactionWarConfig.getGoodFactionId();
+					final Location enemyBase = FactionWarManager.getInstance().getFactionSpawn(enemyFactionId);
+					final int radius = FactionWarConfig.getTownRestrictionRadius();
+					
+					if (enemyBase != null && player.getPosition().distance3D(enemyBase) < radius)
+					{
+						final Location ownBase = FactionWarManager.getInstance().getFactionSpawn(playerFactionId);
+						if (ownBase != null)
+							player.teleportTo(ownBase, 50);
+						else
+							player.teleportTo(faction.getHomeLocation(), 0);
+						player.sendMessage("Zona enemiga restringida. Regresaste a tu base.");
+					}
 				}
 			}
 		}

@@ -66,6 +66,11 @@ public class AdminEvent implements IAdminCommandHandler
 					player.sendMessage("[Event] Cannot start - " + active.getData().getEventName() + " is already in progress.");
 					return;
 				}
+				if (net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().isRunning())
+				{
+					player.sendMessage("[Event] Cannot start - Faction War is in progress.");
+					return;
+				}
 				event.startRegistering();
 				showPanel(player, "Event " + event.getData().getEventName() + " registration opened.");
 				break;

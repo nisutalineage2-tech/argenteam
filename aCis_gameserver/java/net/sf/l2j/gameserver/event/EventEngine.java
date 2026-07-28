@@ -104,6 +104,12 @@ public final class EventEngine
 				return;
 			}
 			
+			if (net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().isRunning())
+			{
+				LOGGER.debug("Scheduler skipped: Faction War is in progress.");
+				return;
+			}
+			
 			for (AbstractEvent event : _events)
 			{
 				if (event.getState() == AbstractEvent.State.IDLE)

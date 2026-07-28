@@ -1,0 +1,1 @@
+ALTER TABLE `mods_faction` ADD COLUMN `factionPoints` INT UNSIGNED NOT NULL DEFAULT 0;

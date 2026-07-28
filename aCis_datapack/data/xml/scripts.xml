@@ -973,6 +973,10 @@
 	<script path="script.teleport.PaganTeleporter" />
 	<script path="script.teleport.PrimevalSummoner" />
 
+	<!-- Faction War -->
+
+	<script path="script.factionwar.WarRegistrar" />
+
 	<!-- Tasks -->
 
 	<script path="task.CastleTaxRefresh" schedule="DAILY" start="00:00:00" />

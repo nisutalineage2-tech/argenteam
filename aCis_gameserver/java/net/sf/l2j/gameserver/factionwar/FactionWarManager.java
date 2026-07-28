@@ -110,6 +110,12 @@ public class FactionWarManager
 			return;
 		}
 		
+		if (net.sf.l2j.gameserver.event.EventEngine.getInstance().isAnyEventActive())
+		{
+			LOGGER.warn("Cannot start Faction War: another event is in progress.");
+			return;
+		}
+		
 		FactionWarConfig.load();
 		
 		_running = true;
@@ -139,12 +145,14 @@ public class FactionWarManager
 		sendGaugeToAllPlayers();
 		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 15000, 15000);
 		
+		teleportFactionPlayersToNeutral();
+		
 		final int teleported = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
 		
 		if (FactionWarConfig.isAnnounceStart())
 		{
 			final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
-			broadcast("[Faction War] La guerra ha comenzado! Mapa: " + firstMap.getName() + " | Score: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
+			broadcast("[Faction War] La guerra ha comenzado! Habla con el Registrador para unirte. Mapa: " + firstMap.getName() + " | Score: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
 		}
 		
 		LOGGER.info("Faction War started. Score: {}. Teleported {} phantoms.", scoreToWin, teleported);
@@ -184,6 +192,8 @@ public class FactionWarManager
 			
 			broadcast("[Faction War] La guerra ha terminado! " + winner + " [" + goodScore + " - " + evilScore + "]");
 		}
+		
+		teleportFactionPlayersToNeutral();
 		
 		LOGGER.info("Faction War stopped. Returned {} phantoms.", returned);
 	}
@@ -258,6 +268,32 @@ public class FactionWarManager
 			if (player.getFactionId() == factionId)
 				player.teleportTo(baseLoc, 50);
 		}
+	}
+	
+	public void teleportFactionPlayersToNeutral()
+	{
+		final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
+		if (neutralLoc == null)
+			return;
+		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline())
+				continue;
+			
+			if (player.getFactionId() != 0)
+				player.teleportTo(neutralLoc, 50);
+		}
+	}
+	
+	public void teleportToWarMap(Player player)
+	{
+		if (player == null || !_running)
+			return;
+		
+		final Location factionLoc = getFactionSpawn(player.getFactionId());
+		if (factionLoc != null)
+			player.teleportTo(factionLoc, 50);
 	}
 	
 	private void spawnFlag()
