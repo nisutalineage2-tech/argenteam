@@ -88,8 +88,8 @@ public class AdminPhantom implements IAdminCommandHandler
 		
 		if (cmd.equals("admin_phantom_start"))
 		{
-			final int loaded = PhantomEngine.startConfigured(player);
-			showPanel(player, "Restored saved phantoms: " + loaded + ".");
+			PhantomEngine.startConfigured(player);
+			showPanel(player, "Loading phantoms in background...");
 			return;
 		}
 		

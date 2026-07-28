@@ -43,6 +43,7 @@ public class FactionWarConfig
 	private static boolean _townRestriction;
 	private static int _townRestrictionRadius;
 	private static int _neutralZoneRadius;
+	private static int _warDurationMinutes;
 	
 	public static void load()
 	{
@@ -77,6 +78,7 @@ public class FactionWarConfig
 		_townRestriction = props.getProperty("TownRestriction", false);
 		_townRestrictionRadius = props.getProperty("TownRestrictionRadius", 1500);
 		_neutralZoneRadius = props.getProperty("NeutralZoneRadius", 2000);
+		_warDurationMinutes = props.getProperty("WarDurationMinutes", 120);
 		
 		_goodSpawnLoc = parseLoc(props.getProperty("GoodSpawn", "-84318,244579,-792"));
 		_evilSpawnLoc = parseLoc(props.getProperty("EvilSpawn", "82218,148561,-3472"));
@@ -173,6 +175,7 @@ public class FactionWarConfig
 	public static int getKillRewardPoints() { return _killRewardPoints; }
 	public static boolean isTownRestriction() { return _townRestriction; }
 	public static int getTownRestrictionRadius() { return _townRestrictionRadius; }
+	public static int getWarDurationMinutes() { return _warDurationMinutes; }
 	public static int getNeutralZoneRadius() { return _neutralZoneRadius; }
 	
 	public static boolean isInNeutralZone(net.sf.l2j.gameserver.model.location.Location loc)

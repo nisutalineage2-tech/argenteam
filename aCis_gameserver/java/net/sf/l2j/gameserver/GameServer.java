@@ -262,8 +262,13 @@ public class GameServer
 		
 		if (Config.ENABLE_FACTION_SYSTEM && net.sf.l2j.gameserver.factionwar.FactionWarConfig.isEnabled())
 		{
-			net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().start(net.sf.l2j.gameserver.factionwar.FactionWarConfig.getScoreToWin(), 0);
-			LOGGER.info("Faction War auto-started (only game mode).");
+			final int duration = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getWarDurationMinutes();
+			net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().start(net.sf.l2j.gameserver.factionwar.FactionWarConfig.getScoreToWin(), duration);
+			LOGGER.info("Faction War auto-started with {}min duration (alternance: FW ↔ Events).", duration);
+		}
+		else
+		{
+			LOGGER.info("Faction War disabled. Events will run in cyclic alternance.");
 		}
 		
 		StringUtil.printSection("Spawns");

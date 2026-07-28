@@ -36,7 +36,7 @@ public final class EventConfig
 	{
 		final ExProperties props = Config.initProperties("./config/events.properties");
 		
-		_enabled = props.getProperty("Enabled", true);
+		_enabled = true; // Events are always enabled (alternance system)
 		_registerTime = props.getProperty("RegisterTime", 10);
 		_voteTime = props.getProperty("VoteTime", 60);
 		_voteEnabled = props.getProperty("VoteEnabled", false);

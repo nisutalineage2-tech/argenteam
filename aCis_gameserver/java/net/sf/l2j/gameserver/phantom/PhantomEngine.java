@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.data.xml.FactionData;
@@ -35,15 +36,23 @@ public final class PhantomEngine
 	
 	public static int startConfigured(Player gm)
 	{
-		PhantomConfig.load();
+		final List<Integer> ids = PhantomConfig.getPhantomIds();
+		if (ids.isEmpty())
+			return 0;
 		
-		int loaded = 0;
-		for (int objectId : PhantomConfig.getPhantomIds())
+		final List<Integer> snapshot = new ArrayList<>(ids);
+		ThreadPool.execute(() ->
 		{
-			if (load(objectId, gm, PhantomConfig.spawnAtGm() && !PhantomConfig.rememberLastLocation()) != null)
-				loaded++;
-		}
-		return loaded;
+			int loaded = 0;
+			for (int objectId : snapshot)
+			{
+				if (load(objectId, gm, PhantomConfig.spawnAtGm() && !PhantomConfig.rememberLastLocation()) != null)
+					loaded++;
+			}
+			LOGGER.info("Background phantom load complete: {}/{} phantoms.", loaded, snapshot.size());
+		});
+		
+		return 0;
 	}
 	
 	public static Player load(int objectId, Player gm, boolean spawnAtGm)
@@ -68,10 +77,7 @@ public final class PhantomEngine
 			return null;
 		}
 		
-		// Try restoring faction data first (for phantoms that were already assigned)
-		FactionData.getInstance().restoreData(phantom);
-		
-		// If still no faction and faction system is enabled, assign a random one
+		// If no faction and faction system is enabled, assign a random one
 		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() <= 0)
 		{
 			final int[] factionIds = FactionData.getInstance().getFactionIds();
@@ -381,7 +387,10 @@ public final class PhantomEngine
 				PhantomAI.clearDeathFlag(phantom.getObjectId());
 			}
 			
-			phantom.teleportTo(spawn, 20);
+			// Add randomization so phantoms don't clump at exact spawn point
+			final int rx = spawn.getX() + Rnd.get(-250, 250);
+			final int ry = spawn.getY() + Rnd.get(-250, 250);
+			phantom.teleportTo(rx, ry, spawn.getZ(), 20);
 			if (phantom.isTeleporting())
 				phantom.onTeleported();
 			

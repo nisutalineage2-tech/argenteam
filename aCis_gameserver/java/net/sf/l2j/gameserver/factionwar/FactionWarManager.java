@@ -204,6 +204,9 @@ public class FactionWarManager
 		teleportFactionPlayersToNeutral();
 		
 		LOGGER.info("Faction War stopped. Returned {} phantoms.", returned);
+		
+		// Notify EventEngine that FW ended (alternance: FW → event)
+		net.sf.l2j.gameserver.event.EventEngine.getInstance().onFactionWarEnded();
 	}
 	
 	public void onFlagKilled(int killerFactionId)
@@ -301,7 +304,12 @@ public class FactionWarManager
 		
 		final Location factionLoc = getFactionSpawn(player.getFactionId());
 		if (factionLoc != null)
-			player.teleportTo(factionLoc, 50);
+		{
+			// Add randomization to spread players around spawn
+			final int rx = factionLoc.getX() + Rnd.get(-300, 300);
+			final int ry = factionLoc.getY() + Rnd.get(-300, 300);
+			player.teleportTo(rx, ry, factionLoc.getZ(), 50);
+		}
 	}
 	
 	private void spawnFlag()

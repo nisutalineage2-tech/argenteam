@@ -78,7 +78,6 @@ public final class PhantomEquipment
 		
 		phantom.getMemos().set(MEMO_KEY, tier);
 		phantom.broadcastUserInfo();
-		phantom.store();
 	}
 	
 	private static int getTier(int level)
