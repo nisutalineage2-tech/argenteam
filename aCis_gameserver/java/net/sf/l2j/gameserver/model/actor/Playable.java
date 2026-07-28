@@ -531,6 +531,10 @@ public abstract class Playable extends Creature
 		if (Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayer.getFactionId() == getActingPlayer().getFactionId())
 			return false;
 		
+		// Cross-faction: different factions can auto-attack each other.
+		if (Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayer.getFactionId() != getActingPlayer().getFactionId())
+			return true;
+		
 		final boolean sameParty = isInSameParty(attackerPlayer);
 		final boolean sameCommandChannel = isInSameCommandChannel(attackerPlayer);
 		
@@ -581,6 +585,10 @@ public abstract class Playable extends Creature
 			
 			// Playables in a PVP area can be kept attacked.
 			if (isInsideZone(ZoneId.PVP) && target.isInsideZone(ZoneId.PVP))
+				return true;
+			
+			// Cross-faction: different factions can keep attacking each other.
+			if (Config.ENABLE_FACTION_SYSTEM && getActingPlayer().getFactionId() != 0 && targetPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() != targetPlayer.getFactionId())
 				return true;
 			
 			// Betrayer Summon will continue the attack.
