@@ -72,8 +72,8 @@ public class FactionWarGuard extends Monster
 		if (npcId != FactionWarConfig.getGuardNpcId())
 			return 0;
 		
-		final var goodLoc = FactionWarConfig.getGoodGuardLoc();
-		final var evilLoc = FactionWarConfig.getEvilGuardLoc();
+		final var goodLoc = FactionWarManager.getInstance().getFactionSpawn(FactionWarConfig.getGoodFactionId());
+		final var evilLoc = FactionWarManager.getInstance().getFactionSpawn(FactionWarConfig.getEvilFactionId());
 		
 		if (goodLoc != null && getPosition().distance3D(goodLoc) < 500)
 			return FactionWarConfig.getGoodFactionId();

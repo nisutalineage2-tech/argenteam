@@ -6,6 +6,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
+import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.enums.GaugeColor;
 import net.sf.l2j.gameserver.enums.SayType;
@@ -139,7 +140,10 @@ public class FactionWarManager
 		final int teleported = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
 		
 		if (FactionWarConfig.isAnnounceStart())
-			broadcast("[Faction War] La guerra ha comenzado! Score to win: " + scoreToWin + (durationMinutes > 0 ? " | Duration: " + durationMinutes + "min" : ""));
+		{
+			final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
+			broadcast("[Faction War] La guerra ha comenzado! Mapa: " + firstMap.getName() + " | Score to win: " + scoreToWin + (durationMinutes > 0 ? " | Duration: " + durationMinutes + "min" : ""));
+		}
 		
 		LOGGER.info("Faction War started. Score to win: {}. Teleported {} phantoms to war.", scoreToWin, teleported);
 	}
@@ -277,9 +281,14 @@ public class FactionWarManager
 	
 	private void spawnGuards()
 	{
+		if (FactionWarConfig.getMaps().isEmpty())
+			return;
+		
+		final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
+		
 		try
 		{
-			final Location goodLoc = FactionWarConfig.getGoodGuardLoc();
+			final Location goodLoc = map.getGoodGuardLoc();
 			_goodGuardSpawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
 			_goodGuardSpawn.setLoc(goodLoc.getX(), goodLoc.getY(), goodLoc.getZ(), 0);
 			_goodGuardNpc = _goodGuardSpawn.doSpawn(false);
@@ -291,7 +300,7 @@ public class FactionWarManager
 		
 		try
 		{
-			final Location evilLoc = FactionWarConfig.getEvilGuardLoc();
+			final Location evilLoc = map.getEvilGuardLoc();
 			_evilGuardSpawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
 			_evilGuardSpawn.setLoc(evilLoc.getX(), evilLoc.getY(), evilLoc.getZ(), 0);
 			_evilGuardNpc = _evilGuardSpawn.doSpawn(false);
@@ -372,15 +381,24 @@ public class FactionWarManager
 		despawnRegistrar();
 		_checkpoints.despawn();
 		
-		_currentMapIndex = (_currentMapIndex + 1) % FactionWarConfig.getMaps().size();
+		// Pick a random map different from the current one
+		int newIndex;
+		do
+		{
+			newIndex = Rnd.get(FactionWarConfig.getMaps().size());
+		}
+		while (newIndex == _currentMapIndex && FactionWarConfig.getMaps().size() > 1);
+		
+		_currentMapIndex = newIndex;
 		
 		spawnFlag();
 		spawnGuards();
 		spawnRegistrar();
 		_checkpoints.spawn(_currentMapIndex);
 		
+		final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
 		if (FactionWarConfig.isAnnounceMapSwitch())
-			broadcast("[Faction War] El mapa ha cambiado a: " + FactionWarConfig.getMaps().get(_currentMapIndex).getName());
+			broadcast("[Faction War] Mapa: " + map.getName());
 	}
 	
 	public int getCurrentMapIndex()
@@ -390,10 +408,15 @@ public class FactionWarManager
 	
 	public Location getFactionSpawn(int factionId)
 	{
+		if (FactionWarConfig.getMaps().isEmpty())
+			return null;
+		
+		final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
+		
 		if (factionId == FactionWarConfig.getGoodFactionId())
-			return FactionWarConfig.getGoodSpawnLoc();
+			return map.getGoodSpawn();
 		if (factionId == FactionWarConfig.getEvilFactionId())
-			return FactionWarConfig.getEvilSpawnLoc();
+			return map.getEvilSpawn();
 		return null;
 	}
 	

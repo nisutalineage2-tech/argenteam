@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.factionwar;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.sf.l2j.commons.config.ExProperties;
@@ -25,8 +26,6 @@ public class FactionWarConfig
 	private static int _checkpointRadius;
 	private static int _mapRotationMinutes;
 	private static final List<WarMap> _maps = new ArrayList<>();
-	private static Location _goodGuardLoc;
-	private static Location _evilGuardLoc;
 	private static Location _goodSpawnLoc;
 	private static Location _evilSpawnLoc;
 	private static Location _neutralSpawnLoc;
@@ -70,8 +69,6 @@ public class FactionWarConfig
 		_townRestriction = props.getProperty("TownRestriction", false);
 		_townRestrictionRadius = props.getProperty("TownRestrictionRadius", 1500);
 		
-		_goodGuardLoc = parseLoc(props.getProperty("GoodGuardLoc", "-84318,244579,-792"));
-		_evilGuardLoc = parseLoc(props.getProperty("EvilGuardLoc", "82218,148561,-3472"));
 		_goodSpawnLoc = parseLoc(props.getProperty("GoodSpawn", "-84318,244579,-792"));
 		_evilSpawnLoc = parseLoc(props.getProperty("EvilSpawn", "82218,148561,-3472"));
 		
@@ -89,7 +86,17 @@ public class FactionWarConfig
 					final int y = Integer.parseInt(parts[2].trim());
 					final int z = Integer.parseInt(parts[3].trim());
 					final int radius = parts.length > 4 ? Integer.parseInt(parts[4].trim()) : 3000;
-					_maps.add(new WarMap(name, x, y, z, radius));
+					
+					// Per-map spawns: goodX,goodY,goodZ,evilX,evilY,evilZ (optional, parts 5-10)
+					Location goodMapSpawn = null;
+					Location evilMapSpawn = null;
+					if (parts.length >= 11)
+					{
+						goodMapSpawn = new Location(Integer.parseInt(parts[5].trim()), Integer.parseInt(parts[6].trim()), Integer.parseInt(parts[7].trim()));
+						evilMapSpawn = new Location(Integer.parseInt(parts[8].trim()), Integer.parseInt(parts[9].trim()), Integer.parseInt(parts[10].trim()));
+					}
+					
+					_maps.add(new WarMap(name, x, y, z, radius, goodMapSpawn, evilMapSpawn));
 				}
 				catch (NumberFormatException e)
 				{
@@ -99,9 +106,11 @@ public class FactionWarConfig
 		
 		if (_maps.isEmpty())
 		{
-			_maps.add(new WarMap("Gludio", -14300, 123700, -3100, 3000));
-			_maps.add(new WarMap("Giran", 83400, 148000, -3400, 3000));
+			_maps.add(new WarMap("Gludio", -14300, 123700, -3100, 3000, null, null));
+			_maps.add(new WarMap("Giran", 83400, 148000, -3400, 3000, null, null));
 		}
+		
+		Collections.shuffle(_maps);
 	}
 	
 	private static Location parseLoc(String s)
@@ -126,8 +135,6 @@ public class FactionWarConfig
 	public static int getCheckpointRadius() { return _checkpointRadius; }
 	public static int getMapRotationMinutes() { return _mapRotationMinutes; }
 	public static List<WarMap> getMaps() { return _maps; }
-	public static Location getGoodGuardLoc() { return _goodGuardLoc; }
-	public static Location getEvilGuardLoc() { return _evilGuardLoc; }
 	public static Location getGoodSpawnLoc() { return _goodSpawnLoc; }
 	public static Location getEvilSpawnLoc() { return _evilSpawnLoc; }
 	public static Location getNeutralSpawnLoc() { return _neutralSpawnLoc; }
@@ -153,14 +160,18 @@ public class FactionWarConfig
 		private final int _y;
 		private final int _z;
 		private final int _radius;
+		private final Location _goodMapSpawn;
+		private final Location _evilMapSpawn;
 		
-		public WarMap(String name, int x, int y, int z, int radius)
+		public WarMap(String name, int x, int y, int z, int radius, Location goodMapSpawn, Location evilMapSpawn)
 		{
 			_name = name;
 			_x = x;
 			_y = y;
 			_z = z;
 			_radius = radius;
+			_goodMapSpawn = goodMapSpawn;
+			_evilMapSpawn = evilMapSpawn;
 		}
 		
 		public String getName() { return _name; }
@@ -169,5 +180,29 @@ public class FactionWarConfig
 		public int getZ() { return _z; }
 		public int getRadius() { return _radius; }
 		public Location getCenter() { return new Location(_x, _y, _z); }
+		
+		public Location getGoodSpawn()
+		{
+			return _goodMapSpawn != null ? _goodMapSpawn : _goodSpawnLoc;
+		}
+		
+		public Location getEvilSpawn()
+		{
+			return _evilMapSpawn != null ? _evilMapSpawn : _evilSpawnLoc;
+		}
+		
+		public Location getGoodGuardLoc()
+		{
+			if (_goodMapSpawn != null)
+				return _goodMapSpawn;
+			return _goodSpawnLoc;
+		}
+		
+		public Location getEvilGuardLoc()
+		{
+			if (_evilMapSpawn != null)
+				return _evilMapSpawn;
+			return _evilSpawnLoc;
+		}
 	}
 }
