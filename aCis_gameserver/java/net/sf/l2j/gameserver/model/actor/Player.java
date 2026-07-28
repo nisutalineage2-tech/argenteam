@@ -2644,7 +2644,7 @@ public final class Player extends Playable
 			// Faction War PvP scoring
 			if (pk != null && pk.getFactionId() > 0 && getFactionId() > 0 && pk.getFactionId() != getFactionId())
 			{
-				net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().onPvpKill(pk.getFactionId(), getFactionId());
+				net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().onPvpKill(pk.getFactionId(), getFactionId(), pk.getObjectId(), getObjectId());
 				
 				// Faction kill reward points (like Corvus mod)
 				final int rewardPoints = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getKillRewardPoints();

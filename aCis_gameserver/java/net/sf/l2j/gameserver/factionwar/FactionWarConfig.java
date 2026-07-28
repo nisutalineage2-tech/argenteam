@@ -45,6 +45,11 @@ public class FactionWarConfig
 	private static int _neutralZoneRadius;
 	private static int _warDurationMinutes;
 	
+	// Rewards
+	private static int _rewardItemId;
+	private static final int[] _topRewardAmounts = new int[3];
+	private static int _winningFactionReward;
+	
 	public static void load()
 	{
 		final ExProperties props = Config.initProperties("./config/factionwar.properties");
@@ -79,6 +84,11 @@ public class FactionWarConfig
 		_townRestrictionRadius = props.getProperty("TownRestrictionRadius", 1500);
 		_neutralZoneRadius = props.getProperty("NeutralZoneRadius", 2000);
 		_warDurationMinutes = props.getProperty("WarDurationMinutes", 120);
+		_rewardItemId = props.getProperty("RewardItemId", 57);
+		_topRewardAmounts[0] = props.getProperty("Top1Reward", 500000);
+		_topRewardAmounts[1] = props.getProperty("Top2Reward", 300000);
+		_topRewardAmounts[2] = props.getProperty("Top3Reward", 100000);
+		_winningFactionReward = props.getProperty("WinningFactionReward", 50000);
 		
 		_goodSpawnLoc = parseLoc(props.getProperty("GoodSpawn", "-84318,244579,-792"));
 		_evilSpawnLoc = parseLoc(props.getProperty("EvilSpawn", "82218,148561,-3472"));
@@ -149,9 +159,7 @@ public class FactionWarConfig
 	public static int getMapVoteSeconds() { return _mapVoteSeconds; }
 	public static List<WarMap> getMaps() { return _maps; }
 	
-	/**
-	 * Returns a random subset of maps for voting (max 4).
-	 */
+	/** Returns a random subset of maps for voting (max 4). */
 	public static List<WarMap> getVoteMaps()
 	{
 		_voteMaps.clear();
@@ -177,6 +185,12 @@ public class FactionWarConfig
 	public static int getTownRestrictionRadius() { return _townRestrictionRadius; }
 	public static int getWarDurationMinutes() { return _warDurationMinutes; }
 	public static int getNeutralZoneRadius() { return _neutralZoneRadius; }
+	public static int getRewardItemId() { return _rewardItemId; }
+	public static int[] getTopRewardAmounts() { return _topRewardAmounts; }
+	public static int getWinningFactionReward() { return _winningFactionReward; }
+	public static int getTop1Reward() { return _topRewardAmounts.length > 0 ? _topRewardAmounts[0] : 0; }
+	public static int getTop2Reward() { return _topRewardAmounts.length > 1 ? _topRewardAmounts[1] : 0; }
+	public static int getTop3Reward() { return _topRewardAmounts.length > 2 ? _topRewardAmounts[2] : 0; }
 	
 	public static boolean isInNeutralZone(net.sf.l2j.gameserver.model.location.Location loc)
 	{
@@ -218,14 +232,7 @@ public class FactionWarConfig
 		public int getRadius() { return _radius; }
 		public Location getCenter() { return new Location(_x, _y, _z); }
 		
-		public Location getGoodSpawn()
-		{
-			return _goodMapSpawn != null ? _goodMapSpawn : _goodSpawnLoc;
-		}
-		
-		public Location getEvilSpawn()
-		{
-			return _evilMapSpawn != null ? _evilMapSpawn : _evilSpawnLoc;
-		}
+		public Location getGoodSpawn() { return _goodMapSpawn != null ? _goodMapSpawn : _goodSpawnLoc; }
+		public Location getEvilSpawn() { return _evilMapSpawn != null ? _evilMapSpawn : _evilSpawnLoc; }
 	}
 }

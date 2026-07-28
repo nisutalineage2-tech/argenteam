@@ -12,6 +12,7 @@ import net.sf.l2j.commons.pool.ConnectionPool;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.communitybbs.manager.BaseBBSManager;
 import net.sf.l2j.gameserver.communitybbs.manager.ClanBBSManager;
+import net.sf.l2j.gameserver.communitybbs.manager.FactionWarBBSManager;
 import net.sf.l2j.gameserver.communitybbs.manager.FavoriteBBSManager;
 import net.sf.l2j.gameserver.communitybbs.manager.FriendsBBSManager;
 import net.sf.l2j.gameserver.communitybbs.manager.MailBBSManager;
@@ -111,6 +112,8 @@ public class CommunityBoard
 			ClanBBSManager.getInstance().parseCmd(command, player);
 		else if (command.startsWith("_bbsmemo"))
 			TopicBBSManager.getInstance().parseCmd(command, player);
+		else if (command.startsWith("_bbsfactionwar"))
+			FactionWarBBSManager.getInstance().parseCmd(command, player);
 		else if (command.startsWith("_bbsmail") || command.equals("_maillist_0_1_0_"))
 			MailBBSManager.getInstance().parseCmd(command, player);
 		else if (command.startsWith("_friend") || command.startsWith("_block"))

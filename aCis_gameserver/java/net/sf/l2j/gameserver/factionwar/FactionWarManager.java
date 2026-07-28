@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
 import net.sf.l2j.commons.logging.CLogger;
@@ -32,6 +33,9 @@ public class FactionWarManager
 	private int _currentMapIndex;
 	private final Map<Integer, Integer> _scores = new HashMap<>();
 	
+	// Per-player stats tracking: playerId -> FactionWarStats
+	private final Map<Integer, FactionWarStats> _playerStats = new ConcurrentHashMap<>();
+	
 	private Spawn _flagSpawn;
 	private Npc _flagNpc;
 	
@@ -52,6 +56,7 @@ public class FactionWarManager
 	private ScheduledFuture<?> _eventEndTask;
 	private ScheduledFuture<?> _scoreboardTask;
 	private ScheduledFuture<?> _countdownTask;
+	private int _winningFaction;
 	private long _startTime;
 	private long _durationMs;
 	
@@ -103,6 +108,30 @@ public class FactionWarManager
 	public FactionWarCheckpoint getCheckpoints()
 	{
 		return _checkpoints;
+	}
+	
+	/**
+	 * Gets the top N players sorted by points (kills + flag captures).
+	 */
+	public List<FactionWarStats> getTopPlayers(int limit)
+	{
+		return _playerStats.values().stream()
+			.sorted((a, b) -> Integer.compare(b.points, a.points))
+			.limit(limit)
+			.collect(java.util.stream.Collectors.toList());
+	}
+	
+	/**
+	 * Gets all player stats for display on the Community Board.
+	 */
+	public Map<Integer, FactionWarStats> getAllPlayerStats()
+	{
+		return new HashMap<>(_playerStats);
+	}
+	
+	public int getWinningFaction()
+	{
+		return _winningFaction;
 	}
 	
 	public String getScoreboard()
@@ -258,6 +287,8 @@ public class FactionWarManager
 		_scores.clear();
 		_scores.put(FactionWarConfig.getGoodFactionId(), 0);
 		_scores.put(FactionWarConfig.getEvilFactionId(), 0);
+		_playerStats.clear();
+		_winningFaction = 0;
 		
 		_currentMapIndex = (mapIndex >= 0 && mapIndex < FactionWarConfig.getMaps().size()) ? mapIndex : Rnd.get(FactionWarConfig.getMaps().size());
 		
@@ -292,29 +323,26 @@ public class FactionWarManager
 		// Auto-teleport all phantoms to war
 		final int teleportedPhantoms = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
 		
-		// Auto-teleport all faction players to their bases (no registration needed)
-		// Players can also respawn at neutral zone on death and re-enter via the Registrar NPC
-		int playersTeleported = 0;
-		for (Player player : World.getInstance().getPlayers())
-		{
-			if (player == null || !player.isOnline() || player.isDead())
-				continue;
-			if (player.getFactionId() == FactionWarConfig.getGoodFactionId() || player.getFactionId() == FactionWarConfig.getEvilFactionId())
-			{
-				teleportToWarMap(player);
-				playersTeleported++;
-				player.sendMessage("[Faction War] ¡La guerra ha comenzado! Has sido teletransportado a la base de tu facción.");
-			}
-		}
+		// Players must go to the Teleport Manager or the Registrar NPC to enter the war
+		broadcast("[Faction War] ¡La guerra ha comenzado! Ve al Teleport Manager o al Registrador de Guerra en la zona neutral para unirte a la batalla. Mapa: " + firstMap.getName());
 		
-		LOGGER.info("Faction War started. Map: {} (index: {}). Score: {}. Duration: {}min. Teleported {} players and {} phantoms.", 
-			firstMap.getName(), _currentMapIndex, scoreToWin, durationMinutes, playersTeleported, teleportedPhantoms);
+		LOGGER.info("Faction War started. Map: {} (index: {}). Score: {}. Duration: {}min. Teleported {} phantoms.", 
+			firstMap.getName(), _currentMapIndex, scoreToWin, durationMinutes, teleportedPhantoms);
 	}
 	
 	public void stop()
 	{
 		if (!_running && !_votingPhaseActive)
 			return;
+		
+		// Determine winner BEFORE clearing state
+		final int goodScore = getScore(FactionWarConfig.getGoodFactionId());
+		final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
+		_winningFaction = 0;
+		if (goodScore > evilScore)
+			_winningFaction = FactionWarConfig.getGoodFactionId();
+		else if (evilScore > goodScore)
+			_winningFaction = FactionWarConfig.getEvilFactionId();
 		
 		_running = false;
 		_votingPhaseActive = false;
@@ -327,8 +355,6 @@ public class FactionWarManager
 		cancelTask(_scoreboardTask);
 		cancelTask(_countdownTask);
 		
-		deregisterAll();
-		
 		despawnFlag();
 		despawnGuards();
 		despawnRegistrar();
@@ -338,17 +364,31 @@ public class FactionWarManager
 		
 		if (FactionWarConfig.isAnnounceEnd())
 		{
-			final int goodScore = getScore(FactionWarConfig.getGoodFactionId());
-			final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
-			String winner;
-			if (goodScore > evilScore)
-				winner = "¡LOS BUENOS GANAN!";
-			else if (evilScore > goodScore)
-				winner = "¡LOS MALVADOS GANAN!";
+			final String winnerName;
+			if (_winningFaction == FactionWarConfig.getGoodFactionId())
+				winnerName = "¡LOS BUENOS GANAN!";
+			else if (_winningFaction == FactionWarConfig.getEvilFactionId())
+				winnerName = "¡LOS MALVADOS GANAN!";
 			else
-				winner = "¡EMPATE!";
+				winnerName = "¡EMPATE!";
 			
-			broadcast("[Faction War] La guerra ha terminado! " + winner + " [" + goodScore + " - " + evilScore + "]");
+			// Announce top 3 players
+			final List<FactionWarStats> top3 = getTopPlayers(3);
+			final StringBuilder topMsg = new StringBuilder();
+			topMsg.append("[Faction War] La guerra ha terminado! ").append(winnerName).append(" [").append(goodScore).append(" - ").append(evilScore).append("]");
+			if (!top3.isEmpty())
+			{
+				topMsg.append(" | Top 3:");
+				for (int i = 0; i < top3.size(); i++)
+				{
+					final FactionWarStats s = top3.get(i);
+					topMsg.append(" #").append(i + 1).append(" ").append(s.playerName).append(" (").append(s.points).append("pts)");
+				}
+			}
+			broadcast(topMsg.toString());
+			
+			// Give rewards to top 3 and winning faction
+			giveRewards(top3);
 		}
 		
 		teleportFactionPlayersToNeutral();
@@ -359,13 +399,134 @@ public class FactionWarManager
 		net.sf.l2j.gameserver.event.EventEngine.getInstance().onFactionWarEnded();
 	}
 	
+	/**
+	 * Gives rewards to top 3 players and winning faction members.
+	 */
+	private void giveRewards(List<FactionWarStats> top3)
+	{
+		final int rewardItemId = FactionWarConfig.getRewardItemId();
+		final int[] topRewards = FactionWarConfig.getTopRewardAmounts();
+		final int winReward = FactionWarConfig.getWinningFactionReward();
+		
+		if (rewardItemId <= 0)
+			return;
+		
+		// Top 3 individual rewards
+		for (int i = 0; i < top3.size() && i < topRewards.length; i++)
+		{
+			final FactionWarStats stats = top3.get(i);
+			if (topRewards[i] <= 0)
+				continue;
+			
+			final Player player = World.getInstance().getPlayer(stats.playerId);
+			if (player != null && player.isOnline())
+			{					player.addItem(rewardItemId, topRewards[i], true);
+				broadcast("[Faction War] ¡" + stats.playerName + " queda #" + (i + 1) + " y recibe " + topRewards[i] + "x " + getItemName(rewardItemId) + "!");
+			}
+		}
+		
+		// Winning faction reward (all members)
+		if (_winningFaction > 0)
+		{
+			int count = 0;
+			for (Player player : World.getInstance().getPlayers())
+			{
+				if (player != null && player.isOnline() && player.getFactionId() == _winningFaction)
+				{
+					player.addItem(rewardItemId, winReward, true);
+					count++;
+				}
+			}
+			broadcast("[Faction War] ¡La facción ganadora recibe " + winReward + "x " + getItemName(rewardItemId) + "! (" + count + " miembros premiados)");
+		}
+	}
+	
+	private String getItemName(int itemId)
+	{
+		final net.sf.l2j.gameserver.data.xml.ItemData itemData = net.sf.l2j.gameserver.data.xml.ItemData.getInstance();
+		if (itemData != null)
+		{
+			final net.sf.l2j.gameserver.model.item.kind.Item item = itemData.getTemplate(itemId);
+			if (item != null)
+				return item.getName();
+		}
+		return "Item";
+	}
+	
+	/**
+	 * Backward-compatible single-arg version. Calls the two-arg version with killerId=0 (no per-player tracking).
+	 */
 	public void onFlagKilled(int killerFactionId)
+	{
+		onFlagKilled(killerFactionId, 0);
+	}
+	
+	public void onPvpKill(int killerFactionId, int victimFactionId, int killerId, int victimId)
+	{
+		if (!_running || !FactionWarConfig.isEnabled() || killerFactionId == victimFactionId)
+			return;
+		
+		final int points = FactionWarConfig.getPointsPerPvpKill();
+		if (points <= 0)
+			return;
+		
+		_scores.merge(killerFactionId, points, Integer::sum);
+		
+		// Track per-player stats
+		FactionWarStats killerStats = _playerStats.get(killerId);
+		if (killerStats == null)
+		{
+			killerStats = new FactionWarStats();
+			killerStats.playerId = killerId;
+			final net.sf.l2j.gameserver.model.actor.Player killer = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(killerId);
+			killerStats.playerName = (killer != null) ? killer.getName() : "Unknown";
+			killerStats.factionId = killerFactionId;
+			_playerStats.put(killerId, killerStats);
+		}
+		killerStats.kills++;
+		killerStats.points += points;
+		
+		FactionWarStats victimStats = _playerStats.get(victimId);
+		if (victimStats == null)
+		{
+			victimStats = new FactionWarStats();
+			victimStats.playerId = victimId;
+			final net.sf.l2j.gameserver.model.actor.Player victim = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(victimId);
+			victimStats.playerName = (victim != null) ? victim.getName() : "Unknown";
+			victimStats.factionId = victimFactionId;
+			_playerStats.put(victimId, victimStats);
+		}
+		victimStats.deaths++;
+		
+		if (FactionWarConfig.isAnnouncePvpKill())
+			broadcast("[Faction War] PvP kill! Faction " + killerFactionId + " +" + points + " pts");
+		
+		checkWinner();
+	}
+	
+	/**
+	 * Track a flag capture for a specific player.
+	 */
+	public void onFlagKilled(int killerFactionId, int killerId)
 	{
 		if (!_running || !FactionWarConfig.isEnabled())
 			return;
 		
 		final int points = FactionWarConfig.getPointsPerFlagKill();
 		_scores.merge(killerFactionId, points, Integer::sum);
+		
+		// Track per-player stats for flag killer
+		FactionWarStats stats = _playerStats.get(killerId);
+		if (stats == null)
+		{
+			stats = new FactionWarStats();
+			stats.playerId = killerId;
+			final net.sf.l2j.gameserver.model.actor.Player player = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(killerId);
+			stats.playerName = (player != null) ? player.getName() : "Unknown";
+			stats.factionId = killerFactionId;
+			_playerStats.put(killerId, stats);
+		}
+		stats.points += points;
 		
 		final int loserFactionId = (killerFactionId == FactionWarConfig.getGoodFactionId())
 			? FactionWarConfig.getEvilFactionId()
@@ -383,23 +544,6 @@ public class FactionWarManager
 		
 		if (_running)
 			scheduleFlagRespawn();
-	}
-	
-	public void onPvpKill(int killerFactionId, int victimFactionId)
-	{
-		if (!_running || !FactionWarConfig.isEnabled() || killerFactionId == victimFactionId)
-			return;
-		
-		final int points = FactionWarConfig.getPointsPerPvpKill();
-		if (points <= 0)
-			return;
-		
-		_scores.merge(killerFactionId, points, Integer::sum);
-		
-		if (FactionWarConfig.isAnnouncePvpKill())
-			broadcast("[Faction War] PvP kill! Faction " + killerFactionId + " +" + points + " pts");
-		
-		checkWinner();
 	}
 	
 	private void checkWinner()
@@ -888,5 +1032,18 @@ public class FactionWarManager
 	{
 		if (task != null && !task.isDone())
 			task.cancel(false);
+	}
+	
+	/**
+	 * Per-player statistics for the current Faction War.
+	 */
+	public static class FactionWarStats
+	{
+		public int playerId;
+		public String playerName;
+		public int factionId;
+		public int kills;
+		public int deaths;
+		public int points;
 	}
 }
