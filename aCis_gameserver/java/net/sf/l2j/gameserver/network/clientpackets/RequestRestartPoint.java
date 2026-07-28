@@ -9,6 +9,8 @@ import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.RestartPointData;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.SiegeSide;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
@@ -136,12 +138,23 @@ public final class RequestRestartPoint extends L2GameClientPacket
 		// Nothing has been found, use regular "To town" behavior.
 		else
 		{
-			// Faction respawn: respawn at faction base if player has a faction.
+			// Faction respawn: if Faction War is running, respawn at NEUTRAL ZONE
+			// Otherwise, respawn at faction home.
 			if (Config.ENABLE_FACTION_SYSTEM)
 			{
-				final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
-				if (faction != null && faction.getHomeLocation() != null)
-					loc = faction.getHomeLocation();
+				if (player.getFactionId() != 0 && FactionWarManager.getInstance().isRunning())
+				{
+					// War is running — send to neutral zone (surrender/rendición)
+					loc = FactionWarConfig.getNeutralSpawnLoc();
+					player.sendMessage("[Faction War] Has muerto en batalla. Ve al Registrador de Guerra para volver a tu base.");
+				}
+				else if (player.getFactionId() != 0)
+				{
+					// No war — normal faction home respawn
+					final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
+					if (faction != null && faction.getHomeLocation() != null)
+						loc = faction.getHomeLocation();
+				}
 			}
 			
 			if (loc == null)

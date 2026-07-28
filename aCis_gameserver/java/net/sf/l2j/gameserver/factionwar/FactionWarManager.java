@@ -282,35 +282,33 @@ public class FactionWarManager
 		sendGaugeToAllPlayers();
 		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 15000, 15000);
 		
-		final int teleported = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
-		
 		final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
 		
 		if (FactionWarConfig.isAnnounceStart())
 		{
-			broadcast("[Faction War] ¡La guerra ha comenzado! Habla con el Registrador en la zona neutral para unirte. Mapa: " + firstMap.getName() + " | Puntuación: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
+			broadcast("[Faction War] ¡La guerra ha comenzado! Mapa: " + firstMap.getName() + " | Puntuación: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
 		}
 		
-		// Send vote popup to faction players (so they can teleport to their base)
+		// Auto-teleport all phantoms to war
+		final int teleportedPhantoms = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
+		
+		// Auto-teleport all faction players to their bases (no registration needed)
+		// Players can also respawn at neutral zone on death and re-enter via the Registrar NPC
+		int playersTeleported = 0;
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (player == null || !player.isOnline())
+			if (player == null || !player.isOnline() || player.isDead())
 				continue;
 			if (player.getFactionId() == FactionWarConfig.getGoodFactionId() || player.getFactionId() == FactionWarConfig.getEvilFactionId())
 			{
-				if (FactionWarRegistry.getInstance().isRegistered(player))
-				{
-					player.sendMessage("[Faction War] Estás registrado. Habla con el Registrador de Guerra en la zona neutral para ir a tu base.");
-				}
-				else
-				{
-					player.sendMessage("[Faction War] Ve a la zona neutral y habla con el Registrador de Guerra para unirte a la batalla.");
-				}
+				teleportToWarMap(player);
+				playersTeleported++;
+				player.sendMessage("[Faction War] ¡La guerra ha comenzado! Has sido teletransportado a la base de tu facción.");
 			}
 		}
 		
-		LOGGER.info("Faction War started. Map: {} (index: {}). Score: {}. Duration: {}min. Teleported {} phantoms.", 
-			firstMap.getName(), _currentMapIndex, scoreToWin, durationMinutes, teleported);
+		LOGGER.info("Faction War started. Map: {} (index: {}). Score: {}. Duration: {}min. Teleported {} players and {} phantoms.", 
+			firstMap.getName(), _currentMapIndex, scoreToWin, durationMinutes, playersTeleported, teleportedPhantoms);
 	}
 	
 	public void stop()
