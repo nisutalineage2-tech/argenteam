@@ -11,6 +11,7 @@ import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.enums.GaugeColor;
 import net.sf.l2j.gameserver.enums.SayType;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
@@ -37,9 +38,14 @@ public abstract class AbstractEvent
 	private ScheduledFuture<?> _matchTask;
 	private ScheduledFuture<?> _startTask;
 	private ScheduledFuture<?> _scorebarTask;
+	private ScheduledFuture<?> _roundTask;
 	private final List<ScheduledFuture<?>> _countdownTasks = new ArrayList<>();
 	private long _matchStartTime;
 	private long _matchDurationMs;
+	private int _currentRound;
+	private int _totalRounds;
+	private long _roundDurationMs;
+	private boolean _roundActive;
 	
 	public AbstractEvent(EventConfig.EventData data)
 	{
@@ -54,6 +60,9 @@ public abstract class AbstractEvent
 	public final EventConfig.EventData getData() { return _data; }
 	public final List<EventPlayer> getAllPlayers() { return _allPlayers; }
 	public final List<EventTeam> getTeams() { return _teams; }
+	public final int getCurrentRound() { return _currentRound; }
+	public final int getTotalRounds() { return _totalRounds; }
+	public final boolean isRoundActive() { return _roundActive; }
 	
 	public final boolean isParticipating(int objectId)
 	{
@@ -133,6 +142,10 @@ public abstract class AbstractEvent
 		_matchStartTime = System.currentTimeMillis();
 		_matchDurationMs = _data.getMatchTime() * 60000L;
 		
+		// Initialize round system
+		_totalRounds = _data.getRounds();
+		_currentRound = 0;
+		
 		assignTeams();
 		teleportPlayers();
 		onStartMatch();
@@ -166,7 +179,14 @@ public abstract class AbstractEvent
 		if (_data.getMatchTime() > 0)
 			_matchTask = ThreadPool.schedule(this::endMatch, _matchDurationMs);
 		
-		LOGGER.info("Event {} started with {} players.", _data.getEventName(), _allPlayers.size());
+		// Start round system if configured
+		if (_totalRounds > 0)
+		{
+			_roundDurationMs = _matchDurationMs / _totalRounds;
+			startNextRound();
+		}
+		
+		LOGGER.info("Event {} started with {} players ({} rounds).", _data.getEventName(), _allPlayers.size(), _totalRounds);
 	}
 	
 	public final void stop()
@@ -175,8 +195,10 @@ public abstract class AbstractEvent
 		cancelTask(_matchTask);
 		cancelTask(_startTask);
 		cancelTask(_scorebarTask);
+		cancelTask(_roundTask);
 		cancelCountdowns();
 		
+		_roundActive = false;
 		restoreAllPlayers();
 		
 		_state = State.IDLE;
@@ -196,8 +218,10 @@ public abstract class AbstractEvent
 			return;
 		
 		cancelTask(_scorebarTask);
+		cancelTask(_roundTask);
 		cancelCountdowns();
 		
+		_roundActive = false;
 		_state = State.ENDED;
 		
 		final EventTeam winner = determineWinner();
@@ -318,8 +342,6 @@ public abstract class AbstractEvent
 		
 		if (killer != null)
 			killer.addKill();
-		if (victim != null)
-			victim.addDeath();
 		
 		onEventKill(killer, victim);
 	}
@@ -631,4 +653,97 @@ public abstract class AbstractEvent
 	protected abstract void onEventKill(EventPlayer killer, EventPlayer victim);
 	protected abstract void onEventDie(EventPlayer victim, EventPlayer killer);
 	protected abstract void onStop();
+	
+	protected void startNextRound()
+	{
+		if (_totalRounds <= 0 || _state != State.RUNNING)
+			return;
+		
+		_currentRound++;
+		_roundActive = true;
+		
+		if (_currentRound > _totalRounds)
+		{
+			endMatch();
+			return;
+		}
+		
+		broadcastEvent("[Event] Round " + _currentRound + "/" + _totalRounds + " starts!");
+		
+		// Teleport players back to team spawns for new round
+		for (EventTeam team : _teams)
+		{
+			final Location loc = team.getSpawnLocation();
+			if (loc == null)
+				continue;
+			
+			final int radius = _data.getPositionRadius();
+			for (EventPlayer ep : team.getPlayers())
+			{
+				if (!ep.isOnline())
+					continue;
+				
+				final Player player = ep.getPlayer();
+				
+				// Revive dead players
+				if (player.isDead())
+					player.doRevive();
+				
+				// Full heal
+				player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+				
+				// Teleport to spawn
+				final int x = loc.getX() + Rnd.get(-radius, radius);
+				final int y = loc.getY() + Rnd.get(-radius, radius);
+				player.teleportTo(x, y, loc.getZ(), 0);
+				
+				// Enable skills
+				player.enableAllSkills();
+				player.setIsImmobilized(false);
+				player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			}
+		}
+		
+		onRoundStart(_currentRound);
+		
+		// Schedule round end
+		cancelTask(_roundTask);
+		_roundTask = ThreadPool.schedule(this::endRound, _roundDurationMs);
+	}
+	
+	protected void endRound()
+	{
+		if (!_roundActive || _state != State.RUNNING)
+			return;
+		
+		_roundActive = false;
+		
+		onRoundEnd(_currentRound);
+		
+		// Check if match should end early (score limit)
+		if (checkScoreLimit())
+		{
+			endMatch();
+			return;
+		}
+		
+		// Start next round or end match
+		if (_currentRound < _totalRounds)
+			startNextRound();
+		else
+			endMatch();
+	}
+	
+	protected boolean checkScoreLimit()
+	{
+		return false;
+	}
+	
+	protected void onRoundStart(int round)
+	{
+	}
+	
+	protected void onRoundEnd(int round)
+	{
+	}
 }

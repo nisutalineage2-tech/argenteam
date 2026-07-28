@@ -10,7 +10,6 @@ public class BombFightEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(BombFightEvent.class.getName());
 	
-	// Bomb skill ID
 	private static final int BOMB_SKILL_ID = 5220;
 	
 	public BombFightEvent(EventConfig.EventData data)
@@ -26,7 +25,6 @@ public class BombFightEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
-		// Give bomb skill to all participants
 		for (EventPlayer ep : getAllPlayers())
 		{
 			if (!ep.isOnline())
@@ -51,7 +49,6 @@ public class BombFightEvent extends AbstractEvent
 		if (killerTeam != null)
 			killerTeam.addScore(1);
 		
-		// Check if enemy team is wiped
 		checkTeamAlive();
 	}
 	
@@ -61,19 +58,15 @@ public class BombFightEvent extends AbstractEvent
 		if (victim == null || !victim.isOnline())
 			return;
 		
-		// No respawn - last team standing
 		final Player player = victim.getPlayer();
-		player.setIsImmobilized(true);
-		player.setIsParalyzed(true);
 		player.setTitle("[Bomb] Dead");
 		player.broadcastTitleInfo();
-		player.sendMessage("[Bomb] Your team is counting on you! Wait for the next round!");
+		player.sendMessage("[Bomb] You have been eliminated! Wait for the next round.");
 	}
 	
 	@Override
 	protected void onStop()
 	{
-		// Remove bomb skill from all participants
 		for (EventPlayer ep : getAllPlayers())
 		{
 			if (ep.isOnline())

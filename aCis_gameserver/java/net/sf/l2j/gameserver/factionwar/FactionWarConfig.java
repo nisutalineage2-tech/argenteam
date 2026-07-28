@@ -27,7 +27,9 @@ public class FactionWarConfig
 	private static int _checkpointCount;
 	private static int _checkpointRadius;
 	private static int _mapRotationMinutes;
+	private static int _mapVoteSeconds;
 	private static final List<WarMap> _maps = new ArrayList<>();
+	private static final List<WarMap> _voteMaps = new ArrayList<>();
 	private static Location _goodSpawnLoc;
 	private static Location _evilSpawnLoc;
 	private static Location _neutralSpawnLoc;
@@ -63,6 +65,7 @@ public class FactionWarConfig
 		_checkpointCount = props.getProperty("CheckpointCount", 3);
 		_checkpointRadius = props.getProperty("CheckpointRadius", 2000);
 		_mapRotationMinutes = props.getProperty("MapRotationMinutes", 30);
+		_mapVoteSeconds = props.getProperty("MapVoteSeconds", 30);
 		_neutralSpawnLoc = parseLoc(props.getProperty("NeutralSpawnLoc", "147300,25750,-2000"));
 		_announceStart = props.getProperty("AnnounceStart", true);
 		_announceEnd = props.getProperty("AnnounceEnd", true);
@@ -141,7 +144,23 @@ public class FactionWarConfig
 	public static int getCheckpointCount() { return _checkpointCount; }
 	public static int getCheckpointRadius() { return _checkpointRadius; }
 	public static int getMapRotationMinutes() { return _mapRotationMinutes; }
+	public static int getMapVoteSeconds() { return _mapVoteSeconds; }
 	public static List<WarMap> getMaps() { return _maps; }
+	
+	/**
+	 * Returns a random subset of maps for voting (max 4).
+	 */
+	public static List<WarMap> getVoteMaps()
+	{
+		_voteMaps.clear();
+		final List<WarMap> copy = new ArrayList<>(_maps);
+		Collections.shuffle(copy);
+		final int count = Math.min(4, copy.size());
+		for (int i = 0; i < count; i++)
+			_voteMaps.add(copy.get(i));
+		return _voteMaps;
+	}
+	
 	public static Location getGoodSpawnLoc() { return _goodSpawnLoc; }
 	public static Location getEvilSpawnLoc() { return _evilSpawnLoc; }
 	public static Location getNeutralSpawnLoc() { return _neutralSpawnLoc; }

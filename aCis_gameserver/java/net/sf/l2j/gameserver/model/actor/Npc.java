@@ -1132,7 +1132,20 @@ public class Npc extends Creature
 	 */
 	public void onBypassFeedback(Player player, String command)
 	{
-		if (command.equalsIgnoreCase("TerritoryStatus"))
+		if (command.startsWith("fwVote_"))
+		{
+			try
+			{
+				int mapIndex = Integer.parseInt(command.substring(7));
+				net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().onPlayerVote(player, mapIndex);
+			}
+			catch (Exception e)
+			{
+				// invalid vote index
+			}
+			return;
+		}
+		else if (command.equalsIgnoreCase("TerritoryStatus"))
 		{
 			final Castle castle = getCastle();
 			if (castle == null)

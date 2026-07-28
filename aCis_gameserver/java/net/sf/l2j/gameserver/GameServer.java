@@ -258,13 +258,12 @@ public class GameServer
 		if (Config.ALLOW_FISH_CHAMPIONSHIP)
 			FishingChampionshipManager.getInstance();
 		
-		net.sf.l2j.gameserver.event.EventConfig.load();
 		net.sf.l2j.gameserver.event.EventEngine.getInstance().init();
 		
 		if (Config.ENABLE_FACTION_SYSTEM && net.sf.l2j.gameserver.factionwar.FactionWarConfig.isEnabled())
 		{
 			net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().start(net.sf.l2j.gameserver.factionwar.FactionWarConfig.getScoreToWin(), 0);
-			LOGGER.info("Faction War auto-started (default mode).");
+			LOGGER.info("Faction War auto-started (only game mode).");
 		}
 		
 		StringUtil.printSection("Spawns");

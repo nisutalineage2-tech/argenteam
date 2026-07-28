@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.event;
 
 import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.skills.L2Skill;
@@ -25,7 +26,6 @@ public class MutantEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
-		// Pick first mutant
 		pickNewMutant();
 	}
 	
@@ -35,7 +35,6 @@ public class MutantEvent extends AbstractEvent
 		if (killer == null)
 			return;
 		
-		// Only the mutant scores (AbstractEvent.onKill already called killer.addKill())
 		if (killer == _currentMutant)
 		{
 			if (killer.isOnline())
@@ -55,25 +54,39 @@ public class MutantEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		// If the mutant died, pick a new one and respawn
 		if (victim == _currentMutant)
 		{
 			removeMutant(victim);
 			broadcastToPlayers("[Mutant] " + victim.getName() + " was killed! A new Mutant rises!");
-			
-			player.teleportTo(getData().getPositionAll().getX(), getData().getPositionAll().getY(), getData().getPositionAll().getZ(), 0);
 			pickNewMutant();
 		}
 		else
 		{
-			// Regular player dies - respawn normally
-			player.sendMessage("[Mutant] You died! Respawning...");
+			player.sendMessage("[Mutant] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+			
+			player.disableAllSkills();
+			player.setIsImmobilized(true);
+			player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+			
 			final EventTeam team = getTeam(victim.getTeamId());
-			if (team != null && team.getSpawnLocation() != null)
+			final int respawnX = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getX() : player.getX();
+			final int respawnY = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getY() : player.getY();
+			final int respawnZ = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getZ() : player.getZ();
+			
+			ThreadPool.schedule(() ->
 			{
-				player.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
-				player.startAbnormalEffect(AbnormalEffect.HOLD_1);
-			}
+				if (player == null || !player.isOnline())
+					return;
+				
+				if (player.isDead())
+					player.doRevive();
+				
+				player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+				player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+				player.enableAllSkills();
+				player.setIsImmobilized(false);
+				player.teleportTo(respawnX, respawnY, respawnZ, 0);
+			}, getData().getRespawnDelay() * 1000L);
 		}
 	}
 	
@@ -87,7 +100,6 @@ public class MutantEvent extends AbstractEvent
 	
 	private void pickNewMutant()
 	{
-		// Find a random alive player who isn't already mutant
 		final java.util.List<EventPlayer> candidates = new java.util.ArrayList<>();
 		for (EventPlayer ep : getAllPlayers())
 		{
@@ -103,7 +115,6 @@ public class MutantEvent extends AbstractEvent
 		
 		if (candidates.isEmpty())
 		{
-			// No candidates - use any online player
 			for (EventPlayer ep : getAllPlayers())
 			{
 				if (ep.isOnline())
@@ -122,12 +133,10 @@ public class MutantEvent extends AbstractEvent
 			p.setTitle("[Mut] 0k");
 			p.broadcastTitleInfo();
 			
-			// Apply mutant buff skill
 			final L2Skill skill = p.getSkill(_mutantSkillId);
 			if (skill != null)
 				skill.getEffects(p, p);
 			
-			// Visual effect
 			p.startAbnormalEffect(AbnormalEffect.FLAME);
 			
 			broadcastToPlayers("[Mutant] " + _currentMutant.getName() + " is now the MUTANT!");

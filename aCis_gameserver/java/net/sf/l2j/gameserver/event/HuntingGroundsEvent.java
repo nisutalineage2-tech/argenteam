@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.event;
 
 import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
 
@@ -58,14 +59,31 @@ public class HuntingGroundsEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Hunt] You died! Respawning...");
+		player.sendMessage("[Hunt] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
+		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
 		
 		final EventTeam team = getTeam(victim.getTeamId());
-		if (team != null && team.getSpawnLocation() != null)
+		final int respawnX = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getX() : player.getX();
+		final int respawnY = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getY() : player.getY();
+		final int respawnZ = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getZ() : player.getZ();
+		
+		ThreadPool.schedule(() ->
 		{
-			player.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
-			player.startAbnormalEffect(AbnormalEffect.HOLD_1);
-		}
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			player.teleportTo(respawnX, respawnY, respawnZ, 0);
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override

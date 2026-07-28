@@ -5,6 +5,7 @@ import java.util.concurrent.ScheduledFuture;
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.random.Rnd;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 
@@ -51,10 +52,8 @@ public class TreasureHuntEvent extends AbstractEvent
 		_chestsFound = 0;
 		_firstFinder = null;
 		
-		// Start spawning chests
 		_spawnTask = ThreadPool.scheduleAtFixedRate(this::spawnTreasure, 5000, _chestInterval * 1000L);
 		
-		// Spawn first batch immediately
 		for (int i = 0; i < 3 && _chestsSpawned < _totalChests; i++)
 			spawnTreasure();
 	}
@@ -81,7 +80,6 @@ public class TreasureHuntEvent extends AbstractEvent
 		broadcastToPlayers("[Treasure] A treasure chest appeared! (" + _chestsSpawned + "/" + _totalChests + ")");
 	}
 	
-	// Called when a player finds/interacts with a treasure chest
 	public void findTreasure(int chestIndex, Player player)
 	{
 		if (getState() != State.RUNNING)
@@ -99,7 +97,7 @@ public class TreasureHuntEvent extends AbstractEvent
 		final EventPlayer ep = getEventPlayer(player.getObjectId());
 		if (ep == null) return;
 		
-		ep.addKill(); // Track treasure found
+		ep.addKill();
 		player.getInventory().addItem(_chestRewardId, _chestRewardCount);
 		
 		if (_firstFinder == null)
@@ -118,7 +116,8 @@ public class TreasureHuntEvent extends AbstractEvent
 		_chests.remove(chestIndex);
 		
 		if (ep.isOnline())
-		{				ep.getPlayer().setTitle("[Find] " + ep.getKills() + "fd");
+		{
+			ep.getPlayer().setTitle("[Find] " + ep.getKills() + "fd");
 			ep.getPlayer().broadcastTitleInfo();
 		}
 	}
@@ -126,7 +125,6 @@ public class TreasureHuntEvent extends AbstractEvent
 	@Override
 	protected void onEventKill(EventPlayer killer, EventPlayer victim)
 	{
-		// No PvP scoring in treasure hunt
 	}
 	
 	@Override
@@ -136,9 +134,29 @@ public class TreasureHuntEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Treasure] You died! Respawning...");
-		if (getData().getPositionAll() != null)
-			player.teleportTo(getData().getPositionAll().getX(), getData().getPositionAll().getY(), getData().getPositionAll().getZ(), 0);
+		player.sendMessage("[Treasure] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
+		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			final Location center = getData().getPositionAll();
+			if (center != null)
+				player.teleportTo(center.getX(), center.getY(), center.getZ(), 0);
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override
@@ -146,7 +164,6 @@ public class TreasureHuntEvent extends AbstractEvent
 	{
 		cancelTask(_spawnTask);
 		
-		// Give extra reward to first finder
 		if (_firstFinder != null && _firstFinder.isOnline())
 		{
 			_firstFinder.getPlayer().getInventory().addItem(_chestRewardId, _chestRewardCount * 2);

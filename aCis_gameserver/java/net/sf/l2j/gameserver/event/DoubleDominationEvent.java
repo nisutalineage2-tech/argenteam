@@ -4,6 +4,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 
@@ -60,8 +61,29 @@ public class DoubleDominationEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[2Dom] You died! Respawning...");
-		player.teleportTo(_zone1.getX() + net.sf.l2j.commons.random.Rnd.get(-200, 200), _zone1.getY() + net.sf.l2j.commons.random.Rnd.get(-200, 200), _zone1.getZ(), 0);
+		player.sendMessage("[2Dom] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
+		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			final int x = _zone1.getX() + net.sf.l2j.commons.random.Rnd.get(-200, 200);
+			final int y = _zone1.getY() + net.sf.l2j.commons.random.Rnd.get(-200, 200);
+			player.teleportTo(x, y, _zone1.getZ(), 0);
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override
@@ -97,7 +119,6 @@ public class DoubleDominationEvent extends AbstractEvent
 			}
 		}
 		
-		// Only score if a team controls BOTH zones
 		boolean blueDominates = blueZone1 > redZone1 && blueZone2 > redZone2;
 		boolean redDominates = redZone1 > blueZone1 && redZone2 > blueZone2;
 		

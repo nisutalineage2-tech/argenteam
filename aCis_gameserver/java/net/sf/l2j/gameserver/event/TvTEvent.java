@@ -11,6 +11,7 @@ import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
 public class TvTEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(TvTEvent.class.getName());
+	private static final int SCORE_LIMIT = 50;
 	
 	public TvTEvent(EventConfig.EventData data)
 	{
@@ -25,7 +26,6 @@ public class TvTEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
-		// Set each player's title to show initial kill count
 		for (EventPlayer ep : getAllPlayers())
 		{
 			if (!ep.isOnline())
@@ -49,7 +49,7 @@ public class TvTEvent extends AbstractEvent
 		if (killerTeam != null)
 			killerTeam.addScore(1);
 		if (victimTeam != null)
-			victimTeam.addScore(-1);
+			victimTeam.subScore(1);
 		
 		// Update killer's title with current kill count
 		if (killer.isOnline())
@@ -74,6 +74,13 @@ public class TvTEvent extends AbstractEvent
 		for (EventTeam team : getTeams())
 		{
 			team.broadcast("[TvT] " + killer.getName() + " killed " + victim.getName() + "!");
+		}
+		
+		// Check score limit
+		if (killerTeam != null && killerTeam.getScore() >= SCORE_LIMIT)
+		{
+			broadcastEvent("[TvT] " + killerTeam.getName() + " reached " + SCORE_LIMIT + " kills! Victory!");
+			endMatch();
 		}
 	}
 	
@@ -103,20 +110,15 @@ public class TvTEvent extends AbstractEvent
 			if (player == null || !player.isOnline())
 				return;
 			
-			// Revive and full heal
 			if (player.isDead())
 				player.doRevive();
 			
 			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
 			
-			// Remove abnormal effects
 			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
-			
-			// Enable skills
 			player.enableAllSkills();
 			player.setIsImmobilized(false);
 			
-			// Teleport to team spawn
 			player.teleportTo(respawnX, respawnY, respawnZ, 0);
 			player.sendMessage("[TvT] You have been revived and healed!");
 		}, getData().getRespawnDelay() * 1000L);
@@ -136,6 +138,6 @@ public class TvTEvent extends AbstractEvent
 		
 		final EventTeam blue = teams.get(0);
 		final EventTeam red = teams.get(1);
-		return blue.getName() + ": " + blue.getScore() + " - " + red.getName() + ": " + red.getScore();
+		return blue.getName() + ": " + blue.getScore() + " - " + red.getName() + ": " + red.getScore() + " | Win: " + SCORE_LIMIT;
 	}
 }

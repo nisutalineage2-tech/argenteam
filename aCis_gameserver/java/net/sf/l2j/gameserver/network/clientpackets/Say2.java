@@ -6,10 +6,6 @@ import java.util.logging.Logger;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.SayType;
-import net.sf.l2j.gameserver.event.AbstractEvent;
-import net.sf.l2j.gameserver.event.EventConfig;
-import net.sf.l2j.gameserver.event.EventEngine;
-import net.sf.l2j.gameserver.event.SimonSaysEvent;
 import net.sf.l2j.gameserver.handler.ChatHandler;
 import net.sf.l2j.gameserver.handler.IChatHandler;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -143,167 +139,11 @@ public final class Say2 extends L2GameClientPacket
 		final String[] parts = text.split(" ", 3);
 		final String cmd = parts[0].toLowerCase();
 		
-		if (cmd.equals(".event") || cmd.equals(".eventjoin"))
-		{
-			if (!EventConfig.isEnabled())
-			{
-				player.sendMessage("[Event] Events are disabled.");
-				return;
-			}
-			
-			if (cmd.equals(".eventjoin"))
-			{
-				// .eventjoin alone -> auto-join active event
-				if (parts.length < 2)
-				{
-					final AbstractEvent active = EventEngine.getInstance().getActiveEvent();
-					if (active == null)
-					{
-						player.sendMessage("[Event] No events are open. Use .eventjoin list to see available events.");
-						return;
-					}
-					handleEventJoin(player, active.getData().getId());
-					return;
-				}
-				
-				final String arg = parts[1].toLowerCase();
-				if (arg.equals("leave"))
-					handleEventLeave(player);
-				else if (arg.equals("list"))
-					handleEventList(player);
-				else
-				{
-					try
-					{
-						final int eventId = Integer.parseInt(arg);
-						handleEventJoin(player, eventId);
-					}
-					catch (NumberFormatException e)
-					{
-						player.sendMessage("[Event] Invalid event id. Usage: .eventjoin <id>");
-					}
-				}
-				return;
-			}
-			
-			// .event join|leave|list
-			if (parts.length < 2)
-			{
-				player.sendMessage("[Event] Usage: .event join <id> | .event leave | .event list");
-				return;
-			}
-			
-			final String action = parts[1].toLowerCase();
-			
-			switch (action)
-			{
-				case "join":
-				{
-					if (parts.length < 3)
-					{
-						player.sendMessage("[Event] Usage: .event join <event_id>");
-						return;
-					}
-					try
-					{
-						final int eventId = Integer.parseInt(parts[2]);
-						handleEventJoin(player, eventId);
-					}
-					catch (NumberFormatException e)
-					{
-						player.sendMessage("[Event] Invalid event id.");
-					}
-					break;
-				}
-				case "leave":
-				{
-					handleEventLeave(player);
-					break;
-				}
-				case "list":
-				{
-					handleEventList(player);
-					break;
-				}
-				default:
-				{
-					player.sendMessage("[Event] Usage: .event join <id> | .event leave | .event list");
-					break;
-				}
-			}
-			return;
-		}
-		
-		// Simon Says command
-		if (cmd.equals(".simon") && parts.length >= 2)
-		{
-			final String word = parts[1].trim();
-			final AbstractEvent active = EventEngine.getInstance().getActiveEvent();
-			if (active instanceof SimonSaysEvent simon)
-				simon.onPlayerSay(word, player);
-			return;
-		}
-		
 		// Faction commands
-		if (cmd.equals(".charge") || cmd.equals(".finfo") || cmd.equals(".fhelp"))
+		if (cmd.equals(".charge") || cmd.equals(".finfo") || cmd.equals(".fhelp") || cmd.equals(".votemap"))
 		{
 			handleFactionCommands(player, cmd, parts);
 			return;
-		}
-	}
-	
-	private static void handleEventJoin(Player player, int eventId)
-	{
-		final AbstractEvent event = EventEngine.getInstance().getEvent(eventId);
-		if (event == null || event.getState() != AbstractEvent.State.REGISTER)
-		{
-			player.sendMessage("[Event] This event is not available for registration.");
-			return;
-		}
-		
-		if (EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId()))
-		{
-			player.sendMessage("[Event] You are already registered in an event.");
-			return;
-		}
-		
-		if (event.registerPlayer(player))
-			player.sendMessage("[Event] You joined " + event.getData().getEventName() + "!");
-		else
-			player.sendMessage("[Event] Cannot join. Check your level requirements.");
-	}
-	
-	private static void handleEventLeave(Player player)
-	{
-		final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(player.getObjectId());
-		if (event == null)
-		{
-			player.sendMessage("[Event] You are not in any event.");
-			return;
-		}
-		
-		if (event.getState() == AbstractEvent.State.REGISTER)
-		{
-			event.unregisterPlayer(player.getObjectId());
-			player.sendMessage("[Event] You left the event.");
-		}
-		else
-		{
-			player.sendMessage("[Event] You cannot leave during an active event.");
-		}
-	}
-	
-	private static void handleEventList(Player player)
-	{
-		player.sendMessage("[Event] Available events:");
-		for (EventConfig.EventData data : EventConfig.getEvents())
-		{
-			if (!data.isEnabled())
-				continue;
-			
-			final AbstractEvent event = EventEngine.getInstance().getEvent(data.getId());
-			final String status = event != null ? event.getState().name() : "N/A";
-			player.sendMessage("[Event] " + data.getId() + ". " + data.getEventName() + " [" + status + "]");
 		}
 	}
 	
@@ -359,6 +199,25 @@ public final class Say2 extends L2GameClientPacket
 				player.sendMessage("[Faction] .charge - Convert faction points to adena");
 				player.sendMessage("[Faction] .finfo - Show faction info");
 				player.sendMessage("[Faction] .fhelp - Show this help");
+				player.sendMessage("[Faction] .votemap <number> - Vote for next war map");
+				break;
+			}
+			case ".votemap":
+			{
+				if (parts.length < 2)
+				{
+					player.sendMessage("[Faction] Usage: .votemap <number>");
+					return;
+				}
+				try
+				{
+					final int mapIndex = Integer.parseInt(parts[1]) - 1;
+					net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().onPlayerVote(player, mapIndex);
+				}
+				catch (NumberFormatException e)
+				{
+					player.sendMessage("[Faction] Usage: .votemap <number>");
+				}
 				break;
 			}
 		}

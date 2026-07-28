@@ -112,8 +112,12 @@ public final class RequestBypassToServer extends L2GameClientPacket
 			try
 			{
 				final WorldObject object = World.getInstance().getObject(Integer.parseInt(id));
-				if (object instanceof Npc npc && endOfId > 0 && player.getAI().canDoInteract(npc))
-					npc.onBypassFeedback(player, _command.substring(endOfId + 1));
+				if (object instanceof Npc npc && endOfId > 0)
+				{
+					final String bypass = _command.substring(endOfId + 1);
+					if (bypass.startsWith("fwVote") || player.getAI().canDoInteract(npc))
+						npc.onBypassFeedback(player, bypass);
+				}
 				
 				player.sendPacket(ActionFailed.STATIC_PACKET);
 			}

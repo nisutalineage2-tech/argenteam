@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.l2j.Config;
-import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.data.SkillTable.FrequentSkill;
 import net.sf.l2j.gameserver.data.manager.CastleManager;
@@ -398,17 +397,8 @@ public abstract class Playable extends Creature
 		if (isInSameActiveDuel(targetPlayer))
 			return true;
 		
-		// Event neutrality: if both players are in any event, skip faction check (all are neutral in events).
-		final AbstractEvent myEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(getActingPlayer().getObjectId());
-		final AbstractEvent targetEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(targetPlayer.getObjectId());
-		final boolean bothInEvent = myEvent != null && myEvent == targetEvent;
-		
-		// Faction check: same faction members cannot attack each other (skipped during events).
-		if (!bothInEvent && Config.ENABLE_FACTION_SYSTEM && getActingPlayer().getFactionId() != 0 && targetPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() == targetPlayer.getFactionId())
-			return false;
-		
-		// Event check: same event teammates cannot attack each other.
-		if (bothInEvent && myEvent.areTeammates(getActingPlayer().getObjectId(), targetPlayer.getObjectId()))
+		// Faction check: same faction members cannot attack each other.
+		if (Config.ENABLE_FACTION_SYSTEM && getActingPlayer().getFactionId() != 0 && targetPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() == targetPlayer.getFactionId())
 			return false;
 		
 		final boolean sameParty = isInSameParty(targetPlayer);

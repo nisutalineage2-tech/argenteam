@@ -2,8 +2,10 @@ package net.sf.l2j.gameserver.event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 
 import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.commons.pool.ThreadPool;
 
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
@@ -16,6 +18,8 @@ public class CTFEvent extends AbstractEvent
 	private static final CLogger LOGGER = new CLogger(CTFEvent.class.getName());
 	
 	private final List<CTFFlag> _flags = new ArrayList<>();
+	private ScheduledFuture<?> _flagCheckTask;
+	private static final int FLAG_CAPTURE_RANGE = 200;
 	
 	public CTFEvent(EventConfig.EventData data)
 	{
@@ -42,6 +46,9 @@ public class CTFEvent extends AbstractEvent
 			}
 		}
 		
+		// Start flag proximity check every 2 seconds
+		_flagCheckTask = ThreadPool.scheduleAtFixedRate(this::checkFlagProximity, 2000, 2000);
+		
 		for (EventPlayer ep : getAllPlayers())
 		{
 			if (ep.isOnline())
@@ -62,8 +69,6 @@ public class CTFEvent extends AbstractEvent
 		
 		if (killerTeam != null)
 			killerTeam.addScore(1);
-		if (victimTeam != null)
-			victimTeam.addScore(-1);
 		
 		for (EventTeam team : getTeams())
 		{
@@ -79,21 +84,97 @@ public class CTFEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[CTF] You died! Respawning...");
+		player.sendMessage("[CTF] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
+		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
 		
 		final EventTeam team = getTeam(victim.getTeamId());
-		if (team != null && team.getSpawnLocation() != null)
-		{
-			player.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
-		}
+		final int respawnX = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getX() : player.getX();
+		final int respawnY = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getY() : player.getY();
+		final int respawnZ = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getZ() : player.getZ();
 		
-		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			player.teleportTo(respawnX, respawnY, respawnZ, 0);
+			player.sendMessage("[CTF] You have been revived and healed!");
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override
 	protected void onStop()
 	{
+		if (_flagCheckTask != null)
+		{
+			_flagCheckTask.cancel(false);
+			_flagCheckTask = null;
+		}
 		_flags.clear();
+	}
+	
+	private void checkFlagProximity()
+	{
+		if (!isRunning())
+			return;
+		
+		for (EventPlayer ep : getAllPlayers())
+		{
+			if (!ep.isOnline())
+				continue;
+			
+			final Player player = ep.getPlayer();
+			if (player.isDead())
+				continue;
+			
+			for (CTFFlag flag : _flags)
+			{
+				// Skip own team's flag
+				if (flag.getTeamId() == ep.getTeamId())
+					continue;
+				
+				// Check if flag is already captured
+				if (flag.isCaptured())
+					continue;
+				
+				// Check distance to flag
+				if (player.getPosition().distance3D(flag.getLocation()) <= FLAG_CAPTURE_RANGE)
+				{
+					captureFlag(flag.getTeamId(), player);
+					flag.setCaptured(true);
+					
+					// Respawn flag after 30 seconds
+					final CTFFlag capturedFlag = flag;
+					ThreadPool.schedule(() ->
+					{
+						capturedFlag.setCaptured(false);
+						for (EventPlayer p : getAllPlayers())
+						{
+							if (p.isOnline())
+								p.getPlayer().sendMessage("[CTF] " + getTeam(capturedFlag.getTeamId()).getName() + "'s flag has respawned!");
+						}
+					}, 30000);
+					break;
+				}
+			}
+		}
+	}
+	
+	private boolean isRunning()
+	{
+		return getState() == State.RUNNING;
 	}
 	
 	public void captureFlag(int teamId, Player captor)
@@ -105,7 +186,7 @@ public class CTFEvent extends AbstractEvent
 		final EventTeam flagTeam = getTeam(teamId);
 		
 		if (flagTeam != null)
-			flagTeam.addScore(-10);
+			flagTeam.subScore(10);
 		
 		final EventTeam captorTeam = getTeam(ep.getTeamId());
 		if (captorTeam != null)
@@ -113,22 +194,28 @@ public class CTFEvent extends AbstractEvent
 		
 		for (EventTeam team : getTeams())
 		{
-			team.broadcast("[CTF] " + captor.getName() + " captured " + flagTeam.getName() + "'s flag!");
+			team.broadcast("[CTF] " + captor.getName() + " captured " + flagTeam.getName() + "'s flag! +10 points!");
 		}
+		
+		captor.sendMessage("[CTF] You captured the enemy flag!");
 	}
 	
 	private static class CTFFlag
 	{
 		private final int _teamId;
 		private final Location _location;
+		private boolean _captured;
 		
 		public CTFFlag(int teamId, Location location)
 		{
 			_teamId = teamId;
 			_location = location;
+			_captured = false;
 		}
 		
 		public int getTeamId() { return _teamId; }
 		public Location getLocation() { return _location; }
+		public boolean isCaptured() { return _captured; }
+		public void setCaptured(boolean captured) { _captured = captured; }
 	}
 }

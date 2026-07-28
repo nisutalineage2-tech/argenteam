@@ -65,10 +65,10 @@ public class RussianRouletteEvent extends AbstractEvent
 		
 		broadcastToPlayers("[Roulette] Round " + (_eliminated.size() + 1) + "! Choose a chest! (" + _roundTime + "s)");
 		
-		_roundTask = ThreadPool.schedule(this::endRound, _roundTime * 1000L);
+		_roundTask = ThreadPool.schedule(this::resolveRound, _roundTime * 1000L);
 	}
 	
-	private void endRound()
+	private void resolveRound()
 	{
 		if (getState() != State.RUNNING)
 			return;

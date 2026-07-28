@@ -41,6 +41,7 @@ public class EventTeam
 	public int getScore() { return _score; }
 	public void setScore(int score) { _score = score; }
 	public void addScore(int amount) { _score += amount; }
+	public void subScore(int amount) { _score = Math.max(0, _score - amount); }
 	
 	public void addPlayer(EventPlayer player)
 	{

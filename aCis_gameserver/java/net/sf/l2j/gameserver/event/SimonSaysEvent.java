@@ -60,10 +60,10 @@ public class SimonSaysEvent extends AbstractEvent
 		broadcastToPlayers("[Simon] Say this word: " + _currentWord);
 		broadcastToPlayers("[Simon] Type .simon " + _currentWord + " in chat!");
 		
-		_roundTask = ThreadPool.schedule(this::endRound, _roundTime * 1000L);
+		_roundTask = ThreadPool.schedule(this::resolveRound, _roundTime * 1000L);
 	}
 	
-	private void endRound()
+	private void resolveRound()
 	{
 		if (getState() != State.RUNNING)
 			return;

@@ -44,12 +44,18 @@ public class FactionWarManager
 	private final FactionWarCheckpoint _checkpoints = new FactionWarCheckpoint();
 	
 	private ScheduledFuture<?> _mapRotationTask;
+	private ScheduledFuture<?> _mapVoteTask;
 	private ScheduledFuture<?> _flagRespawnTask;
 	private ScheduledFuture<?> _guardRespawnTask;
 	private ScheduledFuture<?> _eventEndTask;
 	private ScheduledFuture<?> _scoreboardTask;
 	private long _startTime;
 	private long _durationMs;
+	
+	private boolean _votingActive;
+	private final Map<Integer, Integer> _mapVotes = new HashMap<>();
+	private final java.util.Set<Integer> _votedPlayers = new java.util.HashSet<>();
+	private java.util.List<FactionWarConfig.WarMap> _currentVoteMaps;
 	
 	private static class SingletonHolder
 	{
@@ -135,7 +141,7 @@ public class FactionWarManager
 		
 		if (FactionWarConfig.getMapRotationMinutes() > 0 && FactionWarConfig.getMaps().size() > 1)
 		{
-			_mapRotationTask = ThreadPool.scheduleAtFixedRate(this::rotateMap, FactionWarConfig.getMapRotationMinutes() * 60000L, FactionWarConfig.getMapRotationMinutes() * 60000L);
+			_mapRotationTask = ThreadPool.schedule(this::startMapVote, FactionWarConfig.getMapRotationMinutes() * 60000L);
 		}
 		
 		if (durationMinutes > 0)
@@ -167,6 +173,7 @@ public class FactionWarManager
 		_running = false;
 		
 		cancelTask(_mapRotationTask);
+		cancelTask(_mapVoteTask);
 		cancelTask(_flagRespawnTask);
 		cancelTask(_guardRespawnTask);
 		cancelTask(_eventEndTask);
@@ -197,39 +204,6 @@ public class FactionWarManager
 		teleportFactionPlayersToNeutral();
 		
 		LOGGER.info("Faction War stopped. Returned {} phantoms.", returned);
-		
-		scheduleRandomEvent();
-	}
-	
-	private void scheduleRandomEvent()
-	{
-		if (!net.sf.l2j.gameserver.event.EventConfig.isSchedulerEnabled())
-			return;
-		
-		if (net.sf.l2j.gameserver.event.EventEngine.getInstance().isAnyEventActive())
-			return;
-		
-		LOGGER.info("Alternance: Faction War ended, scheduling random event.");
-		
-		net.sf.l2j.commons.pool.ThreadPool.schedule(() ->
-		{
-			if (!net.sf.l2j.gameserver.event.EventEngine.getInstance().isAnyEventActive() && !_running)
-			{
-				final java.util.List<net.sf.l2j.gameserver.event.AbstractEvent> idleEvents = new java.util.ArrayList<>();
-				for (net.sf.l2j.gameserver.event.AbstractEvent event : net.sf.l2j.gameserver.event.EventEngine.getInstance().getAllEvents())
-				{
-					if (event.getState() == net.sf.l2j.gameserver.event.AbstractEvent.State.IDLE)
-						idleEvents.add(event);
-				}
-				
-				if (!idleEvents.isEmpty())
-				{
-					final net.sf.l2j.gameserver.event.AbstractEvent randomEvent = idleEvents.get(net.sf.l2j.commons.random.Rnd.get(idleEvents.size()));
-					LOGGER.info("Alternance: starting event: {}", randomEvent.getData().getEventName());
-					randomEvent.startRegistering();
-				}
-			}
-		}, 5000);
 	}
 	
 	public void onFlagKilled(int killerFactionId)
@@ -484,6 +458,147 @@ public class FactionWarManager
 			if (_running)
 				spawnGuards();
 		}, FactionWarConfig.getGuardRespawnDelay());
+	}
+	
+	private void startMapVote()
+	{
+		if (!_running || FactionWarConfig.getMaps().size() <= 1)
+			return;
+		
+		_votingActive = true;
+		_mapVotes.clear();
+		_votedPlayers.clear();
+		_currentVoteMaps = FactionWarConfig.getVoteMaps();
+		
+		for (FactionWarConfig.WarMap map : _currentVoteMaps)
+			_mapVotes.put(_currentVoteMaps.indexOf(map), 0);
+		
+		final int voteSeconds = FactionWarConfig.getMapVoteSeconds();
+		
+		broadcast("[Faction War] ¡Vota por el próximo mapa! Tienes " + voteSeconds + " segundos.");
+		
+		sendVotePopup();
+		
+		_mapVoteTask = ThreadPool.schedule(this::applyMapVote, voteSeconds * 1000L);
+	}
+	
+	private void sendVotePopup()
+	{
+		if (_currentVoteMaps == null || _registrarNpc == null)
+			return;
+		
+		final int npcId = _registrarNpc.getObjectId();
+		
+		final StringBuilder mapsHtml = new StringBuilder();
+		for (int i = 0; i < _currentVoteMaps.size(); i++)
+		{
+			final FactionWarConfig.WarMap map = _currentVoteMaps.get(i);
+			mapsHtml.append("<table width=270><tr>");
+			mapsHtml.append("<td width=30 align=center><font color=LEVEL>").append(i + 1).append("</font></td>");
+			mapsHtml.append("<td width=240><a action=\"bypass -h npc_").append(npcId).append("_fwVote_").append(i).append("\">").append(map.getName()).append("</a></td>");
+			mapsHtml.append("</tr></table>");
+			mapsHtml.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\">");
+		}
+		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline())
+				continue;
+			if (player.getFactionId() == FactionWarConfig.getGoodFactionId() || player.getFactionId() == FactionWarConfig.getEvilFactionId())
+			{
+				final net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage html = new net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage(npcId);
+				html.setFile("data/html/script/factionwar/WarRegistrar/war_registrar_map_vote.htm");
+				html.replace("%MAPS%", mapsHtml.toString());
+				html.replace("%SECONDS%", String.valueOf(FactionWarConfig.getMapVoteSeconds()));
+				player.sendPacket(html);
+				
+				player.sendPacket(new ExShowScreenMessage("Vota por el siguiente mapa!", 10000, ExShowScreenMessage.SMPOS.TOP_CENTER, false));
+			}
+		}
+	}
+	
+	public void onPlayerVote(Player player, int mapIndex)
+	{
+		if (!_votingActive || _currentVoteMaps == null)
+			return;
+		
+		if (mapIndex < 0 || mapIndex >= _currentVoteMaps.size())
+			return;
+		
+		if (_votedPlayers.contains(player.getObjectId()))
+		{
+			player.sendMessage("[Faction War] Ya has votado.");
+			return;
+		}
+		
+		_votedPlayers.add(player.getObjectId());
+		_mapVotes.merge(mapIndex, 1, Integer::sum);
+		
+		player.sendMessage("[Faction War] ¡Voto registrado por " + _currentVoteMaps.get(mapIndex).getName() + "!");
+	}
+	
+	private void applyMapVote()
+	{
+		if (!_running)
+			return;
+		
+		_votingActive = false;
+		
+		int bestIndex = 0;
+		int bestVotes = 0;
+		for (Map.Entry<Integer, Integer> entry : _mapVotes.entrySet())
+		{
+			if (entry.getValue() > bestVotes)
+			{
+				bestVotes = entry.getValue();
+				bestIndex = entry.getKey();
+			}
+		}
+		
+		if (bestVotes == 0)
+		{
+			bestIndex = Rnd.get(_currentVoteMaps.size());
+			broadcast("[Faction War] ¡Nadie votó! Mapa aleatorio seleccionado.");
+		}
+		
+		final FactionWarConfig.WarMap chosen = _currentVoteMaps.get(bestIndex);
+		
+		int newIndex = -1;
+		for (int i = 0; i < FactionWarConfig.getMaps().size(); i++)
+		{
+			if (FactionWarConfig.getMaps().get(i).getName().equals(chosen.getName()))
+			{
+				newIndex = i;
+				break;
+			}
+		}
+		
+		if (newIndex == -1)
+			newIndex = Rnd.get(FactionWarConfig.getMaps().size());
+		
+		despawnFlag();
+		despawnGuards();
+		despawnRegistrar();
+		_checkpoints.despawn();
+		
+		_currentMapIndex = newIndex;
+		
+		spawnFlag();
+		spawnGuards();
+		spawnRegistrar();
+		_checkpoints.spawn(_currentMapIndex);
+		
+		final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
+		broadcast("[Faction War] ¡Mapa votado: " + map.getName() + "! (" + bestVotes + " votos)");
+		
+		_mapVotes.clear();
+		_votedPlayers.clear();
+		_currentVoteMaps = null;
+		
+		if (_running && FactionWarConfig.getMapRotationMinutes() > 0 && FactionWarConfig.getMaps().size() > 1)
+		{
+			_mapRotationTask = ThreadPool.schedule(this::startMapVote, FactionWarConfig.getMapRotationMinutes() * 60000L);
+		}
 	}
 	
 	private void rotateMap()

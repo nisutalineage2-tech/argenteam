@@ -2,6 +2,8 @@ package net.sf.l2j.gameserver.event;
 
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.random.Rnd;
+import net.sf.l2j.commons.pool.ThreadPool;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.skills.L2Skill;
 
@@ -26,7 +28,6 @@ public class ZombieEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
-		// All players start as humans with bow
 		for (EventPlayer ep : getAllPlayers())
 		{
 			if (!ep.isOnline())
@@ -37,7 +38,6 @@ public class ZombieEvent extends AbstractEvent
 			p.broadcastTitleInfo();
 		}
 		
-		// Pick initial zombies
 		int zombieCount = Math.max(1, Math.min(2, getAllPlayers().size() / 3));
 		final java.util.List<EventPlayer> shuffled = new java.util.ArrayList<>(getAllPlayers());
 		java.util.Collections.shuffle(shuffled);
@@ -56,24 +56,9 @@ public class ZombieEvent extends AbstractEvent
 		
 		if (isZombie(killer) && !isZombie(victim))
 		{
-			// Zombie infected a human!
 			turnIntoZombie(victim);
 			broadcastToPlayers("[ZH] " + victim.getName() + " was INFECTED and turned into a Zombie!");
-			
-			// Check if any humans remain
 			checkHumansRemaining();
-		}
-		
-		// Respawn killer at their team spawn
-		if (killer.isOnline())
-		{
-			final Player p = killer.getPlayer();
-			if (p.isDead() || p.isAlikeDead())
-			{
-				final EventTeam team = getTeam(killer.getTeamId());
-				if (team != null && team.getSpawnLocation() != null)
-					p.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
-			}
 		}
 	}
 	
@@ -84,14 +69,32 @@ public class ZombieEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[ZH] You died! Respawning...");
-		player.teleportTo(getData().getPositionAll().getX(), getData().getPositionAll().getY(), getData().getPositionAll().getZ(), 0);
+		player.sendMessage("[ZH] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
+		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			player.teleportTo(getData().getPositionAll().getX(), getData().getPositionAll().getY(), getData().getPositionAll().getZ(), 0);
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override
 	protected void onStop()
 	{
-		// Remove zombie skills
 		for (EventPlayer ep : _zombies)
 		{
 			if (ep.isOnline())
@@ -112,7 +115,6 @@ public class ZombieEvent extends AbstractEvent
 		p.setTitle("[ZH] Zombie");
 		p.broadcastTitleInfo();
 		
-		// Remove bow, give zombie skill
 		final net.sf.l2j.gameserver.model.item.instance.ItemInstance bowItem = p.getInventory().getItemByItemId(_humanBowId);
 		if (bowItem != null)
 			p.getInventory().destroyItemByItemId(_humanBowId, bowItem.getCount());
@@ -122,7 +124,7 @@ public class ZombieEvent extends AbstractEvent
 			skill.getEffects(p, p);
 		
 		_zombies.add(ep);
-		ep.setTeamId(1); // Zombies = team 1
+		ep.setTeamId(1);
 		
 		p.sendMessage("[ZH] You are now a ZOMBIE! Hunt humans!");
 	}

@@ -8,7 +8,6 @@ import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
-import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.model.World;
 
 public class AdminFactionWar implements IAdminCommandHandler
@@ -40,11 +39,6 @@ public class AdminFactionWar implements IAdminCommandHandler
 			{
 				showPanel(player, "Faction War already running!");
 				return;
-			}
-			if (EventEngine.getInstance().isAnyEventActive())
-			{
-				EventEngine.getInstance().stopAllEvents();
-				showPanel(player, "Stopped active events. Starting Faction War...");
 			}
 			final int score = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : FactionWarConfig.getScoreToWin();
 			final int duration = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : 0;

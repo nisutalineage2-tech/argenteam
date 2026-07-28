@@ -5,6 +5,7 @@ import java.util.concurrent.ScheduledFuture;
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.random.Rnd;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 
@@ -12,7 +13,6 @@ public class LuckyChestsEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(LuckyChestsEvent.class.getName());
 	
-	// Chest NPC template ID - a visible chest NPC
 	private static final int CHEST_NPC_ID = 90010;
 	
 	private int _maxChests = 5;
@@ -47,14 +47,12 @@ public class LuckyChestsEvent extends AbstractEvent
 			}
 		}
 		
-		// Start spawning chests
 		_spawnTask = ThreadPool.scheduleAtFixedRate(this::spawnChest, 5000, _chestInterval * 1000L);
 	}
 	
 	@Override
 	protected void onEventKill(EventPlayer killer, EventPlayer victim)
 	{
-		// No PvP scoring - chests are what matter
 	}
 	
 	@Override
@@ -64,8 +62,29 @@ public class LuckyChestsEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Chests] You died! Respawning...");
-		player.teleportTo(getData().getPositionAll().getX(), getData().getPositionAll().getY(), getData().getPositionAll().getZ(), 0);
+		player.sendMessage("[Chests] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
+		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			final Location center = getData().getPositionAll();
+			if (center != null)
+				player.teleportTo(center.getX(), center.getY(), center.getZ(), 0);
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override
@@ -83,7 +102,6 @@ public class LuckyChestsEvent extends AbstractEvent
 		if (_chests.size() >= _maxChests)
 			return;
 		
-		// Spawn at random position within 500 radius of center
 		final Location center = getData().getPositionAll();
 		if (center == null)
 			return;
@@ -95,7 +113,6 @@ public class LuckyChestsEvent extends AbstractEvent
 		broadcastToPlayers("[Chests] A chest appeared! Go find it!");
 	}
 	
-	// Called when a player clicks/interacts with a chest NPC
 	public void openChest(int chestIndex, Player player)
 	{
 		if (getState() != State.RUNNING)
@@ -114,17 +131,14 @@ public class LuckyChestsEvent extends AbstractEvent
 		if (ep == null)
 			return;
 		
-		// Random explode or reward
 		if (Rnd.get(100) < _explodeChance)
 		{
-			// BOOM!
 			player.doDie(player);
 			broadcastToPlayers("[Chests] " + ep.getName() + " opened a bomb chest and died!");
 		}
 		else
 		{
-			// Reward!
-			ep.addKill(); // Track chests opened
+			ep.addKill();
 			player.getInventory().addItem(_chestRewardId, _chestRewardCount);
 			if (ep.isOnline())
 			{

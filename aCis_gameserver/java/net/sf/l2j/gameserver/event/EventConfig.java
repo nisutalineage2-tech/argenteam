@@ -87,6 +87,9 @@ public final class EventConfig
 					data.setCustom(key, val);
 			}
 			
+			// Load rounds config
+			data.setRounds(props.getProperty("Event_" + i + "_Rounds", 0));
+			
 			_events.add(data);
 		}
 		
@@ -155,6 +158,7 @@ public final class EventConfig
 		private final boolean _allowMagic;
 		private final boolean _removeBuffs;
 		private final boolean _enabled;
+		private int _rounds;
 		private Location _positionAll;
 		private Location _positionBlue;
 		private Location _positionRed;
@@ -189,6 +193,8 @@ public final class EventConfig
 		public boolean isAllowMagic() { return _allowMagic; }
 		public boolean isRemoveBuffs() { return _removeBuffs; }
 		public boolean isEnabled() { return _enabled; }
+		public int getRounds() { return _rounds; }
+		public void setRounds(int rounds) { _rounds = rounds; }
 		public Location getPositionAll() { return _positionAll; }
 		public Location getPositionBlue() { return _positionBlue; }
 		public Location getPositionRed() { return _positionRed; }

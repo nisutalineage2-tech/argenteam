@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.event;
 
 import net.sf.l2j.commons.logging.CLogger;
+import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -23,7 +24,6 @@ public class DMEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
-		// Set each player's title to show initial kill count
 		for (EventPlayer ep : getAllPlayers())
 		{
 			if (!ep.isOnline())
@@ -40,7 +40,6 @@ public class DMEvent extends AbstractEvent
 		if (killer == null)
 			return;
 		
-		// Update killer's title with current kill count
 		if (killer.isOnline())
 		{
 			killer.getPlayer().setTitle("[DM] Kills: " + killer.getKills());
@@ -65,15 +64,36 @@ public class DMEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[DM] You died! Respawning...");
+		player.sendMessage("[DM] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
 		
-		final EventTeam team = getTeam(victim.getTeamId());
-		if (team != null && team.getSpawnLocation() != null)
-		{
-			player.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
-		}
-		
+		// Disable skills and immobilize during respawn delay
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
 		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		
+		// Schedule respawn with revive + full heal
+		final EventTeam team = getTeam(victim.getTeamId());
+		final int respawnX = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getX() : player.getX();
+		final int respawnY = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getY() : player.getY();
+		final int respawnZ = (team != null && team.getSpawnLocation() != null) ? team.getSpawnLocation().getZ() : player.getZ();
+		
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			player.teleportTo(respawnX, respawnY, respawnZ, 0);
+			player.sendMessage("[DM] You have been revived and healed!");
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override

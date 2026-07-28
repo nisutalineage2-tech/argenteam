@@ -4,6 +4,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
+import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 
@@ -43,14 +44,12 @@ public class DominationEvent extends AbstractEvent
 			}
 		}
 		
-		// Start zone scoring task
 		_zoneTask = ThreadPool.scheduleAtFixedRate(this::tickZone, _tickInterval * 1000L, _tickInterval * 1000L);
 	}
 	
 	@Override
 	protected void onEventKill(EventPlayer killer, EventPlayer victim)
 	{
-		// Kills don't directly score in Domination
 	}
 	
 	@Override
@@ -60,8 +59,29 @@ public class DominationEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Dom] You died! Respawning...");
-		player.teleportTo(_zoneCenter.getX() + net.sf.l2j.commons.random.Rnd.get(-200, 200), _zoneCenter.getY() + net.sf.l2j.commons.random.Rnd.get(-200, 200), _zoneCenter.getZ(), 0);
+		player.sendMessage("[Dom] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		
+		player.disableAllSkills();
+		player.setIsImmobilized(true);
+		player.startAbnormalEffect(AbnormalEffect.HOLD_1);
+		
+		ThreadPool.schedule(() ->
+		{
+			if (player == null || !player.isOnline())
+				return;
+			
+			if (player.isDead())
+				player.doRevive();
+			
+			player.getStatus().setCpHpMp(player.getStatus().getMaxCp(), player.getStatus().getMaxHp(), player.getStatus().getMaxMp());
+			player.stopAbnormalEffect(AbnormalEffect.HOLD_1);
+			player.enableAllSkills();
+			player.setIsImmobilized(false);
+			
+			final int x = _zoneCenter.getX() + net.sf.l2j.commons.random.Rnd.get(-200, 200);
+			final int y = _zoneCenter.getY() + net.sf.l2j.commons.random.Rnd.get(-200, 200);
+			player.teleportTo(x, y, _zoneCenter.getZ(), 0);
+		}, getData().getRespawnDelay() * 1000L);
 	}
 	
 	@Override

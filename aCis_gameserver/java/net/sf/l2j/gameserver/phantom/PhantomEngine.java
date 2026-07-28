@@ -14,8 +14,6 @@ import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.NewbieBuffData;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
-import net.sf.l2j.gameserver.event.AbstractEvent;
-import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.model.Faction;
