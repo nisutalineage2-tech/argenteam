@@ -17,6 +17,7 @@ import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
+import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -386,6 +387,7 @@ public final class PhantomEngine
 			if (phantom.isTeleporting())
 				phantom.onTeleported();
 			
+			FactionWarRegistry.getInstance().register(phantom);
 			PhantomAI.setHome(phantom);
 			moved++;
 		}

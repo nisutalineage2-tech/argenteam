@@ -7,7 +7,9 @@ import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
+import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.event.EventEngine;
+import net.sf.l2j.gameserver.model.World;
 
 public class AdminFactionWar implements IAdminCommandHandler
 {
@@ -54,6 +56,53 @@ public class AdminFactionWar implements IAdminCommandHandler
 				FactionWarManager.getInstance().stop();
 				showPanel(player, "Faction War stopped.");
 			}
+			case "register" ->
+			{
+				if (!FactionWarManager.getInstance().isRunning())
+				{
+					showPanel(player, "Faction War is not running!");
+					return;
+				}
+				final String targetName = st.hasMoreTokens() ? st.nextToken() : null;
+				if (targetName == null)
+				{
+					FactionWarRegistry.getInstance().register(player);
+					FactionWarManager.getInstance().teleportToWarMap(player);
+					showPanel(player, "You registered and teleported to war.");
+				}
+				else
+				{
+					final Player target = World.getInstance().getPlayer(targetName);
+					if (target == null)
+					{
+						showPanel(player, "Player not found: " + targetName);
+						return;
+					}
+					FactionWarRegistry.getInstance().register(target);
+					FactionWarManager.getInstance().teleportToWarMap(target);
+					target.sendMessage("You have been registered for Faction War by an admin.");
+					showPanel(player, target.getName() + " registered and teleported.");
+				}
+			}
+			case "registerall" ->
+			{
+				if (!FactionWarManager.getInstance().isRunning())
+				{
+					showPanel(player, "Faction War is not running!");
+					return;
+				}
+				int count = 0;
+				for (Player p : World.getInstance().getPlayers())
+				{
+					if (p != null && p.isOnline() && p.getFactionId() != 0 && !FactionWarRegistry.getInstance().isRegistered(p))
+					{
+						FactionWarRegistry.getInstance().register(p);
+						FactionWarManager.getInstance().teleportToWarMap(p);
+						count++;
+					}
+				}
+				showPanel(player, count + " players registered and teleported.");
+			}
 			case "score" ->
 			{
 				showPanel(player, FactionWarManager.getInstance().getScoreboard());
@@ -63,7 +112,7 @@ public class AdminFactionWar implements IAdminCommandHandler
 				FactionWarConfig.load();
 				showPanel(player, "Faction War config reloaded.");
 			}
-			default -> showPanel(player, "Usage: factionwar start|stop|score|reload");
+			default -> showPanel(player, "Usage: factionwar start|stop|register|registerall|score|reload");
 		}
 	}
 	
@@ -95,6 +144,11 @@ public class AdminFactionWar implements IAdminCommandHandler
 		sb.append("<td><button value=\"Start\" action=\"bypass -h admin_factionwar start\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 		sb.append("<td><button value=\"Stop\" action=\"bypass -h admin_factionwar stop\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 		sb.append("<td><button value=\"Reload\" action=\"bypass -h admin_factionwar reload\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+		sb.append("</tr></table>");
+		
+		sb.append("<table width=290><tr>");
+		sb.append("<td><button value=\"Register Me\" action=\"bypass -h admin_factionwar register\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+		sb.append("<td><button value=\"Register All\" action=\"bypass -h admin_factionwar registerall\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 		sb.append("</tr></table>");
 		
 		sb.append("</body></html>");

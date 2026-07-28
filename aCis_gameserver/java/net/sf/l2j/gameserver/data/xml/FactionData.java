@@ -83,31 +83,11 @@ public class FactionData implements IXmlReader
 			
 			if (FactionWarConfig.isEnabled())
 			{
-				if (FactionWarManager.getInstance().isRunning())
+				final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
+				if (neutralLoc != null)
 				{
-					final Location warLoc = FactionWarManager.getInstance().getFactionSpawn(player.getFactionId());
-					if (warLoc != null)
-					{
-						player.teleportTo(warLoc, 50);
-						player.sendMessage("La Faction War esta activa. Te teletransportamos al mapa de batalla.");
-					}
-				}
-				else if (FactionWarConfig.isTownRestriction() && faction.getHomeLocation() != null)
-				{
-					final int playerFactionId = player.getFactionId();
-					final int enemyFactionId = (playerFactionId == FactionWarConfig.getGoodFactionId()) ? FactionWarConfig.getEvilFactionId() : FactionWarConfig.getGoodFactionId();
-					final Location enemyBase = FactionWarManager.getInstance().getFactionSpawn(enemyFactionId);
-					final int radius = FactionWarConfig.getTownRestrictionRadius();
-					
-					if (enemyBase != null && player.getPosition().distance3D(enemyBase) < radius)
-					{
-						final Location ownBase = FactionWarManager.getInstance().getFactionSpawn(playerFactionId);
-						if (ownBase != null)
-							player.teleportTo(ownBase, 50);
-						else
-							player.teleportTo(faction.getHomeLocation(), 0);
-						player.sendMessage("Zona enemiga restringida. Regresaste a tu base.");
-					}
+					player.teleportTo(neutralLoc, 50);
+					player.sendMessage("Bienvenido. Habla con el Registrador para unirte a la Faction War.");
 				}
 			}
 		}
