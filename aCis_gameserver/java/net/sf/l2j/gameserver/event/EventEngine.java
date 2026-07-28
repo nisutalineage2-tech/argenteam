@@ -127,8 +127,8 @@ public final class EventEngine
 			// Nothing running — decide what to start based on alternance flag
 			if (Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && _alternanceExpectsFw)
 			{
-				LOGGER.info("Alternance: starting Faction War (next: events).");
-				FactionWarManager.getInstance().start(FactionWarConfig.getScoreToWin(), FactionWarConfig.getWarDurationMinutes());
+				LOGGER.info("Alternance: starting Faction War vote phase (next: events).");
+				FactionWarManager.getInstance().startVotePhase();
 				return;
 			}
 			
@@ -143,11 +143,11 @@ public final class EventEngine
 				}
 			}
 			
-			// All events exhausted — if FW is enabled, start it; otherwise restart cycle
+			// All events exhausted — if FW is enabled, start vote phase; otherwise restart cycle
 			if (Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled())
 			{
-				LOGGER.info("Alternance: events exhausted, starting Faction War.");
-				FactionWarManager.getInstance().start(FactionWarConfig.getScoreToWin(), FactionWarConfig.getWarDurationMinutes());
+				LOGGER.info("Alternance: events exhausted, starting Faction War vote phase.");
+				FactionWarManager.getInstance().startVotePhase();
 			}
 			else
 			{

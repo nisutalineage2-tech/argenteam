@@ -18,6 +18,7 @@ import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.model.spawn.Spawn;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
+import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;
 import net.sf.l2j.gameserver.model.World;
 
@@ -25,8 +26,9 @@ public class FactionWarManager
 {
 	private static final CLogger LOGGER = new CLogger(FactionWarManager.class.getName());
 	
-	private boolean _running;
+	private volatile boolean _running;
 	private boolean _startedOnce;
+	private volatile boolean _votingPhaseActive;
 	private int _currentMapIndex;
 	private final Map<Integer, Integer> _scores = new HashMap<>();
 	
@@ -49,10 +51,11 @@ public class FactionWarManager
 	private ScheduledFuture<?> _guardRespawnTask;
 	private ScheduledFuture<?> _eventEndTask;
 	private ScheduledFuture<?> _scoreboardTask;
+	private ScheduledFuture<?> _countdownTask;
 	private long _startTime;
 	private long _durationMs;
 	
-	private boolean _votingActive;
+	private volatile boolean _votingActive;
 	private final Map<Integer, Integer> _mapVotes = new HashMap<>();
 	private final java.util.Set<Integer> _votedPlayers = new java.util.HashSet<>();
 	private java.util.List<FactionWarConfig.WarMap> _currentVoteMaps;
@@ -82,6 +85,11 @@ public class FactionWarManager
 		return _startedOnce;
 	}
 	
+	public boolean isVotingPhaseActive()
+	{
+		return _votingPhaseActive;
+	}
+	
 	public int getScore(int factionId)
 	{
 		return _scores.getOrDefault(factionId, 0);
@@ -109,12 +117,132 @@ public class FactionWarManager
 		return sb.toString();
 	}
 	
-	public void start(Player player)
+	/**
+	 * Starts the Faction War voting phase. During this phase, players vote for the map.
+	 * After voting ends, a 10-second countdown begins, then the war starts.
+	 */
+	public void startVotePhase()
 	{
-		start(FactionWarConfig.getScoreToWin(), 0);
+		if (_running || _votingPhaseActive)
+		{
+			LOGGER.warn("Faction War already running or in voting phase.");
+			return;
+		}
+		
+		FactionWarConfig.load();
+		
+		_votingPhaseActive = true;
+		_scores.clear();
+		_scores.put(FactionWarConfig.getGoodFactionId(), 0);
+		_scores.put(FactionWarConfig.getEvilFactionId(), 0);
+		
+		// Spawn registrar in neutral zone so players can register during voting
+		spawnRegistrar();
+		
+		// Pick random maps for voting
+		_currentVoteMaps = FactionWarConfig.getVoteMaps();
+		_mapVotes.clear();
+		_votedPlayers.clear();
+		
+		for (int i = 0; i < _currentVoteMaps.size(); i++)
+			_mapVotes.put(i, 0);
+		
+		final int voteSeconds = FactionWarConfig.getMapVoteSeconds();
+		
+		broadcast("[Faction War] ¡La guerra de facciones se acerca! Vota por el mapa: \" .votemap \"");
+		
+		// Send voting HTML to all faction players
+		sendVotePopup();
+		
+		// Schedule vote end
+		_mapVoteTask = ThreadPool.schedule(this::applyInitialVote, voteSeconds * 1000L);
+		
+		LOGGER.info("Faction War voting phase started ({} seconds). {} maps available.", voteSeconds, _currentVoteMaps.size());
 	}
 	
+	/**
+	 * Applies the initial vote result, announces winner, then starts the war after 10 seconds.
+	 */
+	private void applyInitialVote()
+	{
+		if (!_votingPhaseActive)
+			return;
+		
+		_votingActive = false;
+		// IMPORTANT: do NOT set _votingPhaseActive = false here.
+		// It stays true until start() is called, so stop() can cancel the countdown.
+		
+		// Find winner
+		int bestIndex = 0;
+		int bestVotes = 0;
+		for (Map.Entry<Integer, Integer> entry : _mapVotes.entrySet())
+		{
+			if (entry.getValue() > bestVotes)
+			{
+				bestVotes = entry.getValue();
+				bestIndex = entry.getKey();
+			}
+		}
+		
+		// Match vote map index to actual map index
+		final FactionWarConfig.WarMap chosen;
+		if (bestVotes == 0 || _currentVoteMaps == null)
+		{
+			chosen = FactionWarConfig.getMaps().get(Rnd.get(FactionWarConfig.getMaps().size()));
+			broadcast("[Faction War] ¡Nadie votó! Mapa aleatorio: " + chosen.getName());
+		}
+		else
+		{
+			chosen = _currentVoteMaps.get(bestIndex);
+			broadcast("[Faction War] ¡Mapa elegido: " + chosen.getName() + " (" + bestVotes + " votos)! La guerra comienza en 10 segundos...");
+		}
+		
+		// Find the map index in the full map list
+		int mapIndex = 0;
+		for (int i = 0; i < FactionWarConfig.getMaps().size(); i++)
+		{
+			if (FactionWarConfig.getMaps().get(i).getName().equals(chosen.getName()))
+			{
+				mapIndex = i;
+				break;
+			}
+		}
+		
+		final int finalMapIndex = mapIndex;
+		
+		// 10-second countdown
+		_countdownTask = ThreadPool.schedule(() ->
+		{
+			// If voting phase was cancelled (e.g. by stop()), don't start
+			if (!_votingPhaseActive)
+				return;
+			
+			start(FactionWarConfig.getScoreToWin(), FactionWarConfig.getWarDurationMinutes(), finalMapIndex);
+			
+		}, 10000);
+	}
+	
+	/**
+	 * Start the war (called from admin command or after vote phase).
+	 */
+	public void start(Player player)
+	{
+		start(FactionWarConfig.getScoreToWin(), FactionWarConfig.getWarDurationMinutes(), -1);
+	}
+	
+	/**
+	 * Start the war with given score and duration, random map.
+	 */
 	public void start(int scoreToWin, int durationMinutes)
+	{
+		start(scoreToWin, durationMinutes, -1);
+	}
+	
+	/**
+	 * Start the war with given score, duration, and a specific map index.
+	 * @param mapIndex Use -1 for random.
+	 */
+	public void start(int scoreToWin, int durationMinutes, int mapIndex)
 	{
 		if (_running)
 		{
@@ -126,10 +254,12 @@ public class FactionWarManager
 		
 		_running = true;
 		_startedOnce = true;
+		_votingPhaseActive = false;
 		_scores.clear();
 		_scores.put(FactionWarConfig.getGoodFactionId(), 0);
 		_scores.put(FactionWarConfig.getEvilFactionId(), 0);
-		_currentMapIndex = 0;
+		
+		_currentMapIndex = (mapIndex >= 0 && mapIndex < FactionWarConfig.getMaps().size()) ? mapIndex : Rnd.get(FactionWarConfig.getMaps().size());
 		
 		_startTime = System.currentTimeMillis();
 		_durationMs = durationMinutes * 60000L;
@@ -152,25 +282,44 @@ public class FactionWarManager
 		sendGaugeToAllPlayers();
 		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 15000, 15000);
 		
-		teleportFactionPlayersToNeutral();
-		
 		final int teleported = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
+		
+		final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
 		
 		if (FactionWarConfig.isAnnounceStart())
 		{
-			final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
-			broadcast("[Faction War] La guerra ha comenzado! Habla con el Registrador para unirte. Mapa: " + firstMap.getName() + " | Score: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
+			broadcast("[Faction War] ¡La guerra ha comenzado! Habla con el Registrador en la zona neutral para unirte. Mapa: " + firstMap.getName() + " | Puntuación: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
 		}
 		
-		LOGGER.info("Faction War started. Score: {}. Teleported {} phantoms.", scoreToWin, teleported);
+		// Send vote popup to faction players (so they can teleport to their base)
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline())
+				continue;
+			if (player.getFactionId() == FactionWarConfig.getGoodFactionId() || player.getFactionId() == FactionWarConfig.getEvilFactionId())
+			{
+				if (FactionWarRegistry.getInstance().isRegistered(player))
+				{
+					player.sendMessage("[Faction War] Estás registrado. Habla con el Registrador de Guerra en la zona neutral para ir a tu base.");
+				}
+				else
+				{
+					player.sendMessage("[Faction War] Ve a la zona neutral y habla con el Registrador de Guerra para unirte a la batalla.");
+				}
+			}
+		}
+		
+		LOGGER.info("Faction War started. Map: {} (index: {}). Score: {}. Duration: {}min. Teleported {} phantoms.", 
+			firstMap.getName(), _currentMapIndex, scoreToWin, durationMinutes, teleported);
 	}
 	
 	public void stop()
 	{
-		if (!_running)
+		if (!_running && !_votingPhaseActive)
 			return;
 		
 		_running = false;
+		_votingPhaseActive = false;
 		
 		cancelTask(_mapRotationTask);
 		cancelTask(_mapVoteTask);
@@ -178,6 +327,9 @@ public class FactionWarManager
 		cancelTask(_guardRespawnTask);
 		cancelTask(_eventEndTask);
 		cancelTask(_scoreboardTask);
+		cancelTask(_countdownTask);
+		
+		deregisterAll();
 		
 		despawnFlag();
 		despawnGuards();
@@ -192,11 +344,11 @@ public class FactionWarManager
 			final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
 			String winner;
 			if (goodScore > evilScore)
-				winner = "GOOD WINS!";
+				winner = "¡LOS BUENOS GANAN!";
 			else if (evilScore > goodScore)
-				winner = "EVIL WINS!";
+				winner = "¡LOS MALVADOS GANAN!";
 			else
-				winner = "EMPATE!";
+				winner = "¡EMPATE!";
 			
 			broadcast("[Faction War] La guerra ha terminado! " + winner + " [" + goodScore + " - " + evilScore + "]");
 		}
@@ -312,6 +464,15 @@ public class FactionWarManager
 		}
 	}
 	
+	private void deregisterAll()
+	{
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player != null && player.isOnline() && FactionWarRegistry.getInstance().isRegistered(player))
+				FactionWarRegistry.getInstance().unregister(player);
+		}
+	}
+	
 	private void spawnFlag()
 	{
 		try
@@ -420,7 +581,6 @@ public class FactionWarManager
 	
 	private void spawnRegistrar()
 	{
-		// Registrar ALWAYS spawns in the neutral zone (Aden), not on the war map
 		final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
 		if (neutralLoc == null)
 			return;
@@ -468,6 +628,9 @@ public class FactionWarManager
 		}, FactionWarConfig.getGuardRespawnDelay());
 	}
 	
+	/**
+	 * Starts a map rotation vote (mid-war map change).
+	 */
 	private void startMapVote()
 	{
 		if (!_running || FactionWarConfig.getMaps().size() <= 1)
@@ -478,18 +641,21 @@ public class FactionWarManager
 		_votedPlayers.clear();
 		_currentVoteMaps = FactionWarConfig.getVoteMaps();
 		
-		for (FactionWarConfig.WarMap map : _currentVoteMaps)
-			_mapVotes.put(_currentVoteMaps.indexOf(map), 0);
+		for (int i = 0; i < _currentVoteMaps.size(); i++)
+			_mapVotes.put(i, 0);
 		
 		final int voteSeconds = FactionWarConfig.getMapVoteSeconds();
 		
-		broadcast("[Faction War] ¡Vota por el próximo mapa! Tienes " + voteSeconds + " segundos.");
+		broadcast("[Faction War] ¡Vota por el próximo mapa! Tienes " + voteSeconds + " segundos. Usa .votemap o habla con el Registrador.");
 		
 		sendVotePopup();
 		
 		_mapVoteTask = ThreadPool.schedule(this::applyMapVote, voteSeconds * 1000L);
 	}
 	
+	/**
+	 * Sends the voting HTML to all faction players.
+	 */
 	private void sendVotePopup()
 	{
 		if (_currentVoteMaps == null || _registrarNpc == null)
@@ -497,6 +663,29 @@ public class FactionWarManager
 		
 		final int npcId = _registrarNpc.getObjectId();
 		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline())
+				continue;
+			if (player.getFactionId() == FactionWarConfig.getGoodFactionId() || player.getFactionId() == FactionWarConfig.getEvilFactionId())
+			{
+				sendVoteHtml(player, npcId);
+			}
+		}
+	}
+	
+	/**
+	 * Sends the voting HTML to a specific player.
+	 */
+	public void sendVoteHtml(Player player)
+	{
+		if (_currentVoteMaps == null || _registrarNpc == null)
+			return;
+		sendVoteHtml(player, _registrarNpc.getObjectId());
+	}
+	
+	private void sendVoteHtml(Player player, int npcId)
+	{
 		final StringBuilder mapsHtml = new StringBuilder();
 		for (int i = 0; i < _currentVoteMaps.size(); i++)
 		{
@@ -508,31 +697,23 @@ public class FactionWarManager
 			mapsHtml.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\">");
 		}
 		
-		for (Player player : World.getInstance().getPlayers())
-		{
-			if (player == null || !player.isOnline())
-				continue;
-			if (player.getFactionId() == FactionWarConfig.getGoodFactionId() || player.getFactionId() == FactionWarConfig.getEvilFactionId())
-			{
-				final net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage html = new net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage(npcId);
-				html.setFile("data/html/script/factionwar/WarRegistrar/war_registrar_map_vote.htm");
-				html.replace("%MAPS%", mapsHtml.toString());
-				html.replace("%SECONDS%", String.valueOf(FactionWarConfig.getMapVoteSeconds()));
-				player.sendPacket(html);
-				
-				player.sendPacket(new ExShowScreenMessage("Vota por el siguiente mapa!", 10000, ExShowScreenMessage.SMPOS.TOP_CENTER, false));
-			}
-		}
+		final NpcHtmlMessage html = new NpcHtmlMessage(npcId);
+		html.setFile("data/html/script/factionwar/WarRegistrar/war_registrar_map_vote.htm");
+		html.replace("%MAPS%", mapsHtml.toString());
+		html.replace("%SECONDS%", String.valueOf(FactionWarConfig.getMapVoteSeconds()));
+		player.sendPacket(html);
+		
+		player.sendPacket(new ExShowScreenMessage("¡Vota por el mapa de la guerra!", 10000, ExShowScreenMessage.SMPOS.TOP_CENTER, false));
 	}
 	
 	public void onPlayerVote(Player player, int mapIndex)
 	{
-		if (!_votingActive || _currentVoteMaps == null)
+		if (!_votingActive && !_votingPhaseActive)
 			return;
-		
+		if (_currentVoteMaps == null)
+			return;
 		if (mapIndex < 0 || mapIndex >= _currentVoteMaps.size())
 			return;
-		
 		if (_votedPlayers.contains(player.getObjectId()))
 		{
 			player.sendMessage("[Faction War] Ya has votado.");
@@ -545,6 +726,9 @@ public class FactionWarManager
 		player.sendMessage("[Faction War] ¡Voto registrado por " + _currentVoteMaps.get(mapIndex).getName() + "!");
 	}
 	
+	/**
+	 * Applies a mid-war map rotation vote.
+	 */
 	private void applyMapVote()
 	{
 		if (!_running)
@@ -563,13 +747,17 @@ public class FactionWarManager
 			}
 		}
 		
-		if (bestVotes == 0)
+		FactionWarConfig.WarMap chosen;
+		if (bestVotes == 0 || _currentVoteMaps == null)
 		{
-			bestIndex = Rnd.get(_currentVoteMaps.size());
-			broadcast("[Faction War] ¡Nadie votó! Mapa aleatorio seleccionado.");
+			chosen = FactionWarConfig.getMaps().get(Rnd.get(FactionWarConfig.getMaps().size()));
+			broadcast("[Faction War] ¡Nadie votó! Mapa aleatorio seleccionado: " + chosen.getName());
 		}
-		
-		final FactionWarConfig.WarMap chosen = _currentVoteMaps.get(bestIndex);
+		else
+		{
+			chosen = _currentVoteMaps.get(bestIndex);
+			broadcast("[Faction War] ¡Mapa votado: " + chosen.getName() + "! (" + bestVotes + " votos)");
+		}
 		
 		int newIndex = -1;
 		for (int i = 0; i < FactionWarConfig.getMaps().size(); i++)
@@ -584,20 +772,16 @@ public class FactionWarManager
 		if (newIndex == -1)
 			newIndex = Rnd.get(FactionWarConfig.getMaps().size());
 		
+		// Respawn everything on new map
 		despawnFlag();
 		despawnGuards();
-		despawnRegistrar();
 		_checkpoints.despawn();
 		
 		_currentMapIndex = newIndex;
 		
 		spawnFlag();
 		spawnGuards();
-		spawnRegistrar();
 		_checkpoints.spawn(_currentMapIndex);
-		
-		final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
-		broadcast("[Faction War] ¡Mapa votado: " + map.getName() + "! (" + bestVotes + " votos)");
 		
 		_mapVotes.clear();
 		_votedPlayers.clear();
@@ -609,33 +793,14 @@ public class FactionWarManager
 		}
 	}
 	
-	private void rotateMap()
+	/**
+	 * Checks if the player is in the neutral zone.
+	 */
+	public boolean isInNeutralZone(Player player)
 	{
-		if (!_running || FactionWarConfig.getMaps().size() <= 1)
-			return;
-		
-		despawnFlag();
-		despawnGuards();
-		despawnRegistrar();
-		_checkpoints.despawn();
-		
-		int newIndex;
-		do
-		{
-			newIndex = Rnd.get(FactionWarConfig.getMaps().size());
-		}
-		while (newIndex == _currentMapIndex && FactionWarConfig.getMaps().size() > 1);
-		
-		_currentMapIndex = newIndex;
-		
-		spawnFlag();
-		spawnGuards();
-		spawnRegistrar();
-		_checkpoints.spawn(_currentMapIndex);
-		
-		final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
-		if (FactionWarConfig.isAnnounceMapSwitch())
-			broadcast("[Faction War] Mapa: " + map.getName());
+		if (player == null)
+			return false;
+		return FactionWarConfig.isInNeutralZone(new Location(player.getX(), player.getY(), player.getZ()));
 	}
 	
 	public int getCurrentMapIndex()
