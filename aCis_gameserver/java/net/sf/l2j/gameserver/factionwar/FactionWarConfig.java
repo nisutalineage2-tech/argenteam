@@ -19,6 +19,8 @@ public class FactionWarConfig
 	private static int _flagNpcId;
 	private static long _flagRespawnDelay;
 	private static int _guardNpcId;
+	private static int _guardsPerBase;
+	private static int _guardCircleRadius;
 	private static long _guardRespawnDelay;
 	private static int _warRegistrarNpcId;
 	private static int _checkpointNpcId;
@@ -52,13 +54,15 @@ public class FactionWarConfig
 		_flagNpcId = props.getProperty("FlagNpcId", 90000);
 		_flagRespawnDelay = props.getProperty("FlagRespawnDelay", 30) * 1000L;
 		_guardNpcId = props.getProperty("GuardNpcId", 90001);
+		_guardsPerBase = props.getProperty("GuardsPerBase", 3);
+		_guardCircleRadius = props.getProperty("GuardCircleRadius", 100);
 		_guardRespawnDelay = props.getProperty("GuardRespawnDelay", 60) * 1000L;
 		_warRegistrarNpcId = props.getProperty("WarRegistrarNpcId", 90002);
 		_checkpointNpcId = props.getProperty("CheckpointNpcId", 90003);
 		_checkpointCount = props.getProperty("CheckpointCount", 3);
 		_checkpointRadius = props.getProperty("CheckpointRadius", 2000);
 		_mapRotationMinutes = props.getProperty("MapRotationMinutes", 30);
-		_neutralSpawnLoc = parseLoc(props.getProperty("NeutralSpawnLoc", "-84300,243000,-3450"));
+		_neutralSpawnLoc = parseLoc(props.getProperty("NeutralSpawnLoc", "147300,25750,-2000"));
 		_announceStart = props.getProperty("AnnounceStart", true);
 		_announceEnd = props.getProperty("AnnounceEnd", true);
 		_announceFlagKill = props.getProperty("AnnounceFlagKill", true);
@@ -87,7 +91,6 @@ public class FactionWarConfig
 					final int z = Integer.parseInt(parts[3].trim());
 					final int radius = parts.length > 4 ? Integer.parseInt(parts[4].trim()) : 3000;
 					
-					// Per-map spawns: goodX,goodY,goodZ,evilX,evilY,evilZ (optional, parts 5-10)
 					Location goodMapSpawn = null;
 					Location evilMapSpawn = null;
 					if (parts.length >= 11)
@@ -128,6 +131,8 @@ public class FactionWarConfig
 	public static int getFlagNpcId() { return _flagNpcId; }
 	public static long getFlagRespawnDelay() { return _flagRespawnDelay; }
 	public static int getGuardNpcId() { return _guardNpcId; }
+	public static int getGuardsPerBase() { return _guardsPerBase; }
+	public static int getGuardCircleRadius() { return _guardCircleRadius; }
 	public static long getGuardRespawnDelay() { return _guardRespawnDelay; }
 	public static int getWarRegistrarNpcId() { return _warRegistrarNpcId; }
 	public static int getCheckpointNpcId() { return _checkpointNpcId; }
@@ -148,7 +153,7 @@ public class FactionWarConfig
 	public static boolean isTownRestriction() { return _townRestriction; }
 	public static int getTownRestrictionRadius() { return _townRestrictionRadius; }
 	
-		static
+	static
 	{
 		load();
 	}
@@ -189,20 +194,6 @@ public class FactionWarConfig
 		public Location getEvilSpawn()
 		{
 			return _evilMapSpawn != null ? _evilMapSpawn : _evilSpawnLoc;
-		}
-		
-		public Location getGoodGuardLoc()
-		{
-			if (_goodMapSpawn != null)
-				return _goodMapSpawn;
-			return _goodSpawnLoc;
-		}
-		
-		public Location getEvilGuardLoc()
-		{
-			if (_evilMapSpawn != null)
-				return _evilMapSpawn;
-			return _evilSpawnLoc;
 		}
 	}
 }

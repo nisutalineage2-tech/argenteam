@@ -23,6 +23,7 @@ public class FactionWarGuard extends Monster
 	public void onSpawn()
 	{
 		super.onSpawn();
+		setNoRndWalk(true);
 		
 		if (FactionWarConfig.isEnabled())
 		{
@@ -64,6 +65,28 @@ public class FactionWarGuard extends Monster
 		}
 		
 		super.onDecay();
+	}
+	
+	@Override
+	public int getDriftRange()
+	{
+		return 20;
+	}
+	
+	@Override
+	public boolean returnHome()
+	{
+		if (isDead())
+			return false;
+		
+		if (!isInMyTerritory())
+		{
+			abortAll(true);
+			teleportTo(getSpawnLocation(), 0);
+			return true;
+		}
+		
+		return super.returnHome();
 	}
 	
 	private int getGuardFactionId()

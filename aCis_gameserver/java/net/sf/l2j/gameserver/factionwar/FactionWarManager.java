@@ -1,6 +1,8 @@
 package net.sf.l2j.gameserver.factionwar;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
@@ -29,10 +31,12 @@ public class FactionWarManager
 	
 	private Spawn _flagSpawn;
 	private Npc _flagNpc;
-	private Spawn _goodGuardSpawn;
-	private Npc _goodGuardNpc;
-	private Spawn _evilGuardSpawn;
-	private Npc _evilGuardNpc;
+	
+	private final List<Spawn> _goodGuardSpawns = new ArrayList<>();
+	private final List<Npc> _goodGuardNpcs = new ArrayList<>();
+	private final List<Spawn> _evilGuardSpawns = new ArrayList<>();
+	private final List<Npc> _evilGuardNpcs = new ArrayList<>();
+	
 	private Spawn _registrarSpawn;
 	private Npc _registrarNpc;
 	
@@ -114,7 +118,6 @@ public class FactionWarManager
 		_scores.put(FactionWarConfig.getEvilFactionId(), 0);
 		_currentMapIndex = 0;
 		
-		// Record start time for timer display
 		_startTime = System.currentTimeMillis();
 		_durationMs = durationMinutes * 60000L;
 		
@@ -133,7 +136,6 @@ public class FactionWarManager
 			_eventEndTask = ThreadPool.schedule(() -> stop(), _durationMs);
 		}
 		
-		// Send gauge bar to all faction players and start periodic scoreboard
 		sendGaugeToAllPlayers();
 		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 15000, 15000);
 		
@@ -142,10 +144,10 @@ public class FactionWarManager
 		if (FactionWarConfig.isAnnounceStart())
 		{
 			final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
-			broadcast("[Faction War] La guerra ha comenzado! Mapa: " + firstMap.getName() + " | Score to win: " + scoreToWin + (durationMinutes > 0 ? " | Duration: " + durationMinutes + "min" : ""));
+			broadcast("[Faction War] La guerra ha comenzado! Mapa: " + firstMap.getName() + " | Score: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
 		}
 		
-		LOGGER.info("Faction War started. Score to win: {}. Teleported {} phantoms to war.", scoreToWin, teleported);
+		LOGGER.info("Faction War started. Score: {}. Teleported {} phantoms.", scoreToWin, teleported);
 	}
 	
 	public void stop()
@@ -183,7 +185,7 @@ public class FactionWarManager
 			broadcast("[Faction War] La guerra ha terminado! " + winner + " [" + goodScore + " - " + evilScore + "]");
 		}
 		
-		LOGGER.info("Faction War stopped. Returned {} phantoms to faction bases.", returned);
+		LOGGER.info("Faction War stopped. Returned {} phantoms.", returned);
 	}
 	
 	public void onFlagKilled(int killerFactionId)
@@ -194,8 +196,14 @@ public class FactionWarManager
 		final int points = FactionWarConfig.getPointsPerFlagKill();
 		_scores.merge(killerFactionId, points, Integer::sum);
 		
+		final int loserFactionId = (killerFactionId == FactionWarConfig.getGoodFactionId())
+			? FactionWarConfig.getEvilFactionId()
+			: FactionWarConfig.getGoodFactionId();
+		
+		teleportFactionToBase(loserFactionId);
+		
 		if (FactionWarConfig.isAnnounceFlagKill())
-			broadcast("[Faction War] Faction " + killerFactionId + " destruyo la bandera! +" + points + " pts");
+			broadcast("[Faction War] Faction " + killerFactionId + " destruyo la bandera! +" + points + " pts. Faction " + loserFactionId + " regresa a su base!");
 		
 		if (FactionWarConfig.isAnnounceScore())
 			broadcast("[Faction War] " + getScoreboard());
@@ -233,6 +241,22 @@ public class FactionWarManager
 				stop();
 				return;
 			}
+		}
+	}
+	
+	private void teleportFactionToBase(int factionId)
+	{
+		final Location baseLoc = getFactionSpawn(factionId);
+		if (baseLoc == null)
+			return;
+		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline() || player.isDead())
+				continue;
+			
+			if (player.getFactionId() == factionId)
+				player.teleportTo(baseLoc, 50);
 		}
 	}
 	
@@ -285,73 +309,94 @@ public class FactionWarManager
 			return;
 		
 		final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
+		final int count = FactionWarConfig.getGuardsPerBase();
+		final int radius = FactionWarConfig.getGuardCircleRadius();
 		
-		try
+		spawnGuardGroup(map.getGoodSpawn(), count, radius, _goodGuardSpawns, _goodGuardNpcs);
+		spawnGuardGroup(map.getEvilSpawn(), count, radius, _evilGuardSpawns, _evilGuardNpcs);
+	}
+	
+	private void spawnGuardGroup(Location baseLoc, int count, int radius, List<Spawn> spawns, List<Npc> npcs)
+	{
+		for (int i = 0; i < count; i++)
 		{
-			final Location goodLoc = map.getGoodGuardLoc();
-			_goodGuardSpawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
-			_goodGuardSpawn.setLoc(goodLoc.getX(), goodLoc.getY(), goodLoc.getZ(), 0);
-			_goodGuardNpc = _goodGuardSpawn.doSpawn(false);
-		}
-		catch (Exception e)
-		{
-			LOGGER.error("Failed to spawn good guard.", e);
-		}
-		
-		try
-		{
-			final Location evilLoc = map.getEvilGuardLoc();
-			_evilGuardSpawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
-			_evilGuardSpawn.setLoc(evilLoc.getX(), evilLoc.getY(), evilLoc.getZ(), 0);
-			_evilGuardNpc = _evilGuardSpawn.doSpawn(false);
-		}
-		catch (Exception e)
-		{
-			LOGGER.error("Failed to spawn evil guard.", e);
+			final double angle = (2 * Math.PI * i) / count;
+			final int x = baseLoc.getX() + (int) (radius * Math.cos(angle));
+			final int y = baseLoc.getY() + (int) (radius * Math.sin(angle));
+			final int z = baseLoc.getZ();
+			
+			try
+			{
+				final Spawn spawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
+				spawn.setLoc(x, y, z, 0);
+				final Npc npc = spawn.doSpawn(false);
+				if (npc != null)
+				{
+					spawns.add(spawn);
+					npcs.add(npc);
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("Failed to spawn guard at ({}, {}, {}).", e, x, y, z);
+			}
 		}
 	}
 	
 	private void despawnGuards()
 	{
-		despawnNpc(_goodGuardNpc, _goodGuardSpawn);
-		_goodGuardNpc = null;
-		_goodGuardSpawn = null;
-		despawnNpc(_evilGuardNpc, _evilGuardSpawn);
-		_evilGuardNpc = null;
-		_evilGuardSpawn = null;
+		despawnGuardGroup(_goodGuardSpawns, _goodGuardNpcs);
+		despawnGuardGroup(_evilGuardSpawns, _evilGuardNpcs);
 	}
 	
-	private void despawnNpc(Npc npc, Spawn spawn)
+	private void despawnGuardGroup(List<Spawn> spawns, List<Npc> npcs)
 	{
-		if (npc != null)
-			npc.deleteMe();
-		if (spawn != null)
-			spawn.doDelete();
+		for (Npc npc : npcs)
+		{
+			if (npc != null)
+				npc.deleteMe();
+		}
+		npcs.clear();
+		
+		for (Spawn spawn : spawns)
+		{
+			if (spawn != null)
+				spawn.doDelete();
+		}
+		spawns.clear();
 	}
 	
 	private void spawnRegistrar()
 	{
-		if (FactionWarConfig.getMaps().isEmpty())
+		// Registrar ALWAYS spawns in the neutral zone (Aden), not on the war map
+		final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
+		if (neutralLoc == null)
 			return;
 		
 		try
 		{
-			final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().get(_currentMapIndex);
 			_registrarSpawn = new Spawn(FactionWarConfig.getWarRegistrarNpcId(), true);
-			_registrarSpawn.setLoc(map.getX(), map.getY() + 200, map.getZ(), 0);
+			_registrarSpawn.setLoc(neutralLoc.getX(), neutralLoc.getY(), neutralLoc.getZ(), 0);
 			_registrarNpc = _registrarSpawn.doSpawn(false);
 		}
 		catch (Exception e)
 		{
-			LOGGER.error("Failed to spawn War Registrar.", e);
+			LOGGER.error("Failed to spawn War Registrar at neutral zone.", e);
 		}
 	}
 	
 	private void despawnRegistrar()
 	{
-		despawnNpc(_registrarNpc, _registrarSpawn);
-		_registrarNpc = null;
-		_registrarSpawn = null;
+		if (_registrarNpc != null)
+		{
+			_registrarNpc.deleteMe();
+			_registrarNpc = null;
+		}
+		if (_registrarSpawn != null)
+		{
+			_registrarSpawn.doDelete();
+			_registrarSpawn = null;
+		}
 	}
 	
 	public void onGuardDied()
@@ -381,7 +426,6 @@ public class FactionWarManager
 		despawnRegistrar();
 		_checkpoints.despawn();
 		
-		// Pick a random map different from the current one
 		int newIndex;
 		do
 		{
@@ -420,9 +464,6 @@ public class FactionWarManager
 		return null;
 	}
 	
-	/**
-	 * Returns remaining time string, or empty if no duration set.
-	 */
 	public String getRemainingTimeStr()
 	{
 		if (_durationMs <= 0 || _startTime <= 0)
@@ -439,9 +480,6 @@ public class FactionWarManager
 		return String.format("%d:%02d", mins, secs);
 	}
 	
-	/**
-	 * Sends a SetupGauge bar to all online players showing the war duration.
-	 */
 	private void sendGaugeToAllPlayers()
 	{
 		if (_durationMs <= 0)
@@ -455,9 +493,6 @@ public class FactionWarManager
 		}
 	}
 	
-	/**
-	 * Periodic scoreboard broadcast with score + remaining time, sent via ExShowScreenMessage.
-	 */
 	public void broadcastScoreboardWithTime()
 	{
 		if (!_running)

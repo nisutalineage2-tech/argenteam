@@ -85,13 +85,17 @@ public class FactionData implements IXmlReader
 			{
 				final int playerFactionId = player.getFactionId();
 				final int enemyFactionId = (playerFactionId == FactionWarConfig.getGoodFactionId()) ? FactionWarConfig.getEvilFactionId() : FactionWarConfig.getGoodFactionId();
-				final Location enemyBase = (enemyFactionId == FactionWarConfig.getGoodFactionId()) ? FactionWarConfig.getGoodSpawnLoc() : FactionWarConfig.getEvilSpawnLoc();
+				final Location enemyBase = net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().getFactionSpawn(enemyFactionId);
 				final int radius = FactionWarConfig.getTownRestrictionRadius();
 				
 				if (enemyBase != null && player.getPosition().distance3D(enemyBase) < radius)
 				{
-					player.teleportTo(faction.getHomeLocation(), 0);
-					player.sendMessage("You were teleported to your faction base. Enemy territory is restricted.");
+					final Location ownBase = net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().getFactionSpawn(playerFactionId);
+					if (ownBase != null)
+						player.teleportTo(ownBase, 50);
+					else
+						player.teleportTo(faction.getHomeLocation(), 0);
+					player.sendMessage("Zona enemiga restringida. Regresaste a tu base.");
 				}
 			}
 		}
