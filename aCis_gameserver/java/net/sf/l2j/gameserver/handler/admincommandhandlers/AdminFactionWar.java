@@ -7,6 +7,7 @@ import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
+import net.sf.l2j.gameserver.event.EventEngine;
 
 public class AdminFactionWar implements IAdminCommandHandler
 {
@@ -31,18 +32,23 @@ public class AdminFactionWar implements IAdminCommandHandler
 		
 		switch (action)
 		{
-			case "start" ->
+		case "start" ->
+		{
+			if (FactionWarManager.getInstance().isRunning())
 			{
-				if (FactionWarManager.getInstance().isRunning())
-				{
-					showPanel(player, "Faction War already running!");
-					return;
-				}
-				final int score = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : FactionWarConfig.getScoreToWin();
-				final int duration = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : 0;
-				FactionWarManager.getInstance().start(score, duration);
-				showPanel(player, "Faction War started! Score: " + score + (duration > 0 ? " Duration: " + duration + "min" : ""));
+				showPanel(player, "Faction War already running!");
+				return;
 			}
+			if (EventEngine.getInstance().isAnyEventActive())
+			{
+				EventEngine.getInstance().stopAllEvents();
+				showPanel(player, "Stopped active events. Starting Faction War...");
+			}
+			final int score = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : FactionWarConfig.getScoreToWin();
+			final int duration = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : 0;
+			FactionWarManager.getInstance().start(score, duration);
+			showPanel(player, "Faction War started! Score: " + score + (duration > 0 ? " Duration: " + duration + "min" : ""));
+		}
 			case "stop" ->
 			{
 				FactionWarManager.getInstance().stop();

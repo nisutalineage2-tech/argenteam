@@ -26,6 +26,7 @@ public class FactionWarManager
 	private static final CLogger LOGGER = new CLogger(FactionWarManager.class.getName());
 	
 	private boolean _running;
+	private boolean _startedOnce;
 	private int _currentMapIndex;
 	private final Map<Integer, Integer> _scores = new HashMap<>();
 	
@@ -70,6 +71,11 @@ public class FactionWarManager
 		return _running;
 	}
 	
+	public boolean isStartedOnce()
+	{
+		return _startedOnce;
+	}
+	
 	public int getScore(int factionId)
 	{
 		return _scores.getOrDefault(factionId, 0);
@@ -110,15 +116,10 @@ public class FactionWarManager
 			return;
 		}
 		
-		if (net.sf.l2j.gameserver.event.EventEngine.getInstance().isAnyEventActive())
-		{
-			LOGGER.warn("Cannot start Faction War: another event is in progress.");
-			return;
-		}
-		
 		FactionWarConfig.load();
 		
 		_running = true;
+		_startedOnce = true;
 		_scores.clear();
 		_scores.put(FactionWarConfig.getGoodFactionId(), 0);
 		_scores.put(FactionWarConfig.getEvilFactionId(), 0);
@@ -196,6 +197,39 @@ public class FactionWarManager
 		teleportFactionPlayersToNeutral();
 		
 		LOGGER.info("Faction War stopped. Returned {} phantoms.", returned);
+		
+		scheduleRandomEvent();
+	}
+	
+	private void scheduleRandomEvent()
+	{
+		if (!net.sf.l2j.gameserver.event.EventConfig.isSchedulerEnabled())
+			return;
+		
+		if (net.sf.l2j.gameserver.event.EventEngine.getInstance().isAnyEventActive())
+			return;
+		
+		LOGGER.info("Alternance: Faction War ended, scheduling random event.");
+		
+		net.sf.l2j.commons.pool.ThreadPool.schedule(() ->
+		{
+			if (!net.sf.l2j.gameserver.event.EventEngine.getInstance().isAnyEventActive() && !_running)
+			{
+				final java.util.List<net.sf.l2j.gameserver.event.AbstractEvent> idleEvents = new java.util.ArrayList<>();
+				for (net.sf.l2j.gameserver.event.AbstractEvent event : net.sf.l2j.gameserver.event.EventEngine.getInstance().getAllEvents())
+				{
+					if (event.getState() == net.sf.l2j.gameserver.event.AbstractEvent.State.IDLE)
+						idleEvents.add(event);
+				}
+				
+				if (!idleEvents.isEmpty())
+				{
+					final net.sf.l2j.gameserver.event.AbstractEvent randomEvent = idleEvents.get(net.sf.l2j.commons.random.Rnd.get(idleEvents.size()));
+					LOGGER.info("Alternance: starting event: {}", randomEvent.getData().getEventName());
+					randomEvent.startRegistering();
+				}
+			}
+		}, 5000);
 	}
 	
 	public void onFlagKilled(int killerFactionId)

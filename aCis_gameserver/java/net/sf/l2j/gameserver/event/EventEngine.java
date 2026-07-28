@@ -6,6 +6,8 @@ import java.util.concurrent.ScheduledFuture;
 
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.actor.Player;
 
 public final class EventEngine
@@ -15,6 +17,7 @@ public final class EventEngine
 	private static final List<AbstractEvent> _events = new ArrayList<>();
 	private ScheduledFuture<?> _schedulerTask;
 	private boolean _enabled;
+	private boolean _suppressAlternance;
 	
 	private EventEngine()
 	{
@@ -110,6 +113,13 @@ public final class EventEngine
 				return;
 			}
 			
+			if (!net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().isStartedOnce())
+			{
+				LOGGER.info("Alternance: starting Faction War (first run).");
+				net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().start(net.sf.l2j.gameserver.factionwar.FactionWarConfig.getScoreToWin(), 0);
+				return;
+			}
+			
 			for (AbstractEvent event : _events)
 			{
 				if (event.getState() == AbstractEvent.State.IDLE)
@@ -181,6 +191,11 @@ public final class EventEngine
 		return active;
 	}
 	
+	public List<AbstractEvent> getAllEvents()
+	{
+		return new ArrayList<>(_events);
+	}
+	
 	public AbstractEvent getEventForPlayer(int playerId)
 	{
 		for (AbstractEvent event : _events)
@@ -233,5 +248,31 @@ public final class EventEngine
 		
 		EventConfig.load();
 		init();
+	}
+	
+	public void stopAllEvents()
+	{
+		_suppressAlternance = true;
+		for (AbstractEvent event : _events)
+		{
+			if (event.getState() != AbstractEvent.State.IDLE)
+				event.stop();
+		}
+		_suppressAlternance = false;
+	}
+	
+	public void onEventEnded()
+	{
+		if (_suppressAlternance)
+			return;
+		
+		if (!EventConfig.isSchedulerEnabled())
+			return;
+		
+		if (FactionWarManager.getInstance().isRunning())
+			return;
+		
+		LOGGER.info("Alternance: event ended, starting Faction War.");
+		FactionWarManager.getInstance().start(FactionWarConfig.getScoreToWin(), 0);
 	}
 }

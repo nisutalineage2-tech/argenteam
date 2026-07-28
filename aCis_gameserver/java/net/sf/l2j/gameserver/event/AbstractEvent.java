@@ -186,6 +186,8 @@ public abstract class AbstractEvent
 		onStop();
 		
 		LOGGER.info("Event {} stopped.", _data.getEventName());
+		
+		EventEngine.getInstance().onEventEnded();
 	}
 	
 	protected final void endMatch()
@@ -223,6 +225,8 @@ public abstract class AbstractEvent
 		onStop();
 		
 		LOGGER.info("Event {} ended.", _data.getEventName());
+		
+		EventEngine.getInstance().onEventEnded();
 	}
 	
 	public final boolean registerPlayer(Player player)
