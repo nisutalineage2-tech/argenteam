@@ -9,6 +9,7 @@ import java.util.Map;
 
 import net.sf.l2j.commons.data.xml.IXmlReader;
 import net.sf.l2j.commons.pool.ConnectionPool;
+import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.data.StatSet;
 
 import net.sf.l2j.Config;
@@ -81,13 +82,29 @@ public class FactionData implements IXmlReader
 			player.getAppearance().setTitleColor(faction.getTitleColor());
 			player.setTitle(faction.getName());
 			
+			// Teleport to neutral zone AFTER EnterWorld completes (delay 1s).
+			// Teleporting during EnterWorld desyncs the client and causes disconnect.
 			if (FactionWarConfig.isEnabled())
 			{
 				final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
 				if (neutralLoc != null)
 				{
-					player.teleportTo(neutralLoc, 50);
-					player.sendMessage("Bienvenido. Habla con el Registrador para unirte a la Faction War.");
+					final int px = player.getX();
+					final int py = player.getY();
+					final int pz = player.getZ();
+					
+					// Only teleport if player is not already at neutral zone
+					if (Math.abs(px - neutralLoc.getX()) > 100 || Math.abs(py - neutralLoc.getY()) > 100 || Math.abs(pz - neutralLoc.getZ()) > 50)
+					{
+						ThreadPool.schedule(() ->
+						{
+							if (player.isOnline() && !player.isInJail())
+							{
+								player.teleportTo(neutralLoc, 50);
+								player.sendMessage("Bienvenido a la zona neutral de la Faction War.");
+							}
+						}, 1000);
+					}
 				}
 			}
 		}
