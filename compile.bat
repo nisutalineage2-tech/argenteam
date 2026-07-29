@@ -115,17 +115,9 @@ mkdir "%DP_DIR%\build\login" 2>nul
 mkdir "%DP_DIR%\build\sql" 2>nul
 mkdir "%DP_DIR%\build\tools" 2>nul
 
-REM Crear archivo de exclusiones temporales para xcopy
-set "EXCLUDE_FILE=%TEMP%\acis_exclude.txt"
-echo .project> "%EXCLUDE_FILE%"
-echo log>> "%EXCLUDE_FILE%"
-echo cachedir>> "%EXCLUDE_FILE%"
-echo clans>> "%EXCLUDE_FILE%"
-echo crests>> "%EXCLUDE_FILE%"
-
-REM Copiar data (excluyendo carpetas no deseadas)
+REM Copiar data (excluyendo carpetas no deseadas con robocopy)
 echo Copiando datos...
-xcopy /e /i /y "%DP_DIR%\data" "%DP_DIR%\build\gameserver\data\" /exclude:"%EXCLUDE_FILE%" >nul
+robocopy "%DP_DIR%\data" "%DP_DIR%\build\gameserver\data" /E /XD .project log cachedir clans crests /NFL /NJH /NJS /NDL >nul 2>nul
 
 REM Copiar sql
 echo Copiando SQL...
@@ -137,9 +129,6 @@ copy "%DP_DIR%\tools\*" "%DP_DIR%\build\tools\" >nul
 
 REM Copiar serverNames.xml a login
 copy "%DP_DIR%\data\serverNames.xml" "%DP_DIR%\build\login\" >nul
-
-REM Limpiar exclusiones temporales
-del "%EXCLUDE_FILE%" 2>nul
 
 echo.
 echo ========================================
