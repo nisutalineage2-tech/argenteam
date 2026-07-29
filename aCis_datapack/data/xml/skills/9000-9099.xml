@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <list>
 	<skill id="9007" levels="1" name="Mutant">
-		<set name="target" val="TARGET_SELF" />
+		<set name="target" val="SELF" />
 		<set name="skillType" val="BUFF" />
 		<set name="operateType" val="PASSIVE" />
 		<for>
@@ -17,7 +17,7 @@
 		</for>
 	</skill>
 	<skill id="9008" levels="1" name="Zombie">
-		<set name="target" val="TARGET_SELF" />
+		<set name="target" val="SELF" />
 		<set name="skillType" val="BUFF" />
 		<set name="operateType" val="PASSIVE" />
 		<for>
