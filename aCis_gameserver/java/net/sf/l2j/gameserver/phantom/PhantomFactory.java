@@ -47,15 +47,19 @@ public final class PhantomFactory
 	};
 	private static final String[] MALE_NAMES =
 	{
-		"Adrian", "Bruno", "Daniel", "Fabian", "Gabriel", "Hector", "Ivan", "Julian", "Lucas", "Marcos", "Matias", "Nicolas", "Rafael", "Tomas", "Dario", "Emilio", "Franco", "Leandro"
+		"Alejandro", "Alvaro", "Andres", "Antonio", "Carlos", "Cristian", "David", "Diego", "Eduardo", "Fernando", "Francisco", "Gonzalo", "Guillermo", "Hector", "Ignacio", "Ivan", "Jaime", "Javier", "Jorge", "Jose", "Juan", "Julian", "Kevin", "Leandro", "Lucas", "Luis", "Manuel", "Marcelo", "Marco", "Martin", "Miguel", "Nicolas", "Pablo", "Pedro", "Rafael", "Ricardo", "Roberto", "Rodrigo", "Santiago", "Sergio", "Tomas", "Victor", "Xavier"
 	};
 	private static final String[] FEMALE_NAMES =
 	{
-		"Camila", "Elena", "Laura", "Paula", "Sofia", "Valeria", "Clara", "Diana", "Iris", "Mara", "Nadia", "Rina", "Selene", "Tania", "Vera", "Luna", "Ariana", "Noelia"
+		"Alejandra", "Andrea", "Angela", "Beatriz", "Camila", "Carla", "Carolina", "Catalina", "Clara", "Daniela", "Diana", "Elena", "Gabriela", "Isabel", "Laura", "Lorena", "Luna", "Maria", "Marta", "Monica", "Nadia", "Natalia", "Noelia", "Patricia", "Paula", "Rosa", "Sandra", "Selene", "Sofia", "Tania", "Valentina", "Valeria", "Vera", "Veronica", "Victoria", "Ximena"
 	};
 	private static final String[] LAST_PARTS =
 	{
-		"Stone", "Blade", "River", "Storm", "Cross", "Vale", "Moon", "Steel", "Raven", "Frost", "Light", "Shade", "Wolf", "Ash", "Oak", "Mist", "Dawn", "Night"
+		"Stone", "Blade", "River", "Storm", "Cross", "Wolf", "Knight", "Raven", "Frost", "Light", "Shade", "Dawn", "Night", "Shadow", "Soul", "Fury", "Wind", "Fire", "Crow", "Hawk", "Fang", "Heart", "Wing", "Bane", "Ark", "Void", "Gem", "Song", "Mourn", "Wrath", "Crest", "Shield", "Spear", "Caster"
+	};
+	private static final String[] FANTASY_NAMES =
+	{
+		"Astaroth", "Belial", "Cronos", "Darkar", "Eclipse", "Fenix", "Gorath", "Havoc", "Inferno", "Jade", "Kael", "Legion", "Mystic", "Nemesis", "Onyx", "Phantom", "Quasar", "Ragnar", "Spectral", "Titan", "Umbra", "Valak", "Warden", "Xenith", "Yggdrasil", "Zarath", "Drako", "Ether", "Falcon", "Grimm", "Hyperion", "Icarus", "Kraken", "Lynx", "Morpheus", "Noctis", "Orion", "Phoenix", "Ravager", "Shadow", "Tempest", "Vortex", "Wraith", "Zero", "Arkham", "Berserk", "Doom", "Exodus", "Frost", "Ghost"
 	};
 	
 	private PhantomFactory()
@@ -148,10 +152,26 @@ public final class PhantomFactory
 		final String[] firstNames = (sex == Sex.MALE) ? MALE_NAMES : FEMALE_NAMES;
 		for (int i = 0; i < 100; i++)
 		{
-			String name = firstNames[Rnd.get(firstNames.length)] + LAST_PARTS[Rnd.get(LAST_PARTS.length)];
+			final int roll = Rnd.get(100);
+			String name;
+			
+			if (roll < 30) // 30%: single-word fantasy name
+				name = FANTASY_NAMES[Rnd.get(FANTASY_NAMES.length)];
+			else if (roll < 45) // 15%: first name only
+				name = firstNames[Rnd.get(firstNames.length)];
+			else // 55%: compound FirstName+LastPart
+				name = firstNames[Rnd.get(firstNames.length)] + LAST_PARTS[Rnd.get(LAST_PARTS.length)];
+			
 			if (name.length() > 16)
 				name = name.substring(0, 16);
 			
+			if (PlayerInfoTable.getInstance().getPlayerObjectId(name) <= 0)
+				return name;
+		}
+		// Fallback: add numbers if everything is taken
+		for (int i = 0; i < 100; i++)
+		{
+			final String name = firstNames[Rnd.get(firstNames.length)] + (Rnd.get(10, 999));
 			if (PlayerInfoTable.getInstance().getPlayerObjectId(name) <= 0)
 				return name;
 		}
