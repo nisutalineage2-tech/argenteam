@@ -49,6 +49,8 @@ public class FactionWarConfig
 	private static int _rewardItemId;
 	private static final int[] _topRewardAmounts = new int[3];
 	private static int _winningFactionReward;
+	private static int _pvpAdenaReward;
+	private static final java.util.List<int[]> _spoilItems = new java.util.ArrayList<>();
 	
 	public static void load()
 	{
@@ -89,6 +91,24 @@ public class FactionWarConfig
 		_topRewardAmounts[1] = props.getProperty("Top2Reward", 300000);
 		_topRewardAmounts[2] = props.getProperty("Top3Reward", 100000);
 		_winningFactionReward = props.getProperty("WinningFactionReward", 50000);
+		_pvpAdenaReward = props.getProperty("PvpAdenaReward", 5000);
+		
+		_spoilItems.clear();
+		final String[] spoilEntries = props.getProperty("SpoilItems", "57,1000;5588,1").split(";");
+		for (String entry : spoilEntries)
+		{
+			final String[] parts = entry.trim().split(",");
+			if (parts.length >= 1)
+			{
+				try
+				{
+					final int itemId = Integer.parseInt(parts[0].trim());
+					final int count = (parts.length >= 2) ? Integer.parseInt(parts[1].trim()) : 1;
+					_spoilItems.add(new int[]{itemId, count});
+				}
+				catch (NumberFormatException e) { }
+			}
+		}
 		
 		_goodSpawnLoc = parseLoc(props.getProperty("GoodSpawn", "-84318,244579,-792"));
 		_evilSpawnLoc = parseLoc(props.getProperty("EvilSpawn", "82218,148561,-3472"));
@@ -191,6 +211,8 @@ public class FactionWarConfig
 	public static int getTop1Reward() { return _topRewardAmounts.length > 0 ? _topRewardAmounts[0] : 0; }
 	public static int getTop2Reward() { return _topRewardAmounts.length > 1 ? _topRewardAmounts[1] : 0; }
 	public static int getTop3Reward() { return _topRewardAmounts.length > 2 ? _topRewardAmounts[2] : 0; }
+	public static int getPvpAdenaReward() { return _pvpAdenaReward; }
+	public static java.util.List<int[]> getSpoilItems() { return _spoilItems; }
 	
 	public static boolean isInNeutralZone(net.sf.l2j.gameserver.model.location.Location loc)
 	{

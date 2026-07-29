@@ -501,7 +501,53 @@ public class FactionWarManager
 		if (FactionWarConfig.isAnnouncePvpKill())
 			broadcast("[Faction War] PvP kill! Faction " + killerFactionId + " +" + points + " pts");
 		
+		// Give adena reward to the killer
+		final int adenaReward = FactionWarConfig.getPvpAdenaReward();
+		if (adenaReward > 0)
+		{
+			final net.sf.l2j.gameserver.model.actor.Player killer = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(killerId);
+			if (killer != null && killer.isOnline())
+			{
+				killer.addItem(57, adenaReward, true);
+				
+				// Random spoil drop to the killer's party
+				giveRandomSpoilToParty(killer);
+			}
+		}
+		
 		checkWinner();
+	}
+	
+	/**
+	 * Gives a random spoil item to the killer's party members.
+	 */
+	private void giveRandomSpoilToParty(net.sf.l2j.gameserver.model.actor.Player killer)
+	{
+		final java.util.List<int[]> spoilItems = FactionWarConfig.getSpoilItems();
+		if (spoilItems == null || spoilItems.isEmpty())
+			return;
+		
+		final int[] chosen = spoilItems.get(net.sf.l2j.commons.random.Rnd.get(spoilItems.size()));
+		final int itemId = chosen[0];
+		final int count = chosen.length > 1 ? chosen[1] : 1;
+		
+		if (itemId <= 0)
+			return;
+		
+		final net.sf.l2j.gameserver.model.group.Party party = killer.getParty();
+		if (party != null)
+		{
+			// Distribute to all party members in range
+			for (net.sf.l2j.gameserver.model.actor.Player member : party.getMembers())
+			{
+				if (member != null && member.isOnline() && !member.isDead() && member.distance3D(killer) <= 1500)
+					member.addItem(itemId, count, true);
+			}
+		}
+		else
+		{
+			killer.addItem(itemId, count, true);
+		}
 	}
 	
 	/**

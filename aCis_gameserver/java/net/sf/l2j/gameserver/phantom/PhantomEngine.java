@@ -398,6 +398,11 @@ public final class PhantomEngine
 			PhantomAI.setHome(phantom);
 			moved++;
 		}
+		
+		// Auto-party phantoms by faction after teleporting to war
+		if (moved > 1)
+			PhantomAI.ensureFactionParties();
+		
 		return moved;
 	}
 	

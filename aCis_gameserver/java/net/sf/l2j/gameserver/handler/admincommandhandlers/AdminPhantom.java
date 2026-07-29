@@ -11,6 +11,7 @@ import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.handler.IAdminCommandHandler;
 import net.sf.l2j.gameserver.model.Faction;
+import net.sf.l2j.gameserver.enums.actors.OperateType;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -41,7 +42,10 @@ public class AdminPhantom implements IAdminCommandHandler
 		"admin_phantom_online",
 		"admin_phantom_status",
 		"admin_phantom_faction",
-		"admin_phantom_factions"
+		"admin_phantom_factions",
+		"admin_phantom_party",
+		"admin_phantom_store",
+		"admin_phantom_factionall"
 	};
 	
 	@Override
@@ -270,6 +274,92 @@ public class AdminPhantom implements IAdminCommandHandler
 				FactionData.getInstance().storeData(phantom);
 				showOnline(player, page, filterFaction, phantom.getName() + " -> " + faction.getName() + ".");
 			}
+			return;
+		}
+		
+		if (cmd.equals("admin_phantom_party"))
+		{
+			PhantomAI.ensureFactionParties();
+			final java.util.Map<Integer, Integer> partyCount = new java.util.HashMap<>();
+			int partied = 0;
+			for (Player p : PhantomEngine.getActivePhantoms())
+			{
+				if (p != null && p.getParty() != null)
+				{
+					final int leaderId = p.getParty().getLeaderObjectId();
+					partyCount.merge(leaderId, 1, Integer::sum);
+					partied++;
+				}
+			}
+			showPanel(player, "Parties formed. " + partied + " phantoms in " + partyCount.size() + " parties.");
+			return;
+		}
+		
+		if (cmd.equals("admin_phantom_store"))
+		{
+			int opened = 0;
+			int closed = 0;
+			for (Player p : PhantomEngine.getActivePhantoms())
+			{
+				if (p == null || p.isDead())
+					continue;
+				
+				if (p.getOperateType() == OperateType.NONE)
+				{
+					p.sitDown();
+					p.setOperateType(OperateType.SELL);
+					p.broadcastUserInfo();
+					opened++;
+				}
+				else
+				{
+					p.setOperateType(OperateType.NONE);
+					p.standUp();
+					p.broadcastUserInfo();
+					closed++;
+				}
+			}
+			showPanel(player, "Store toggle: " + opened + " opened, " + closed + " closed.");
+			return;
+		}
+		
+		if (cmd.equals("admin_phantom_factionall"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+			
+			final int factionId;
+			try
+			{
+				factionId = Integer.parseInt(st.nextToken());
+			}
+			catch (Exception e)
+			{
+				showPanel(player, "Usage: factionall <factionId> — assigns ALL phantoms without faction to the given faction.");
+				return;
+			}
+			
+			final Faction faction = FactionData.getInstance().getFaction(factionId);
+			if (faction == null)
+			{
+				showPanel(player, "Faction " + factionId + " not found.");
+				return;
+			}
+			
+			int assigned = 0;
+			for (Player p : PhantomEngine.getActivePhantoms())
+			{
+				if (p != null && p.getFactionId() <= 0)
+				{
+					p.setFactionId(factionId);
+					FactionData.getInstance().storeData(p);
+					assigned++;
+				}
+			}
+			showPanel(player, "Assigned " + assigned + " phantoms to " + faction.getName() + ".");
 			return;
 		}
 	}

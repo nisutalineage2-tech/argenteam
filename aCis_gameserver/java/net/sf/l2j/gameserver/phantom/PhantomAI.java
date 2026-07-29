@@ -22,6 +22,11 @@ import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.model.Faction;
+import net.sf.l2j.gameserver.model.group.Party;
+import net.sf.l2j.gameserver.data.xml.ItemData;
+import net.sf.l2j.gameserver.enums.actors.OperateType;
+import net.sf.l2j.gameserver.model.item.kind.Item;
+import net.sf.l2j.gameserver.model.group.Party;
 import net.sf.l2j.gameserver.model.WorldObject;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Npc;
@@ -172,6 +177,35 @@ public final class PhantomAI
 				return;
 			
 			final boolean warRunning = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
+			final boolean inNeutralZone = Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(phantom.getPosition());
+			
+			// === NEUTRAL ZONE BEHAVIOR: Wander or open private store ===
+			if (inNeutralZone && !warRunning)
+			{
+				// Sit and open a sell store with some items, or just wander
+				if (phantom.getOperateType() == OperateType.NONE && !phantom.isSitting() && Rnd.get(100) < 30)
+				{
+					openPrivateStore(phantom);
+					return;
+				}
+				
+				if (phantom.getOperateType() != OperateType.NONE || phantom.isSitting())
+				{
+					// Already in store mode or sitting — skip loot/monsters
+					LAST_ACTIONS.put(phantom.getObjectId(), "Neutral store");
+					return;
+				}
+				
+				// Wander around the neutral zone
+				if (!phantom.isMoving() && Rnd.get(100) < 60)
+				{
+					wander(phantom);
+					return;
+				}
+				
+				LAST_ACTIONS.put(phantom.getObjectId(), "Neutral zone");
+				return;
+			}
 			
 			// === FACTION WAR MODE: Skip farming/looting/patrol, focus on PvP ===
 			if (warRunning)
@@ -938,6 +972,102 @@ public final class PhantomAI
 	 * This makes phantoms converge on the battle area when no enemies are nearby,
 	 * keeping the war dynamic and populated.
 	 */
+	/**
+	 * Opens a private sell store for the phantom in neutral zone.
+	 * The phantom sits down and broadcasts a sell store with random items from inventory.
+	 */
+	private static void openPrivateStore(Player phantom)
+	{
+		if (phantom == null || phantom.isDead() || phantom.getOperateType() != OperateType.NONE)
+			return;
+		
+		try
+		{
+			phantom.sitDown();
+			phantom.setOperateType(OperateType.SELL);
+			phantom.broadcastUserInfo();
+			LAST_ACTIONS.put(phantom.getObjectId(), "Store");
+			PhantomLog.info("Phantom " + phantom.getName() + " opened a private store in neutral zone.");
+			
+			// Schedule closing the store after a random time (30-120 seconds)
+			final int objectId = phantom.getObjectId();
+			ThreadPool.schedule(() ->
+			{
+				final Player p = PhantomEngine.getActivePhantom(objectId);
+				if (p != null && p.getOperateType() == OperateType.SELL)
+				{
+					p.setOperateType(OperateType.NONE);
+					p.standUp();
+					p.broadcastUserInfo();
+					PhantomLog.info("Phantom " + p.getName() + " closed private store.");
+				}
+			}, Rnd.get(30000, 120000));
+		}
+		catch (Exception e)
+		{
+			PhantomLog.warn("openPrivateStore failed for " + phantom.getName() + ": " + e.getMessage());
+		}
+	}
+	
+	/**
+	 * Ensures phantoms of the same faction are in a party together.
+	 * Creates parties of up to 9 phantoms grouped by faction.
+	 */
+	public static void ensureFactionParties()
+	{
+		try
+		{
+			final java.util.Map<Integer, java.util.List<Player>> byFaction = new java.util.HashMap<>();
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom == null || phantom.isDead() || !phantom.isOnline())
+					continue;
+				final int fId = phantom.getFactionId();
+				if (fId > 0)
+					byFaction.computeIfAbsent(fId, k -> new java.util.ArrayList<>()).add(phantom);
+			}
+			
+			for (java.util.List<Player> factionPhantoms : byFaction.values())
+			{
+				if (factionPhantoms.size() < 2)
+					continue;
+				
+				// Remove phantoms already in a party
+				final java.util.List<Player> unpartied = new java.util.ArrayList<>();
+				for (Player p : factionPhantoms)
+				{
+					if (p.getParty() == null)
+						unpartied.add(p);
+				}
+				
+				// Group into parties of up to 9
+				for (int i = 0; i < unpartied.size(); i += 9)
+				{
+					final int end = Math.min(i + 9, unpartied.size());
+					final Player leader = unpartied.get(i);
+					final java.util.List<Player> members = unpartied.subList(i + 1, end);
+					
+					for (Player member : members)
+					{
+						if (member.getParty() == null && leader.getParty() == null)
+						{
+							// Create new party with leader + member
+							new Party(leader, member, net.sf.l2j.gameserver.enums.LootRule.ITEM_RANDOM);
+						}
+						else if (leader.getParty() != null && member.getParty() == null)
+						{
+							leader.getParty().addPartyMember(member);
+						}
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			PhantomLog.warn("ensureFactionParties failed: " + e.getMessage());
+		}
+	}
+	
 	private static void moveToWarCenter(Player phantom)
 	{
 		try
