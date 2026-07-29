@@ -25,7 +25,10 @@ public final class ServerList extends L2LoginServerPacket
 		for (GameServerInfo gsi : GameServerManager.getInstance().getRegisteredGameServers().values())
 		{
 			final ServerType type = (account.getAccessLevel() < 0 || (gsi.getType() == ServerType.GM_ONLY && account.getAccessLevel() <= 0)) ? ServerType.DOWN : gsi.getType();
-			final String hostName = (isLocalIp(account.getClientIp()) && gsi.getGameServerThread() != null) ? gsi.getGameServerThread().getConnectionIp() : gsi.getHostName();
+			
+			// Always use the configured Hostname from server.properties, not the connection IP.
+			// The old logic sent 127.0.0.1 to LAN clients when GS and LS were on the same machine.
+			final String hostName = gsi.getHostName();
 			
 			_servers.add(new ServerData(type, hostName, gsi));
 		}
