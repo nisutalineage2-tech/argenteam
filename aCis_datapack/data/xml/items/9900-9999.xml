@@ -7,7 +7,7 @@
 		<set name="random_damage" val="5" />
 		<set name="attack_range" val="500" />
 		<set name="damage_range" val="0;0;10;0" />
-		<set name="material" val="steel" />
+		<set name="material" val="STEEL" />
 		<set name="weight" val="1880" />
 		<set name="soulshots" val="7" />
 		<set name="spiritshots" val="2" />
