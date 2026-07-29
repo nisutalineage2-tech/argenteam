@@ -64,6 +64,13 @@ public class Monster extends Attackable
 	@Override
 	protected void calculateRewards(Creature creature)
 	{
+		// Notify DungeonEngine if this mob belongs to a dungeon instance
+		if ("[Dungeon]".equals(getTitle()))
+		{
+			net.sf.l2j.gameserver.dungeon.DungeonEngine.getInstance().onMobKill(this);
+			return;
+		}
+		
 		if (getAI().getAggroList().isEmpty())
 			return;
 		
