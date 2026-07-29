@@ -63,6 +63,8 @@ public class DoorData implements IXmlReader
 				set.set("posZ", parseInteger(attrs, "z"));
 			});
 			
+			// Clear coords from previous door to prevent accumulation on early returns.
+			coords.clear();
 			forEach(doorNode, "coordinates", coordinatesNode -> forEach(coordinatesNode, "loc", locNode ->
 			{
 				final NamedNodeMap attrs = locNode.getAttributes();
