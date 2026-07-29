@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list>
+
+	<!-- ===== Example Dungeon: Catacomb of Dark Omens ===== -->
+	<!--
+		dungeon attributes:
+		id            - Unique dungeon ID
+		name          - Display name
+		minPlayers    - Minimum players needed
+		maxPlayers    - Maximum players allowed
+		minLevel      - Minimum character level
+		maxLevel      - Maximum character level
+		cooldownHours - Hours before same player/IP can re-enter
+		rewards       - Item rewards: "itemId,count;itemId2,count2"
+		rewardHtm     - HTML file for reward screen ("NULL" = no HTML)
+		enterHtm      - HTML file for entrance instructions ("NULL" = no HTML)
+		
+		stage attributes:
+		order   - Stage number (1, 2, 3, ...)
+		loc     - Teleport coordinates: "x,y,z"
+		teleport- Whether to teleport players here (true/false)
+		minutes - Time limit for this stage in minutes
+		
+		mob attributes:
+		npcId - NPC/mob template ID
+		locs  - Spawn coordinates formatted as: "x1,y1,z1;x2,y2,z2;..."
+	-->
+
+	<dungeon id="1" name="Catacomb of Dark Omens" minPlayers="1" maxPlayers="2"
+		minLevel="20" maxLevel="40" cooldownHours="24"
+		rewards="57,50000;1835,5;729,1"
+		rewardHtm="NULL" enterHtm="NULL">
+
+		<stage order="1" loc="-20000,15000,-4000" teleport="true" minutes="5">
+			<mob npcId="20100" locs="-20100,14900,-4000;-19900,15100,-4000" />
+		</stage>
+
+		<stage order="2" loc="-20500,14800,-4000" teleport="false" minutes="7">
+			<mob npcId="20101" locs="-20600,14700,-4000;-20400,14900,-4000;-20500,15000,-4000" />
+		</stage>
+
+		<stage order="3" loc="-21000,15200,-4100" teleport="true" minutes="10">
+			<mob npcId="20103" locs="-21100,15100,-4100;-20900,15300,-4100;-21050,15050,-4100" />
+		</stage>
+	</dungeon>
+
+	<!-- ===== Example Dungeon: Temple of the Ancient ===== -->
+	<dungeon id="2" name="Temple of the Ancient" minPlayers="2" maxPlayers="3"
+		minLevel="40" maxLevel="60" cooldownHours="48"
+		rewards="57,200000;1835,15;729,3"
+		rewardHtm="NULL" enterHtm="NULL">
+
+		<stage order="1" loc="28000,-28000,-4200" teleport="true" minutes="8">
+			<mob npcId="20200" locs="27900,-28100,-4200;28100,-27900,-4200" />
+			<mob npcId="20201" locs="28050,-28050,-4200" />
+		</stage>
+
+		<stage order="2" loc="28300,-28300,-4200" teleport="false" minutes="12">
+			<mob npcId="20202" locs="28200,-28400,-4200;28400,-28200,-4200;28300,-28300,-4200;28150,-28350,-4200" />
+		</stage>
+	</dungeon>
+
+</list>

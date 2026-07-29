@@ -271,6 +271,8 @@ public class GameServer
 			LOGGER.info("Faction War disabled. Events will run in cyclic alternance.");
 		}
 		
+		net.sf.l2j.gameserver.dungeon.DungeonEngine.getInstance().init();
+		
 		StringUtil.printSection("Spawns");
 		SpawnManager.getInstance().spawn();
 		
