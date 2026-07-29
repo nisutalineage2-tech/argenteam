@@ -356,7 +356,8 @@ public final class PhantomEngine
 	
 	/**
 	 * Teleports all active phantoms with valid faction IDs to the faction war map.
-	 * Dead phantoms are revived first so everyone participates.
+	 * First simulates travel by walking toward the neutral zone and saying war phrases,
+	 * then after a short delay teleports them to the war map.
 	 */
 	public static int teleportPhantomsToWar()
 	{
@@ -387,21 +388,65 @@ public final class PhantomEngine
 				PhantomAI.clearDeathFlag(phantom.getObjectId());
 			}
 			
-			// Add randomization so phantoms don't clump at exact spawn point
-			final int rx = spawn.getX() + Rnd.get(-250, 250);
-			final int ry = spawn.getY() + Rnd.get(-250, 250);
-			phantom.teleportTo(rx, ry, spawn.getZ(), 20);
-			if (phantom.isTeleporting())
-				phantom.onTeleported();
+			// Say a war battle phrase before traveling
+			PhantomSocial.sayWarPhrase(phantom);
 			
-			FactionWarRegistry.getInstance().register(phantom);
-			PhantomAI.setHome(phantom);
+			// Walk toward the neutral zone to simulate traveling to war
+			final Location neutralLoc = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getNeutralSpawnLoc();
+			if (neutralLoc != null && phantom.distance3D(neutralLoc) > 300)
+			{
+				final int walkX = neutralLoc.getX() + Rnd.get(-200, 200);
+				final int walkY = neutralLoc.getY() + Rnd.get(-200, 200);
+				phantom.getAI().tryToMoveTo(new Location(walkX, walkY, neutralLoc.getZ()), null);
+			}
+			
+			// Schedule delayed teleport to war map (simulates travel time)
+			final int fId = factionId;
+			final Location warSpawn = spawn;
+			final Player p = phantom;
+			final boolean alreadyMoving = neutralLoc != null && p.distance3D(neutralLoc) > 300;
+			final int delay = alreadyMoving ? Rnd.get(4000, 10000) : Rnd.get(2000, 5000);
+			
+			ThreadPool.schedule(() ->
+			{
+				try
+				{
+					if (p == null || !p.isOnline())
+						return;
+					
+					// Don't teleport if war ended while walking
+					if (!FactionWarManager.getInstance().isRunning())
+						return;
+					
+					// Stop any movement and teleport
+					p.getMove().stop();
+					
+					final int rx = warSpawn.getX() + Rnd.get(-250, 250);
+					final int ry = warSpawn.getY() + Rnd.get(-250, 250);
+					p.teleportTo(rx, ry, warSpawn.getZ(), 20);
+					if (p.isTeleporting())
+						p.onTeleported();
+					
+					FactionWarRegistry.getInstance().register(p);
+					PhantomAI.setHome(p);
+					
+					// Say arrival phrase
+					PhantomSocial.sayWarPhrase(p);
+				}
+				catch (Exception e)
+				{
+					PhantomLog.warn("War teleport failed for " + (p == null ? "null" : p.getName()) + ": " + e.getMessage());
+				}
+			}, delay);
+			
 			moved++;
 		}
 		
 		// Auto-party phantoms by faction after teleporting to war
 		if (moved > 1)
-			PhantomAI.ensureFactionParties();
+		{
+			ThreadPool.schedule(PhantomAI::ensureFactionParties, 12000);
+		}
 		
 		return moved;
 	}
