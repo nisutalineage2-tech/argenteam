@@ -59,7 +59,11 @@ public final class PhantomFactory
 	};
 	private static final String[] FANTASY_NAMES =
 	{
-		"Astaroth", "Belial", "Cronos", "Darkar", "Eclipse", "Fenix", "Gorath", "Havoc", "Inferno", "Jade", "Kael", "Legion", "Mystic", "Nemesis", "Onyx", "Phantom", "Quasar", "Ragnar", "Spectral", "Titan", "Umbra", "Valak", "Warden", "Xenith", "Zarath", "Drako", "Ether", "Falcon", "Grimm", "Hyperion", "Icarus", "Kraken", "Lynx", "Morpheus", "Noctis", "Orion", "Phoenix", "Ravager", "Shadow", "Tempest", "Vortex", "Wraith", "Zero", "Arkham", "Berserk", "Doom", "Exodus", "Frost", "Ghost", "Molestiker", "Killzone", "ShadowArrow", "DarkWolf", "StarKnight", "MoonWalker", "NightHawk", "FireStorm", "IceBreaker", "SoulReaper", "WarMachine", "DeathWing", "BlackPearl", "RedDragon", "SilverHawk", "IronFist", "ThunderStrike", "QuickSilver", "StoneHeart", "BladeMaster", "DarkAngel", "BloodFang", "VoidWalker", "SkyHunter", "DragonSlayer", "ShadowHunter", "FallenAngel", "WildFire", "NightBlade", "StormBringer"
+		"Astaroth", "Belial", "Cronos", "Darkar", "Eclipse", "Fenix", "Gorath", "Havoc", "Inferno", "Jade", "Kael", "Legion", "Mystic", "Nemesis", "Onyx", "Phantom", "Quasar", "Ragnar", "Spectral", "Titan", "Umbra", "Valak", "Warden", "Xenith", "Zarath", "Drako", "Ether", "Falcon", "Grimm", "Hyperion", "Icarus", "Kraken", "Lynx", "Morpheus", "Noctis", "Orion", "Phoenix", "Ravager", "Shadow", "Tempest", "Vortex", "Wraith", "Zero", "Arkham", "Berserk", "Doom", "Exodus", "Frost", "Ghost", "Molestiker", "Killzone", "ShadowArrow", "DarkWolf", "StarKnight", "MoonWalker", "NightHawk", "FireStorm", "IceBreaker", "SoulReaper", "WarMachine", "DeathWing", "BlackPearl", "RedDragon", "SilverHawk", "IronFist", "ThunderStrike", "QuickSilver", "StoneHeart", "BladeMaster", "DarkAngel", "BloodFang", "VoidWalker", "SkyHunter", "DragonSlayer", "ShadowHunter", "FallenAngel", "WildFire", "NightBlade", "StormBringer", "SwordSaint", "GhostWalker", "TitanSlayer"
+	};
+	private static final String[] ARGENTINE_NAMES =
+	{
+		"DonSatur", "ChicledeMenta", "Acuariusdepera", "DonRamon", "DonPepito", "DonGato", "DonRolo", "DonFideo", "DonChurro", "DonMilo", "Tomatelo", "Sabelo", "DaleBO", "VamoArriba", "DaleQueVa", "Parala", "Tomala", "Miralo", "Bancame", "DaleDale", "Chabon", "Bodrio", "Trucho", "Mersa", "Bardero", "Chantapufi", "Alfajorcito", "Milanga", "Matambre", "Choripan", "Morcipan", "Bondiola", "Vacioloco", "Raviolon", "Canelones", "Empanada", "Pebete", "Chipa", "Rocoto", "Chamusca", "Tano", "Turquito", "Gallego", "Polaco", "Ruso", "Chino", "Gringo", "Yanky", "Porteno", "Cordobes", "Rosarino", "Tucumano", "Mendocino", "Santafesino", "Marplatense", "Entrerriano", "Bonaerense", "Messi", "Maradona", "Bostero", "Gallina", "Milionario", "Xeneize", "Pincha", "Matador", "FanaBoca", "FanaRiver", "SuperMessi", "DiosMessi", "PibeDeOro", "Pibito", "Chamuyero", "Fachero", "Palermitano", "Rojiblanco", "Nacional", "Criollo", "Gauchito", "Potrillo", "Mervale", "TanoBati", "Cachengue", "Bambino", "Rengue", "Botija", "Gurisas", "Chamigo", "ChePibe", "CheBolo", "ViejoMecha"
 	};
 	
 	private PhantomFactory()
@@ -155,30 +159,23 @@ public final class PhantomFactory
 			final int roll = Rnd.get(100);
 			String name;
 			
-			if (roll < 30) // 30%: single-word fantasy/gamer name
+			if (roll < 25) // 25%: single-word fantasy/gamer name
 				name = FANTASY_NAMES[Rnd.get(FANTASY_NAMES.length)];
-			else if (roll < 60) // 30%: compound FirstName+LastPart
+			else if (roll < 45) // 20%: compound FirstName+LastPart
 				name = firstNames[Rnd.get(firstNames.length)] + LAST_PARTS[Rnd.get(LAST_PARTS.length)];
-			else if (roll < 75) // 15%: Xx wrapped name
+			else if (roll < 55) // 10%: xXx wrapped name (clean, no underscores)
 			{
 				final String base = firstNames[Rnd.get(firstNames.length)];
-				final String[] wraps = { "xXx" + base + "xXx", "Xx_" + base + "_xX", "_" + base + "_", "xX" + base + "Xx" };
+				final String[] wraps = { "xXx" + base + "xXx", "xX" + base + "Xx" };
 				name = wraps[Rnd.get(wraps.length)];
 			}
-			else if (roll < 90) // 15%: numbered name (FirstName + number or Fantasy + number)
-			{
-				final String base = Rnd.nextBoolean() ? firstNames[Rnd.get(firstNames.length)] : FANTASY_NAMES[Rnd.get(FANTASY_NAMES.length)];
-				final int num = Rnd.get(10, 999);
-				final String[] numFormats = { base + num, base + "_" + num, num + "_" + base, num + base };
-				name = numFormats[Rnd.get(numFormats.length)];
-			}
-			else // 10%: compound fantasy compound (TwoWords)
+			else if (roll < 80) // 25%: creative Argentine name
+				name = ARGENTINE_NAMES[Rnd.get(ARGENTINE_NAMES.length)];
+			else // 20%: compound fantasy (TwoWords from LAST_PARTS)
 			{
 				final String w1 = LAST_PARTS[Rnd.get(LAST_PARTS.length)];
 				final String w2 = LAST_PARTS[Rnd.get(LAST_PARTS.length)];
 				name = w1 + w2;
-				if (name.length() > 16)
-					name = name.substring(0, 16);
 			}
 			
 			if (name.length() > 16)
@@ -187,17 +184,17 @@ public final class PhantomFactory
 			if (PlayerInfoTable.getInstance().getPlayerObjectId(name) <= 0)
 				return name;
 		}
-		// Fallback: add numbers if everything is taken
+		// Fallback: try Xx wraps and double-fantasy compounds without numbers
 		for (int i = 0; i < 100; i++)
 		{
-			final int roll = Rnd.get(3);
 			final String name;
-			if (roll == 0)
-				name = firstNames[Rnd.get(firstNames.length)] + Rnd.get(10, 999);
-			else if (roll == 1)
-				name = FANTASY_NAMES[Rnd.get(FANTASY_NAMES.length)] + Rnd.get(10, 999);
-			else
+			if (Rnd.nextBoolean())
 				name = "xXx" + firstNames[Rnd.get(firstNames.length)] + "xXx";
+			else
+				name = LAST_PARTS[Rnd.get(LAST_PARTS.length)] + LAST_PARTS[Rnd.get(LAST_PARTS.length)];
+			
+			if (name.length() > 16)
+				continue;
 			
 			if (PlayerInfoTable.getInstance().getPlayerObjectId(name) <= 0)
 				return name;
