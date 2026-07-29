@@ -1,0 +1,26 @@
+# Config / Properties — aCis
+
+## Archivos de configuración
+
+| Archivo | Propósito |
+|---|---|
+| `aCis_gameserver/config/factionwar.properties` | **Faction War**: mapas, recompensas, NPCs, zonas |
+| `aCis_gameserver/config/phantoms.properties` | **Phantoms**: AI, IDs, zonas de nivel, PvP, PK |
+| `aCis_gameserver/config/events.properties` | **Eventos**: TvT, DM, CTF |
+| `aCis_gameserver/config/players.properties` | **Jugadores**: rates, buffs, etc. |
+| `aCis_gameserver/config/server.properties` | **Servidor**: IP, puertos, general |
+
+## Formato de mapas en factionwar.properties
+```properties
+Maps = Nombre,centerX,centerY,centerZ,radius,goodSpawnX,goodSpawnY,goodSpawnZ,evilSpawnX,evilSpawnY,evilSpawnZ;Nombre2,...
+```
+
+## Formato de SpoilItems
+```properties
+SpoilItems = itemId,count;itemId2,count2
+```
+
+## Cómo se cargan
+- `FactionWarConfig.load()` usa `ExProperties` para leer `factionwar.properties`
+- `PhantomConfig.load()` usa `ExProperties` para leer `phantoms.properties`
+- `Config` centraliza todo en `aCis_gameserver/config/`

@@ -1,0 +1,40 @@
+# Eventos — Sistema Completo
+
+## Arquitectura
+
+| Archivo | Propósito |
+|---|---|
+| `event/EventEngine.java` | Singleton: scheduler, alternancia con Faction War |
+| `event/AbstractEvent.java` | Clase base para eventos: register, start, stop, rewards |
+| `event/EventConfig.java` | Carga config de eventos |
+| `event/EventPlayer.java` | Wrapper Player + datos de evento |
+| `event/events/TvT.java` | Team vs Team |
+| `event/events/DM.java` | Deathmatch |
+| `event/events/CTF.java` | Capture the Flag |
+| `event/events/BombFight.java` | Bomb Fight |
+| `event/events/LuckyChests.java` | Lucky Chests |
+| `event/events/Domination.java` | Domination |
+| `event/events/SimonSays.java` | Simon Says |
+| `event/events/RaidInTheMiddle.java` | Raid in the Middle |
+
+## Flujo
+
+1. Alternancia con Faction War: war → eventos → war → eventos...
+2. EventEngine.runScheduler() cada 1 minuto
+3. Si FW no está activo, selecciona evento aleatorio
+4. Registration → players join via NPC o .eventjoin
+5. Start → teleport a zona, teams asignados
+6. Running → players compiten
+7. Stop → rewards al ganador
+
+## Config (events.properties)
+```properties
+# IDs de eventos: TvT=1, DM=2, CTF=3, BombFight=4, etc.
+Event_1_Enabled = True
+Event_1_MinLvl = 1
+Event_1_MaxLvl = 85
+Event_1_MatchTime = 120
+Event_1_MinPlayers = 2
+Event_1_RewardItemId = 57
+Event_1_RewardAmount = 50000
+```

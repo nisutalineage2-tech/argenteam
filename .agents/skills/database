@@ -1,0 +1,23 @@
+# Database / Instalación — aCis
+
+## Archivos SQL
+- `aCis_datapack/sql/mods_faction.sql` — Tabla de facciones por personaje
+- `aCis_datapack/sql/events.sql` — Tabla de eventos
+
+## Installer
+- `aCis_datapack/tools/database_installer.bat` — Script de instalación
+- `aCis_datapack/tools/full_install.sql` — Script completo con todas las tablas
+
+## Cómo agregar una tabla nueva
+1. Crear el `.sql` en `aCis_datapack/sql/`
+2. Agregarlo al `database_installer.bat` y al `full_install.sql`
+3. Crear el DAO en Java (con `ConnectionPool` y PreparedStatement)
+
+## Conexión
+Config en `aCis_gameserver/config/server.properties`:
+```properties
+# Ejemplo con MariaDB
+URL = jdbc:mariadb://localhost:3306/acis
+LOGIN = root
+PASSWORD = 
+```

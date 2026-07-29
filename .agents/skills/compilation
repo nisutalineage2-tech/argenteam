@@ -1,0 +1,29 @@
+# Compilación — aCis
+
+## Con Eclipse (recomendado por el usuario)
+1. Abrir Eclipse
+2. Importar proyectos existentes: `aCis_gameserver` y `aCis_datapack`
+3. Build automático o manual (Ctrl+B)
+
+## Con Ant (build.xml)
+```bash
+# Compilar gameserver
+cd aCis_gameserver
+ant -f build.xml
+
+# Compilar datapack
+cd aCis_datapack
+ant -f build.xml
+```
+
+## Con javac manual (solo verificar errores)
+```bash
+cd aCis_gameserver
+javac -encoding UTF-8 -source 21 -target 21 -cp "lib/*;build/classes" -d build/classes -sourcepath java ruta/de/archivo.java
+```
+
+## Notas
+- Java 21 requerido
+- Dependencias en `aCis_gameserver/lib/*.jar`
+- El build genera los .class en `build/classes/`
+- Los .class se distribuyen a `C:\server` o la carpeta del servidor

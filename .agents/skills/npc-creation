@@ -1,0 +1,42 @@
+# NPCs Custom — Cómo crear o modificar NPCs
+
+## Paso 1: Definir el NPC en XML
+Archivo: `aCis_datapack/data/xml/npcs/90000-90999.xml`
+
+```xml
+<npc id="90002" idTemplate="31228" name="War Registrar" title="Faction War">
+  <set name="level" value="40"/>
+  <set name="sex" value="male"/>
+  <set name="type" value="L2Npc"/>
+  <set name="collision radius" value="8"/>
+  <set name="collision height" value="22"/>
+  <abilities>
+    <skill id="NNN" level="1"/> <!-- opcional -->
+  </abilities>
+</npc>
+```
+
+## Paso 2: Crear HTML
+Archivo: `aCis_datapack/data/html/script/categoria/NOMBRE/archivo.htm`
+
+```html
+<html><body>
+<center><font color="LEVEL">Título</font></center>
+<br>
+Texto del NPC.
+<br>
+<a action="bypass -h npc_%objectId%_MI_BYPASS">Opción</a>
+<br>
+<button value="Cerrar" action="bypass -h npc_%objectId%_exit" width=90 height=21 back="L2UI_ch3.Btn1_normalOn" fore="L2UI_ch3.Btn1_normal">
+</body></html>
+```
+
+## Paso 3: Manejar bypasses en Java
+Agregar el handler en `Npc.onBypassFeedback()` o crear una clase `instance/MiNpc.java` que extienda `Npc`.
+
+## Paso 4 (opcional): Spawn en XML
+```xml
+<spawnlist>
+  <spawn npcId="90002" x="-84300" y="243000" z="-3450" heading="0"/>
+</spawnlist>
+``` 

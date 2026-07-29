@@ -1,0 +1,38 @@
+# HTML / XML — aCis Datapack
+
+## Ubicación
+- `aCis_datapack/data/html/` — todos los archivos HTML de NPCs, paneles, etc.
+- `aCis_datapack/data/xml/` — datos XML (NPCs, spawns, zonas, items, skills, etc.)
+
+## HTMLs importantes del sistema de facciones/eventos
+
+| Ruta | NPC / Propósito |
+|---|---|
+| `html/mods/faction/*.htm` | NPC Faction Manager (90004) |
+| `html/mods/event/9999.htm` | Panel de eventos |
+| `html/script/factionwar/WarRegistrar/*.htm` | Registrador de Guerra (90002) |
+| `html/CommunityBoard/top/events.htm` | Community Board de eventos |
+| `html/CommunityBoard/top/index.htm` | Community Board principal |
+
+## XMLs importantes
+
+| Ruta | Propósito |
+|---|---|
+| `xml/faction.xml` | Definición de facciones |
+| `xml/npcs/90000-90999.xml` | NPCs custom del Faction War |
+| `xml/spawnlist/faction_neutral_zone.xml` | Spawns zona neutral |
+| `xml/zones/PeaceZone.xml` | Zonas de paz |
+| `xml/accessLevels.xml` | Niveles de acceso |
+| `xml/adminCommands.xml` | Comandos admin habilitados |
+
+## Reglas HTML
+- Usar `NpcHtmlMessage` del lado Java para cargar HTMLs
+- El HTML se renderiza en el cliente de Lineage 2 (formato antiguo)
+- Tablas `<table>`, botones `<button>`, links `<a action="bypass...">`
+- El límite de tamaño de HTML es ~4096 caracteres (NpcHtmlMessage default)
+- Si el HTML es muy grande, el cliente muestra "An html content was too long"
+
+## Reglas XML
+- Los NPCs custom se definen en `npcs/90000-90999.xml`
+- Los spawns se definen en `spawnlist/` (por zona)
+- Las zonas se definen en `zones/` (PeaceZone, ArenaZone, etc.)

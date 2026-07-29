@@ -1,0 +1,37 @@
+# Git Workflow — aCis
+
+## Remotes
+- `github` → SSH (`git@github.com-acis:nisutalineage2-tech/argenteam.git`)
+- `origin` → HTTPS (`https://github.com/nisutalineage2-tech/argenteam.git`)
+
+## Comandos diarios
+
+```bash
+# Traer última versión
+git pull origin master
+
+# Ver estado
+git status
+git diff --stat
+
+# Ver últimos commits
+git log --oneline -5
+
+# Commit + Push
+git add archivo1 archivo2
+git commit -m "tipo: descripción breve"
+git push github master
+```
+
+## Estilo de commits
+```
+feat: nueva funcionalidad
+fix: corrección de bug
+refactor: refactorización sin cambios funcionales
+docs: documentación
+```
+
+## Notas
+- No pushear sin confirmar con el usuario
+- No usar `git add -A` — solo archivos específicos
+- Hacer pull antes de empezar a trabajar

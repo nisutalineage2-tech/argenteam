@@ -1,0 +1,36 @@
+# Java Backend — aCis Gameserver
+
+## Ubicación
+- `aCis_gameserver/java/net/sf/l2j/gameserver/` — todo el código del servidor
+
+## Paquetes clave
+
+| Paquete | Propósito |
+|---|---|
+| `phantom/` | Phantoms (bots): AI, combate, inventario, social, factories |
+| `factionwar/` | Faction War Manager, Config, Checkpoints, Registry |
+| `event/` | Sistema de eventos (TvT, DM, CTF, etc.) |
+| `communitybbs/` | Community Board (Alt+B) |
+| `model/actor/` | Clases base: Player, Creature, Npc, etc. |
+| `handler/admincommandhandlers/` | Comandos admin (AdminPhantom, AdminFactionWar, etc.) |
+| `data/xml/` | Cargadores de XML: FactionData, etc. |
+| `network/clientpackets/` | Paquetes del cliente |
+| `network/serverpackets/` | Paquetes al cliente |
+
+## Cómo compilar
+```bash
+# Con Ant (build.xml)
+ant -f aCis_gameserver/build.xml
+
+# O manualmente con javac
+cd aCis_gameserver
+javac -encoding UTF-8 -source 21 -target 21 -cp "lib/*" -d build/classes -sourcepath java ruta/al/archivo.java
+```
+
+## Convenciones
+- Java 21 (records, pattern matching, switch expressions)
+- No usar Javolution ni librerías deprecadas
+- Thread safety: usar `ConcurrentHashMap`, `volatile` para flags compartidos
+- Logging: usar `CLogger` de `net.sf.l2j.commons.logging`
+- Config: leer desde properties con `ExProperties`
+- HTML en NPCs: usar `NpcHtmlMessage` con `setFile()` o `setHtml()`

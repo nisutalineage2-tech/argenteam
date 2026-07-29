@@ -1,0 +1,50 @@
+# Faction War — Sistema Completo
+
+## Arquitectura
+
+```
+Java (gameserver)          Config                    Data
+─────────────────    ───────────────────    ─────────────────
+FactionWarManager    factionwar.properties   npcs/90000-90999.xml
+FactionWarConfig     phantoms.properties     spawnlist/faction_neutral_zone.xml
+FactionWarNpc                                zones/PeaceZone.xml
+FactionWarCheckpoint                         mods/faction/*.htm
+FactionWarRegistry                           script/factionwar/*.htm
+AdminFactionWar                              faction.xml
+AdminPhantom
+PhantomAI / PhantomEngine
+```
+
+## Flujo
+
+1. Alternancia automática: EventEngine → FactionWar (vía startVotePhase)
+2. Votación: 30s, 4 mapas aleatorios, jugadores votan por bypass _fwVote_N
+3. Cuenta regresiva: 10s → start()
+4. Guerra activa: phantoms pelean, jugadores entran por NPC en Talking Island
+5. Fin: stop() → recompensas Top 3 + facción ganadora → alterna a eventos
+
+## Archivos clave a modificar
+
+| Cambio común | Archivo(s) |
+|---|---|
+| Agregar/quitar mapa | `factionwar.properties` línea `Maps` |
+| Cambiar recompensas | `factionwar.properties` sección Rewards |
+| Cambiar NPCs | `npcs/90000-90999.xml` |
+| Cambiar HTML del Registrador | `html/script/factionwar/WarRegistrar/*.htm` |
+| Cambiar lógica de guerra | `FactionWarManager.java` |
+| Cambiar comportamiento phantoms | `PhantomAI.java` |
+| Cambiar panel admin | `AdminPhantom.java`, `AdminFactionWar.java` |
+
+## Config rápida en factionwar.properties
+```properties
+Enabled = True
+GoodFactionId = 1
+EvilFactionId = 2
+ScoreToWin = 100
+WarDurationMinutes = 120
+MapRotationMinutes = 15
+MapVoteSeconds = 30
+NeutralSpawnLoc = -84300,243000,-3450
+PvpAdenaReward = 5000
+SpoilItems = 57,1000;5588,1;1875,1;1877,1
+```
