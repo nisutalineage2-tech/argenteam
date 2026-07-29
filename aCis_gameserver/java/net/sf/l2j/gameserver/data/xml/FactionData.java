@@ -73,40 +73,44 @@ public class FactionData implements IXmlReader
 		if (!Config.ENABLE_FACTION_SYSTEM)
 			return;
 		
-		restoreData(player);
-		
-		final Faction faction = _factions.get(player.getFactionId());
-		if (faction != null)
+		try
 		{
-			player.getAppearance().setNameColor(faction.getNameColor());
-			player.getAppearance().setTitleColor(faction.getTitleColor());
-			player.setTitle(faction.getName());
+			restoreData(player);
 			
-			// Teleport to neutral zone AFTER EnterWorld completes (delay 1s).
-			// Teleporting during EnterWorld desyncs the client and causes disconnect.
-			if (FactionWarConfig.isEnabled())
+			final Faction faction = _factions.get(player.getFactionId());
+			if (faction != null)
 			{
-				final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
-				if (neutralLoc != null)
+				player.getAppearance().setNameColor(faction.getNameColor());
+				player.getAppearance().setTitleColor(faction.getTitleColor());
+				player.setTitle(faction.getName());
+				
+				if (FactionWarConfig.isEnabled())
 				{
-					final int px = player.getX();
-					final int py = player.getY();
-					final int pz = player.getZ();
-					
-					// Only teleport if player is not already at neutral zone
-					if (Math.abs(px - neutralLoc.getX()) > 100 || Math.abs(py - neutralLoc.getY()) > 100 || Math.abs(pz - neutralLoc.getZ()) > 50)
+					final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
+					if (neutralLoc != null)
 					{
-						ThreadPool.schedule(() ->
+						final int px = player.getX();
+						final int py = player.getY();
+						final int pz = player.getZ();
+						
+						if (Math.abs(px - neutralLoc.getX()) > 100 || Math.abs(py - neutralLoc.getY()) > 100 || Math.abs(pz - neutralLoc.getZ()) > 50)
 						{
-							if (player.isOnline() && !player.isInJail())
+							ThreadPool.schedule(() ->
 							{
-								player.teleportTo(neutralLoc, 50);
-								player.sendMessage("Bienvenido a la zona neutral de la Faction War.");
-							}
-						}, 1000);
+								if (player.isOnline() && !player.isInJail())
+								{
+									player.teleportTo(neutralLoc, 50);
+									player.sendMessage("Bienvenido a la zona neutral de la Faction War.");
+								}
+							}, 3000);
+						}
 					}
 				}
 			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.error("Error during onPlayerEnter for {}.", e, player.getName());
 		}
 	}
 	
