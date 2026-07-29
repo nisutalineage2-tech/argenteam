@@ -46,11 +46,11 @@ public class RequestGameStart extends L2GameClientPacket
 					if (player == null)
 						return;
 					
+					LOGGER.info("Character '{}' loaded from slot {} for login.", player.getName(), _slot);
+					
 					player.setClient(client);
 					client.setPlayer(player);
 					player.setOnlineStatus(true, true);
-					
-					sendPacket(SSQInfo.sendSky());
 					
 					client.setState(GameClientState.ENTERING);
 					

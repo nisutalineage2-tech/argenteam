@@ -89,6 +89,8 @@ public class EnterWorld extends L2GameClientPacket
 		
 		final int objectId = player.getObjectId();
 		
+		LOGGER.info("EnterWorld for {} starting.", player.getName());
+		
 		if (player.isGM())
 		{
 			if (Config.GM_STARTUP_INVULNERABLE && AdminData.getInstance().hasAccess("admin_invul", player.getAccessLevel()))
@@ -268,7 +270,9 @@ public class EnterWorld extends L2GameClientPacket
 		
 		player.onPlayerEnter();
 		
+		LOGGER.info("EnterWorld for {} - before FactionData.onPlayerEnter", player.getName());
 		FactionData.getInstance().onPlayerEnter(player);
+		LOGGER.info("EnterWorld for {} - after FactionData.onPlayerEnter", player.getName());
 		
 		sendPacket(new SkillCoolTime(player));
 		
@@ -289,6 +293,8 @@ public class EnterWorld extends L2GameClientPacket
 			qs.getQuest().notifyEvent("UC", null, player);
 		
 		player.sendPacket(ActionFailed.STATIC_PACKET);
+		
+		LOGGER.info("EnterWorld for {} complete.", player.getName());
 	}
 	
 	@Override
