@@ -4,7 +4,7 @@ REM ############################################
 REM ## You can change here your own DB params ##
 REM ############################################
 REM MYSQL BIN PATH
-set mysqlBinPath=C:\Program Files\MariaDB 10.9\bin
+set mysqlBinPath=C:\xampp\mysql\bin
 
 REM LOGINSERVER
 set LSUSER=root
@@ -106,6 +106,7 @@ echo Installing empty character-related tables.
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mdt_bets.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mdt_history.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mods_faction.sql
+%mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/alter_add_factionPoints.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mods_factionwar.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/mods_wedding.sql
 %mysqlPath% -h %GSHOST% -u %GSUSER% --password=%GSPASS% -D %GSDB% < ../sql/events.sql

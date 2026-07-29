@@ -125,12 +125,14 @@ $MYG < ../sql/items_on_ground.sql &> /dev/null
 $MYG < ../sql/mdt_bets.sql &> /dev/null
 $MYG < ../sql/mdt_history.sql &> /dev/null
 $MYG < ../sql/mods_faction.sql &> /dev/null
+$MYG < ../sql/alter_add_factionPoints.sql &> /dev/null
 $MYG < ../sql/mods_factionwar.sql &> /dev/null
 $MYG < ../sql/mods_wedding.sql &> /dev/null
 $MYG < ../sql/events.sql &> /dev/null
-$MYG < ../sql/olympiad_fights.sql&> /dev/null
-$MYG < ../sql/olympiad_nobles_eom.sql&> /dev/null
-$MYG < ../sql/olympiad_nobles.sql&> /dev/null
+$MYG < ../sql/dungeon.sql &> /dev/null
+$MYG < ../sql/olympiad_fights.sql &> /dev/null
+$MYG < ../sql/olympiad_nobles_eom.sql &> /dev/null
+$MYG < ../sql/olympiad_nobles.sql &> /dev/null
 $MYG < ../sql/petition.sql &> /dev/null
 $MYG < ../sql/petition_message.sql &> /dev/null
 $MYG < ../sql/pets.sql &> /dev/null
