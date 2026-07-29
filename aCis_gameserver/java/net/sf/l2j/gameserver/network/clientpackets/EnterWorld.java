@@ -66,6 +66,18 @@ public class EnterWorld extends L2GameClientPacket
 	@Override
 	protected void runImpl()
 	{
+		try
+		{
+			runImplInternal();
+		}
+		catch (Exception e)
+		{
+			LOGGER.error("EnterWorld error for {}.", getClient().toString(), e);
+		}
+	}
+	
+	private void runImplInternal()
+	{
 		final Player player = getClient().getPlayer();
 		if (player == null)
 		{

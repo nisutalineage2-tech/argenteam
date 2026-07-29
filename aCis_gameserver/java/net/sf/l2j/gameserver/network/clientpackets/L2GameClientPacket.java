@@ -39,7 +39,7 @@ public abstract class L2GameClientPacket extends ReceivablePacket<GameClient>
 				getClient().onBufferUnderflow();
 				return false;
 			}
-			LOGGER.error("Failed reading {} for {}. ", e, getType(), getClient().toString());
+			LOGGER.error("Failed reading {} for {}.", getType(), getClient().toString(), e);
 		}
 		return false;
 	}
@@ -61,7 +61,7 @@ public abstract class L2GameClientPacket extends ReceivablePacket<GameClient>
 		}
 		catch (Exception e)
 		{
-			LOGGER.error("Failed reading {} for {}. ", e, getType(), getClient().toString());
+			LOGGER.error("Failed reading {} for {}.", getType(), getClient().toString(), e);
 			
 			if (this instanceof EnterWorld)
 				getClient().closeNow();
