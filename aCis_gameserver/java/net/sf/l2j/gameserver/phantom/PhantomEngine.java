@@ -366,7 +366,21 @@ public final class PhantomEngine
 			if (phantom == null || !phantom.isOnline())
 				continue;
 			
-			final int factionId = phantom.getFactionId();
+			int factionId = phantom.getFactionId();
+			if (factionId <= 0 && Config.ENABLE_FACTION_SYSTEM)
+			{
+				// Assign random faction to factionless phantoms
+				final int[] factionIds = FactionData.getInstance().getFactionIds();
+				if (factionIds.length > 0)
+				{
+					factionId = factionIds[Rnd.get(factionIds.length)];
+					phantom.setFactionId(factionId);
+					FactionData.getInstance().storeData(phantom);
+					FactionData.getInstance().onPlayerEnter(phantom);
+					PhantomLog.info("Assigned faction " + factionId + " to phantom " + phantom.getName() + " for war teleport.");
+				}
+			}
+			
 			if (factionId <= 0)
 				continue;
 			

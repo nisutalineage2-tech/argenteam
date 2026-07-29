@@ -11,6 +11,7 @@ import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.random.Rnd;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.GaugeColor;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -319,6 +320,9 @@ public class FactionWarManager
 		{
 			broadcast("[Faction War] ¡La guerra ha comenzado! Mapa: " + firstMap.getName() + " | Puntuación: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
 		}
+		
+		// Refresh faction visuals for all players (colors, titles)
+		broadcastFactionVisuals();
 		
 		// Auto-teleport all phantoms to war
 		final int teleportedPhantoms = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
@@ -1072,6 +1076,38 @@ public class FactionWarManager
 			if (player != null && player.isOnline())
 				player.sendPacket(cs);
 		}
+	}
+	
+	/**
+	 * Refreshes faction visuals (name color, title, title color) for all online players.
+	 * Uses inline faction lookup to avoid calling onPlayerEnter() which would teleport players.
+	 */
+	public void broadcastFactionVisuals()
+	{
+		if (!Config.ENABLE_FACTION_SYSTEM)
+			return;
+		
+		final net.sf.l2j.gameserver.data.xml.FactionData factionData = net.sf.l2j.gameserver.data.xml.FactionData.getInstance();
+		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline())
+				continue;
+			
+			final int factionId = player.getFactionId();
+			if (factionId <= 0)
+				continue;
+			
+			final net.sf.l2j.gameserver.model.Faction faction = factionData.getFaction(factionId);
+			if (faction == null)
+				continue;
+			
+			player.getAppearance().setNameColor(faction.getNameColor());
+			player.getAppearance().setTitleColor(faction.getTitleColor());
+			player.setTitle(faction.getName());
+			player.broadcastUserInfo();
+		}
+		LOGGER.info("Broadcasted faction visuals to all online players.");
 	}
 	
 	private void cancelTask(ScheduledFuture<?> task)
