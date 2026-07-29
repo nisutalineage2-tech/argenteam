@@ -1,0 +1,156 @@
+@echo off
+title aCis Compiler
+
+REM ============================================================
+REM  aCis Compiler — compila Gameserver + Datapack
+REM  Requiere JDK 21 (javac, jar)
+REM ============================================================
+
+set "PROJECT_DIR=%~dp0"
+set "GS_DIR=%PROJECT_DIR%aCis_gameserver"
+set "DP_DIR=%PROJECT_DIR%aCis_datapack"
+
+REM Verificar JAVA_HOME
+if "%JAVA_HOME%"=="" (
+    echo ERROR: JAVA_HOME no esta definida.
+    echo.
+    echo Configurala temporalmente con:
+    echo   set JAVA_HOME=C:\Program Files\Java\jdk-21.0.12
+    echo.
+    pause
+    exit /b 1
+)
+
+if not exist "%JAVA_HOME%\bin\javac.exe" (
+    echo ERROR: No se encontro javac.exe en %%JAVA_HOME%%\bin
+    echo Verifica que JAVA_HOME apunte a un JDK, no a un JRE.
+    pause
+    exit /b 1
+)
+
+echo.
+echo ========================================
+echo     COMPILANDO aCis GAMESERVER
+echo ========================================
+echo.
+
+REM Clean
+if exist "%GS_DIR%\build" (
+    echo Limpiando build anterior...
+    rmdir /s /q "%GS_DIR%\build"
+)
+
+REM Classpath con todas las libs
+set "CLASSPATH="
+for %%j in ("%GS_DIR%\lib\*.jar") do (
+    if defined CLASSPATH (set "CLASSPATH=%CLASSPATH%;%%j") else (set "CLASSPATH=%%j")
+)
+
+REM Crear directorios
+mkdir "%GS_DIR%\build\classes" 2>nul
+mkdir "%GS_DIR%\build\dist\login\libs" 2>nul
+mkdir "%GS_DIR%\build\dist\gameserver\libs" 2>nul
+
+REM Compilar
+echo Buscando archivos .java...
+dir /s /b "%GS_DIR%\java\*.java" > "%GS_DIR%\build\_files.txt"
+for /f %%a in ('type "%GS_DIR%\build\_files.txt" ^| find /c /v ""') do set FILE_COUNT=%%a
+echo Encontrados %FILE_COUNT% archivos. Compilando...
+
+"%JAVA_HOME%\bin\javac" -encoding UTF-8 -source 21 -target 21 -cp "%CLASSPATH%" -d "%GS_DIR%\build\classes" -sourcepath "%GS_DIR%\java" @"%GS_DIR%\build\_files.txt"
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo ERROR: Fallo la compilacion del Gameserver.
+    pause
+    exit /b 1
+)
+
+del "%GS_DIR%\build\_files.txt"
+echo Gameserver compilado exitosamente.
+echo.
+
+REM Crear JAR
+echo Creando l2jserver.jar...
+pushd "%GS_DIR%\build\classes"
+"%JAVA_HOME%\bin\jar" cf "%GS_DIR%\build\l2jserver.jar" .
+popd
+
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Fallo al crear el JAR.
+    pause
+    exit /b 1
+)
+
+echo JAR creado exitosamente.
+echo.
+
+REM Copiar libs, configs y scripts a dist
+echo Copiando librerias y configuracion...
+copy "%GS_DIR%\build\l2jserver.jar" "%GS_DIR%\build\dist\login\libs\" >nul
+copy "%GS_DIR%\build\l2jserver.jar" "%GS_DIR%\build\dist\gameserver\libs\" >nul
+copy "%GS_DIR%\lib\*.jar" "%GS_DIR%\build\dist\login\libs\" >nul
+copy "%GS_DIR%\lib\*.jar" "%GS_DIR%\build\dist\gameserver\libs\" >nul
+xcopy /e /i /y "%GS_DIR%\dist\*" "%GS_DIR%\build\dist\login\" >nul
+xcopy /e /i /y "%GS_DIR%\dist\*" "%GS_DIR%\build\dist\gameserver\" >nul
+xcopy /e /i /y "%GS_DIR%\config\*.properties" "%GS_DIR%\build\dist\gameserver\config\" >nul
+REM Limpiar configs especificas del login en dist del gameserver
+del "%GS_DIR%\build\dist\gameserver\config\banned_ips.properties" 2>nul
+del "%GS_DIR%\build\dist\gameserver\config\loginserver.properties" 2>nul
+
+REM Crear carpeta data y log
+mkdir "%GS_DIR%\build\dist\gameserver\data" 2>nul
+mkdir "%GS_DIR%\build\dist\gameserver\log" 2>nul
+mkdir "%GS_DIR%\build\dist\login\log" 2>nul
+
+echo.
+echo ========================================
+echo     COMPILANDO aCis DATAPACK
+echo ========================================
+echo.
+
+REM Crear directorios datapack
+mkdir "%DP_DIR%\build\gameserver\data" 2>nul
+mkdir "%DP_DIR%\build\login" 2>nul
+mkdir "%DP_DIR%\build\sql" 2>nul
+mkdir "%DP_DIR%\build\tools" 2>nul
+
+REM Crear archivo de exclusiones temporales para xcopy
+set "EXCLUDE_FILE=%TEMP%\acis_exclude.txt"
+echo .project> "%EXCLUDE_FILE%"
+echo log>> "%EXCLUDE_FILE%"
+echo cachedir>> "%EXCLUDE_FILE%"
+echo clans>> "%EXCLUDE_FILE%"
+echo crests>> "%EXCLUDE_FILE%"
+
+REM Copiar data (excluyendo carpetas no deseadas)
+echo Copiando datos...
+xcopy /e /i /y "%DP_DIR%\data" "%DP_DIR%\build\gameserver\data\" /exclude:"%EXCLUDE_FILE%" >nul
+
+REM Copiar sql
+echo Copiando SQL...
+copy "%DP_DIR%\sql\*.sql" "%DP_DIR%\build\sql\" >nul
+
+REM Copiar tools
+echo Copiando tools...
+copy "%DP_DIR%\tools\*" "%DP_DIR%\build\tools\" >nul
+
+REM Copiar serverNames.xml a login
+copy "%DP_DIR%\data\serverNames.xml" "%DP_DIR%\build\login\" >nul
+
+REM Limpiar exclusiones temporales
+del "%EXCLUDE_FILE%" 2>nul
+
+echo.
+echo ========================================
+echo     COMPILACION COMPLETA
+echo ========================================
+echo.
+echo Gameserver: %GS_DIR%\build\dist\
+echo Datapack:   %DP_DIR%\build\
+echo.
+echo Para copiar al servidor:
+echo   copy "%GS_DIR%\build\dist\gameserver" "C:\server\gameserver"
+echo   copy "%DP_DIR%\build\gameserver\data" "C:\server\gameserver\data"
+echo.
+pause
