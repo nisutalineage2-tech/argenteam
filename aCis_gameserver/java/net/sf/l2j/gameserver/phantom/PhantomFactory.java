@@ -59,7 +59,7 @@ public final class PhantomFactory
 	};
 	private static final String[] FANTASY_NAMES =
 	{
-		"Astaroth", "Belial", "Cronos", "Darkar", "Eclipse", "Fenix", "Gorath", "Havoc", "Inferno", "Jade", "Kael", "Legion", "Mystic", "Nemesis", "Onyx", "Phantom", "Quasar", "Ragnar", "Spectral", "Titan", "Umbra", "Valak", "Warden", "Xenith", "Yggdrasil", "Zarath", "Drako", "Ether", "Falcon", "Grimm", "Hyperion", "Icarus", "Kraken", "Lynx", "Morpheus", "Noctis", "Orion", "Phoenix", "Ravager", "Shadow", "Tempest", "Vortex", "Wraith", "Zero", "Arkham", "Berserk", "Doom", "Exodus", "Frost", "Ghost"
+		"Astaroth", "Belial", "Cronos", "Darkar", "Eclipse", "Fenix", "Gorath", "Havoc", "Inferno", "Jade", "Kael", "Legion", "Mystic", "Nemesis", "Onyx", "Phantom", "Quasar", "Ragnar", "Spectral", "Titan", "Umbra", "Valak", "Warden", "Xenith", "Zarath", "Drako", "Ether", "Falcon", "Grimm", "Hyperion", "Icarus", "Kraken", "Lynx", "Morpheus", "Noctis", "Orion", "Phoenix", "Ravager", "Shadow", "Tempest", "Vortex", "Wraith", "Zero", "Arkham", "Berserk", "Doom", "Exodus", "Frost", "Ghost", "Molestiker", "Killzone", "ShadowArrow", "DarkWolf", "StarKnight", "MoonWalker", "NightHawk", "FireStorm", "IceBreaker", "SoulReaper", "WarMachine", "DeathWing", "BlackPearl", "RedDragon", "SilverHawk", "IronFist", "ThunderStrike", "QuickSilver", "StoneHeart", "BladeMaster", "DarkAngel", "BloodFang", "VoidWalker", "SkyHunter", "DragonSlayer", "ShadowHunter", "FallenAngel", "WildFire", "NightBlade", "StormBringer"
 	};
 	
 	private PhantomFactory()
@@ -155,12 +155,31 @@ public final class PhantomFactory
 			final int roll = Rnd.get(100);
 			String name;
 			
-			if (roll < 30) // 30%: single-word fantasy name
+			if (roll < 30) // 30%: single-word fantasy/gamer name
 				name = FANTASY_NAMES[Rnd.get(FANTASY_NAMES.length)];
-			else if (roll < 45) // 15%: first name only
-				name = firstNames[Rnd.get(firstNames.length)];
-			else // 55%: compound FirstName+LastPart
+			else if (roll < 60) // 30%: compound FirstName+LastPart
 				name = firstNames[Rnd.get(firstNames.length)] + LAST_PARTS[Rnd.get(LAST_PARTS.length)];
+			else if (roll < 75) // 15%: Xx wrapped name
+			{
+				final String base = firstNames[Rnd.get(firstNames.length)];
+				final String[] wraps = { "xXx" + base + "xXx", "Xx_" + base + "_xX", "_" + base + "_", "xX" + base + "Xx" };
+				name = wraps[Rnd.get(wraps.length)];
+			}
+			else if (roll < 90) // 15%: numbered name (FirstName + number or Fantasy + number)
+			{
+				final String base = Rnd.nextBoolean() ? firstNames[Rnd.get(firstNames.length)] : FANTASY_NAMES[Rnd.get(FANTASY_NAMES.length)];
+				final int num = Rnd.get(10, 999);
+				final String[] numFormats = { base + num, base + "_" + num, num + "_" + base, num + base };
+				name = numFormats[Rnd.get(numFormats.length)];
+			}
+			else // 10%: compound fantasy compound (TwoWords)
+			{
+				final String w1 = LAST_PARTS[Rnd.get(LAST_PARTS.length)];
+				final String w2 = LAST_PARTS[Rnd.get(LAST_PARTS.length)];
+				name = w1 + w2;
+				if (name.length() > 16)
+					name = name.substring(0, 16);
+			}
 			
 			if (name.length() > 16)
 				name = name.substring(0, 16);
@@ -171,7 +190,15 @@ public final class PhantomFactory
 		// Fallback: add numbers if everything is taken
 		for (int i = 0; i < 100; i++)
 		{
-			final String name = firstNames[Rnd.get(firstNames.length)] + (Rnd.get(10, 999));
+			final int roll = Rnd.get(3);
+			final String name;
+			if (roll == 0)
+				name = firstNames[Rnd.get(firstNames.length)] + Rnd.get(10, 999);
+			else if (roll == 1)
+				name = FANTASY_NAMES[Rnd.get(FANTASY_NAMES.length)] + Rnd.get(10, 999);
+			else
+				name = "xXx" + firstNames[Rnd.get(firstNames.length)] + "xXx";
+			
 			if (PlayerInfoTable.getInstance().getPlayerObjectId(name) <= 0)
 				return name;
 		}
