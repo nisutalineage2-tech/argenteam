@@ -37,4 +37,56 @@
 		<node x="151216" y="47259" />
 		<node x="150947" y="46960" />
 	</zone>
+	
+	<!-- ============================================================= -->
+	<!--   Faction War Zones (PvP areas outside town PeaceZones)       -->
+	<!-- ============================================================= -->
+	<zone shape="NPoly" minZ="-3800" maxZ="-3400"><!-- gludio_faction_war -->
+		<node x="-21000" y="109000" />
+		<node x="-21000" y="115000" />
+		<node x="-15000" y="115000" />
+		<node x="-15000" y="109000" />
+	</zone>
+	<zone shape="NPoly" minZ="-3800" maxZ="-3400"><!-- dion_faction_war -->
+		<node x="4000" y="133000" />
+		<node x="4000" y="139000" />
+		<node x="10000" y="139000" />
+		<node x="10000" y="133000" />
+	</zone>
+	<zone shape="NPoly" minZ="-3600" maxZ="-3200"><!-- giran_faction_war -->
+		<node x="72000" y="139000" />
+		<node x="72000" y="145000" />
+		<node x="78000" y="145000" />
+		<node x="78000" y="139000" />
+	</zone>
+	<zone shape="NPoly" minZ="-1400" maxZ="-1000"><!-- oren_faction_war -->
+		<node x="76000" y="45000" />
+		<node x="76000" y="51000" />
+		<node x="82000" y="51000" />
+		<node x="82000" y="45000" />
+	</zone>
+	<zone shape="NPoly" minZ="-2400" maxZ="-2000"><!-- aden_faction_war -->
+		<node x="147000" y="30000" />
+		<node x="147000" y="36000" />
+		<node x="153000" y="36000" />
+		<node x="153000" y="30000" />
+	</zone>
+	<zone shape="NPoly" minZ="-2600" maxZ="-2200"><!-- goddard_faction_war -->
+		<node x="142000" y="-51000" />
+		<node x="142000" y="-45000" />
+		<node x="148000" y="-45000" />
+		<node x="148000" y="-51000" />
+	</zone>
+	<zone shape="NPoly" minZ="-1000" maxZ="-600"><!-- rune_faction_war -->
+		<node x="47000" y="-51000" />
+		<node x="47000" y="-45000" />
+		<node x="53000" y="-45000" />
+		<node x="53000" y="-51000" />
+	</zone>
+	<zone shape="NPoly" minZ="-1600" maxZ="-1200"><!-- schuttgart_faction_war -->
+		<node x="80000" y="-141000" />
+		<node x="80000" y="-135000" />
+		<node x="86000" y="-135000" />
+		<node x="86000" y="-141000" />
+	</zone>
 </list>
