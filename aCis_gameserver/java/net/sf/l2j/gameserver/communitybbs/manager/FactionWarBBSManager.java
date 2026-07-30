@@ -134,7 +134,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 		sb.append("</table>");
 		
 		// Refresh button
-		sb.append("<br><center><button value=\"Actualizar\" action=\"_bbsfactionwar;refresh\" width=120 height=22 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></center>");
+		sb.append("<br><center><button value=\"Actualizar\" action=\"bypass _bbsfactionwar;refresh\" width=120 height=22 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></center>");
 		
 		sb.append("</body></html>");
 		

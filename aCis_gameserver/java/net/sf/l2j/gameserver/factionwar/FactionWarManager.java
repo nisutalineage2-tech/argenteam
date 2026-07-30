@@ -323,10 +323,8 @@ public class FactionWarManager
 		if (durationMinutes > 0)
 		{
 			_eventEndTask = ThreadPool.schedule(() -> stop(), _durationMs);
-		}
-		
-		sendGaugeToAllPlayers();
-		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 15000, 15000);
+		}			sendGaugeToAllPlayers();
+		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 3000, 3000);
 		
 		final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
 		
@@ -1481,19 +1479,29 @@ public class FactionWarManager
 		final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
 		final String timeStr = getRemainingTimeStr();
 		
+		// Compact one-line message at the very top of screen
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[ Faction War ] Good: ").append(goodScore).append(" vs Evil: ").append(evilScore);
 		if (!timeStr.isEmpty())
-			sb.append(" | Time: ").append(timeStr);
+			sb.append(" | ").append(timeStr);
 		sb.append(" | Flag: ").append(_lastMainFlagKillerFaction > 0 ? getFactionName(_lastMainFlagKillerFaction) : "-");
 		
 		final String msg = sb.toString();
-		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(1, -1, ExShowScreenMessage.SMPOS.TOP_CENTER, false, 1, 0, 0, false, 15000, false, msg);
+		
+		// showEffect=true + showFading=true for a smoother look; size=1 small so it doesn't block clicks
+		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(1, -1, ExShowScreenMessage.SMPOS.TOP_CENTER, false, 1, 0, 0, true, 4000, true, msg);
+		
+		// Send SetupGauge with remaining time so the client shows a real-time progress bar
+		final long remaining = Math.max(0, _durationMs - (System.currentTimeMillis() - _startTime));
+		final SetupGauge gauge = new SetupGauge(GaugeColor.RED, (int) remaining, (int) _durationMs);
 		
 		for (Player player : World.getInstance().getPlayers())
 		{
 			if (player != null && player.isOnline())
+			{
 				player.sendPacket(screenMsg);
+				player.sendPacket(gauge);
+			}
 		}
 	}
 	
