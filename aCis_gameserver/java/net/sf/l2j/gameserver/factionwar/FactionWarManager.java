@@ -31,8 +31,8 @@ public class FactionWarManager
 	private volatile boolean _running;
 	private boolean _startedOnce;
 	private volatile boolean _votingPhaseActive;
-	private int _currentMapIndex;
-	private final Map<Integer, Integer> _scores = new HashMap<>();
+	private volatile int _currentMapIndex;
+	private final Map<Integer, Integer> _scores = new ConcurrentHashMap<>();
 	
 	// Per-player stats tracking: playerId -> FactionWarStats
 	private final Map<Integer, FactionWarStats> _playerStats = new ConcurrentHashMap<>();
@@ -57,14 +57,14 @@ public class FactionWarManager
 	private ScheduledFuture<?> _eventEndTask;
 	private ScheduledFuture<?> _scoreboardTask;
 	private ScheduledFuture<?> _countdownTask;
-	private int _winningFaction;
-	private long _startTime;
-	private long _durationMs;
+	private volatile int _winningFaction;
+	private volatile long _startTime;
+	private volatile long _durationMs;
 	
 	private volatile boolean _votingActive;
 	private final Map<Integer, Integer> _mapVotes = new HashMap<>();
 	private final java.util.Set<Integer> _votedPlayers = new java.util.HashSet<>();
-	private java.util.List<FactionWarConfig.WarMap> _currentVoteMaps;
+	private volatile java.util.List<FactionWarConfig.WarMap> _currentVoteMaps;
 	
 	private static class SingletonHolder
 	{
@@ -701,6 +701,8 @@ public class FactionWarManager
 	
 	private void scheduleFlagRespawn()
 	{
+		if (_flagRespawnTask != null && !_flagRespawnTask.isDone())
+			_flagRespawnTask.cancel(false);
 		_flagRespawnTask = ThreadPool.schedule(() ->
 		{
 			if (_running)
@@ -813,6 +815,8 @@ public class FactionWarManager
 	
 	private void scheduleGuardRespawn()
 	{
+		if (_guardRespawnTask != null && !_guardRespawnTask.isDone())
+			_guardRespawnTask.cancel(false);
 		_guardRespawnTask = ThreadPool.schedule(() ->
 		{
 			if (_running)

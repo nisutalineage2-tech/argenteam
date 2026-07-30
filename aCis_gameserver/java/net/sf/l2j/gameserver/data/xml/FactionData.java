@@ -23,7 +23,7 @@ import org.w3c.dom.Document;
 
 public class FactionData implements IXmlReader
 {
-	private static final String INSERT_CHARACTER_FACTION = "INSERT INTO mods_faction (char_id,factionId,factionPoints) VALUES (?,?,?)";
+	private static final String INSERT_CHARACTER_FACTION = "REPLACE INTO mods_faction (char_id,factionId,factionPoints) VALUES (?,?,?)";
 	private static final String DELETE_CHARACTER_FACTION = "DELETE FROM mods_faction WHERE char_id=?";
 	private static final String RESTORE_CHARACTER_FACTION = "SELECT factionId, factionPoints FROM mods_faction WHERE char_id=?";
 	private static final String UPDATE_CHARACTER_FACTION_POINTS = "UPDATE mods_faction SET factionPoints=? WHERE char_id=?";
@@ -119,10 +119,11 @@ public class FactionData implements IXmlReader
 		if (!Config.ENABLE_FACTION_SYSTEM)
 			return;
 		
-		removeData(player);
-		
 		if (player.getFactionId() == 0)
+		{
+			removeData(player);
 			return;
+		}
 		
 		try (Connection con = ConnectionPool.getConnection();
 			PreparedStatement ps = con.prepareStatement(INSERT_CHARACTER_FACTION))

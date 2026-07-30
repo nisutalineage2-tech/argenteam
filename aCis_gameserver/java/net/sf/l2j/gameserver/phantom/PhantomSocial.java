@@ -7,6 +7,7 @@ import net.sf.l2j.Config;
 import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.enums.SayType;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
@@ -143,9 +144,9 @@ public final class PhantomSocial
 		if (warRunning)
 		{
 			final String[] lines;
-			if (phantom.getFactionId() == 1)
+			if (phantom.getFactionId() == FactionWarConfig.getGoodFactionId())
 				lines = WAR_LINES_GOOD;
-			else if (phantom.getFactionId() == 2)
+			else if (phantom.getFactionId() == FactionWarConfig.getEvilFactionId())
 				lines = WAR_LINES_EVIL;
 			else
 				lines = WAR_LINES_NEUTRAL;
@@ -162,9 +163,9 @@ public final class PhantomSocial
 			return;
 		
 		final String[] lines;
-		if (phantom.getFactionId() == 1)
+		if (phantom.getFactionId() == FactionWarConfig.getGoodFactionId())
 			lines = WAR_LINES_GOOD;
-		else if (phantom.getFactionId() == 2)
+		else if (phantom.getFactionId() == FactionWarConfig.getEvilFactionId())
 			lines = WAR_LINES_EVIL;
 		else
 			lines = WAR_LINES_NEUTRAL;

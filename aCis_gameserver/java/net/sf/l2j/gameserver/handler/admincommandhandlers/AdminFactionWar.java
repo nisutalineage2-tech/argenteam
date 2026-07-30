@@ -40,8 +40,18 @@ public class AdminFactionWar implements IAdminCommandHandler
 				showPanel(player, "Faction War already running!");
 				return;
 			}
-			final int score = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : FactionWarConfig.getScoreToWin();
-			final int duration = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : 0;
+			final int score;
+			final int duration;
+			try
+			{
+				score = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : FactionWarConfig.getScoreToWin();
+				duration = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : 0;
+			}
+			catch (NumberFormatException e)
+			{
+				showPanel(player, "Invalid number format. Usage: //factionwar start [score] [duration]");
+				return;
+			}
 			FactionWarManager.getInstance().start(score, duration);
 			showPanel(player, "Faction War started! Score: " + score + (duration > 0 ? " Duration: " + duration + "min" : ""));
 		}

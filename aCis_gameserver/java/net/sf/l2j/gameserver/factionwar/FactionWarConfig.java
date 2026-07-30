@@ -5,11 +5,14 @@ import java.util.Collections;
 import java.util.List;
 
 import net.sf.l2j.commons.config.ExProperties;
+import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.model.location.Location;
 
 public class FactionWarConfig
 {
+	private static final CLogger LOGGER = new CLogger(FactionWarConfig.class.getName());
+
 	private static boolean _enabled;
 	private static int _goodFactionId;
 	private static int _evilFactionId;
@@ -29,7 +32,6 @@ public class FactionWarConfig
 	private static int _mapRotationMinutes;
 	private static int _mapVoteSeconds;
 	private static final List<WarMap> _maps = new ArrayList<>();
-	private static final List<WarMap> _voteMaps = new ArrayList<>();
 	private static Location _goodSpawnLoc;
 	private static Location _evilSpawnLoc;
 	private static Location _neutralSpawnLoc;
@@ -155,8 +157,23 @@ public class FactionWarConfig
 	
 	private static Location parseLoc(String s)
 	{
+		if (s == null || s.isEmpty())
+			return null;
 		final String[] p = s.split(",");
-		return new Location(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), Integer.parseInt(p[2].trim()));
+		if (p.length < 3)
+		{
+			LOGGER.warn("Malformed location: '{}' — expected x,y,z", s);
+			return null;
+		}
+		try
+		{
+			return new Location(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), Integer.parseInt(p[2].trim()));
+		}
+		catch (NumberFormatException e)
+		{
+			LOGGER.warn("Invalid number in location: '{}'", s);
+			return null;
+		}
 	}
 	
 	public static boolean isEnabled() { return Config.ENABLE_FACTION_SYSTEM && _enabled; }
@@ -182,13 +199,13 @@ public class FactionWarConfig
 	/** Returns a random subset of maps for voting (max 4). */
 	public static List<WarMap> getVoteMaps()
 	{
-		_voteMaps.clear();
 		final List<WarMap> copy = new ArrayList<>(_maps);
 		Collections.shuffle(copy);
 		final int count = Math.min(4, copy.size());
+		final List<WarMap> result = new ArrayList<>(count);
 		for (int i = 0; i < count; i++)
-			_voteMaps.add(copy.get(i));
-		return _voteMaps;
+			result.add(copy.get(i));
+		return result;
 	}
 	
 	public static Location getGoodSpawnLoc() { return _goodSpawnLoc; }
