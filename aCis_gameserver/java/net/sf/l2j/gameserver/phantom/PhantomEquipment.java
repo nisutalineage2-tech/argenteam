@@ -52,6 +52,14 @@ public final class PhantomEquipment
 		43, 499, 517, 2422, 2423, 2424, 2425, 2426, 2429, 2430, 2435, 2436, 2448, 2449, 2454, 2459, 2460, 568, 600, 601, 608, 612
 	};
 	
+	private static final int[][] SOULSHOTS =
+	{
+		{ 1835, 2509 }, // Tier 0: No grade
+		{ 1463, 2510 }, // Tier 1: D
+		{ 1464, 2511 }, // Tier 2: C
+		{ 1465, 2512 }, // Tier 3: B
+	};
+	
 	private PhantomEquipment()
 	{
 	}
@@ -76,8 +84,32 @@ public final class PhantomEquipment
 				equipItem(phantom, maybeMixedPart(itemId));
 		}
 		
+		// Soulshots / Spiritshots
+		giveShots(phantom, tier, mage);
+		
 		phantom.getMemos().set(MEMO_KEY, tier);
 		phantom.broadcastUserInfo();
+	}
+	
+	private static void giveShots(Player phantom, int tier, boolean mage)
+	{
+		if (tier < 0 || tier >= SOULSHOTS.length)
+			tier = 0;
+		
+		final int soulshotId = SOULSHOTS[tier][0];
+		final int spiritshotId = SOULSHOTS[tier][1];
+		
+		// Give soulshots for physical classes, spiritshots for mages
+		if (mage)
+			phantom.getInventory().addItem(spiritshotId, 100000);
+		else
+			phantom.getInventory().addItem(soulshotId, 100000);
+		
+		// Enable auto-use
+		if (mage)
+			phantom.addAutoSoulShot(spiritshotId);
+		else
+			phantom.addAutoSoulShot(soulshotId);
 	}
 	
 	private static int getTier(int level)
