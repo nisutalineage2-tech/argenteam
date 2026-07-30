@@ -154,13 +154,13 @@ public final class PhantomEquipment
 	
 	private static boolean isDaggerClass(Player phantom)
 	{
-		final int classId = phantom.getClassId();
+		final int classId = phantom.getClassId().getId();
 		return classId >= 35 && classId <= 39; // Dark Avenger -> Ghost Sentinel? No, daggers are 7-8, 17-18, 35-36...
 	}
 	
 	private static boolean isArcherClass(Player phantom)
 	{
-		final int classId = phantom.getClassId();
+		final int classId = phantom.getClassId().getId();
 		return classId >= 31 && classId <= 34; // Hawkeye, Silver Ranger, Moonlight Sentinel, Ghost Sentinel
 	}
 	

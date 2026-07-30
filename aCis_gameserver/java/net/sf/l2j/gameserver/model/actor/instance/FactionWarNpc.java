@@ -1,6 +1,5 @@
 package net.sf.l2j.gameserver.model.actor.instance;
 
-import java.util.List;
 import java.util.StringTokenizer;
 
 import net.sf.l2j.gameserver.data.SkillTable;
@@ -29,12 +28,10 @@ public class FactionWarNpc extends Folk
 			return;
 		
 		final StringTokenizer st = new StringTokenizer(command, " ");
-		final String cmd = st.nextToken();
-		
-		switch (cmd)
+		final String cmd = st.nextToken();			switch (cmd)
 		{
 			case "warGoToBase" -> handleGoToBase(player);
-			case "warCheckpoint" -> handleCheckpoint(player, st);
+			case "warCheckpoints" -> handleCheckpointStatus(player);
 			case "fwVote" -> handleVote(player, st);
 			case "warVoteMenu" -> handleVoteMenu(player);
 			case "bufferBuff" -> handleBufferBuff(player, st);
@@ -69,7 +66,11 @@ public class FactionWarNpc extends Folk
 		player.sendMessage("¡Teletransportado a la base de tu facción! ¡Lucha por la gloria!");
 	}
 	
-	private void handleCheckpoint(Player player, StringTokenizer st)
+	/**
+	 * Shows checkpoint ownership status to the player.
+	 * Checkpoints are capturable battlegrounds — no direct teleport.
+	 */
+	private void handleCheckpointStatus(Player player)
 	{
 		if (!FactionWarManager.getInstance().isRunning())
 		{
@@ -77,35 +78,52 @@ public class FactionWarNpc extends Folk
 			return;
 		}
 		
-		if (player.getFactionId() <= 0)
-		{
-			showPanel(player, "No tienes una facción.");
-			return;
-		}
+		final FactionWarCheckpoint cp = FactionWarManager.getInstance().getCheckpoints();
+		final int count = cp.size();
 		
-		if (!st.hasMoreTokens())
-			return;
+		final StringBuilder sb = new StringBuilder(2048);
+		sb.append("<html><body><center><font color=LEVEL>Checkpoints Capturables</font></center><br>");
+		sb.append("Los checkpoints son puntos de batalla. ¡Ataca y captúralos para tu facción!<br><br>");
+		sb.append("<table width=280>");
+		sb.append("<tr><td width=30><font color=808080>#</font></td><td width=150><font color=808080>Dueño</font></td><td width=100><font color=808080>Estado</font></td></tr>");
 		
-		try
+		for (int i = 0; i < count; i++)
 		{
-			final int index = Integer.parseInt(st.nextToken());
-			final FactionWarCheckpoint cp = FactionWarManager.getInstance().getCheckpoints();
-			final List<Location> locs = cp.getLocations();
+			final int owner = cp.getOwner(i);
+			final String ownerName;
+			final String ownerColor;
 			
-			if (index < 0 || index >= locs.size())
+			if (owner == FactionWarConfig.getGoodFactionId())
 			{
-				showPanel(player, "Checkpoint inválido.");
-				return;
+				ownerName = FactionWarConfig.getGoodFactionName();
+				ownerColor = "0000FF";
+			}
+			else if (owner == FactionWarConfig.getEvilFactionId())
+			{
+				ownerName = FactionWarConfig.getEvilFactionName();
+				ownerColor = "FF0000";
+			}
+			else
+			{
+				ownerName = "Neutral";
+				ownerColor = "C0C0C0";
 			}
 			
-			final Location loc = locs.get(index);
-			player.teleportTo(loc.getX(), loc.getY(), loc.getZ(), 0);
-			player.sendMessage("Teletransportado al checkpoint " + (index + 1) + ".");
+			final String status = (owner == player.getFactionId()) ? "<font color=00FF00>Propio</font>" : "<font color=FF6600>Capturable</font>";
+			
+			sb.append("<tr><td>").append(i + 1).append("</td>");
+			sb.append("<td><font color=\"").append(ownerColor).append("\">").append(ownerName).append("</font></td>");
+			sb.append("<td>").append(status).append("</td></tr>");
 		}
-		catch (NumberFormatException e)
-		{
-			showPanel(player, "Checkpoint inválido.");
-		}
+		
+		sb.append("</table><br>");
+		sb.append("<button value=\"Volver\" action=\"bypass -h npc_%objectId%_Chat 0\" width=100 height=25 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\">");
+		sb.append("</body></html>");
+		
+		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
+		html.setHtml(sb.toString());
+		html.replace("%objectId%", String.valueOf(getObjectId()));
+		player.sendPacket(html);
 	}
 	
 	private void handleVote(Player player, StringTokenizer st)
@@ -424,24 +442,24 @@ public class FactionWarNpc extends Folk
 			sb.append("Evil: <font color=FF0000>").append(FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId())).append("</font><br>");
 			sb.append("Puntuación para ganar: ").append(FactionWarConfig.getScoreToWin()).append("<br>");
 			
-			// Checkpoints available during war
+			// Checkpoint status during war (now capturable battlegrounds)
 			if (running)
 			{
 				final FactionWarCheckpoint cp = FactionWarManager.getInstance().getCheckpoints();
-				final List<Location> locs = cp.getLocations();
-				if (!locs.isEmpty())
+				if (cp.size() > 0)
 				{
-					sb.append("<br><font color=B0C4DE>--- Checkpoints Disponibles ---</font><br>");
-					sb.append("<table width=280>");
-					for (int i = 0; i < locs.size(); i++)
+					sb.append("<br><font color=B0C4DE>--- Checkpoints Capturables ---</font><br>");
+					// Show brief ownership status
+					int goodCp = 0, evilCp = 0;
+					for (int i = 0; i < cp.size(); i++)
 					{
-						if (i % 2 == 0)
-							sb.append("<tr>");
-						sb.append("<td><button value=\"CP ").append(i + 1).append("\" action=\"bypass -h npc_%objectId%_warCheckpoint ").append(i).append("\" width=130 height=25 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
-						if (i % 2 == 1 || i == locs.size() - 1)
-							sb.append("</tr>");
+						final int owner = cp.getOwner(i);
+						if (owner == FactionWarConfig.getGoodFactionId()) goodCp++;
+						else if (owner == FactionWarConfig.getEvilFactionId()) evilCp++;
 					}
-					sb.append("</table><br>");
+					sb.append("<font color=0000FF>").append(FactionWarConfig.getGoodFactionName()).append(": ").append(goodCp).append(" CPs</font> | ");
+					sb.append("<font color=FF0000>").append(FactionWarConfig.getEvilFactionName()).append(": ").append(evilCp).append(" CPs</font><br>");
+					sb.append("<button value=\"Detalle de CPs\" action=\"bypass -h npc_%objectId%_warCheckpoints\" width=200 height=25 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"><br>");
 				}
 			}
 		}

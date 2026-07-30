@@ -16,6 +16,7 @@ import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.GaugeColor;
 import net.sf.l2j.gameserver.enums.SayType;
+import net.sf.l2j.gameserver.model.FactionFlag;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -51,6 +52,10 @@ public class FactionWarManager
 	private Npc _registrarNpc;
 	
 	private final FactionWarCheckpoint _checkpoints = new FactionWarCheckpoint();
+	
+	// XML-defined flag spawns (from faction_flags.xml)
+	private final List<Spawn> _xmlFlagSpawns = new ArrayList<>();
+	private final List<Npc> _xmlFlagNpcs = new ArrayList<>();
 	
 	// Anti-farm tracking: killerId -> lastVictimId
 	private final Map<Integer, Integer> _lastKillVictim = new ConcurrentHashMap<>();
@@ -302,6 +307,7 @@ public class FactionWarManager
 		_durationMs = durationMinutes * 60000L;
 		
 		spawnFlag();
+		spawnXmlFlags();
 		spawnGuards();
 		spawnRegistrar();
 		_checkpoints.spawn(_currentMapIndex);
@@ -365,6 +371,7 @@ public class FactionWarManager
 		cancelTask(_countdownTask);
 		
 		despawnFlag();
+		despawnXmlFlags();
 		despawnGuards();
 		despawnRegistrar();
 		_checkpoints.despawn();
@@ -473,6 +480,38 @@ public class FactionWarManager
 		onFlagKilled(killerFactionId, 0);
 	}
 	
+	/**
+	 * Adds raw score points to a faction and checks for winner.
+	 */
+	public void addScore(int factionId, int points)
+	{
+		if (!_running)
+			return;
+		
+		_scores.merge(factionId, points, Integer::sum);
+		checkWinner();
+	}
+	
+	/**
+	 * Called when a faction player captures a checkpoint (kills the CpFlag NPC).
+	 * Delegates to the checkpoint manager for ownership change.
+	 */
+	public void onCheckpointCaptured(int capturingFactionId, net.sf.l2j.gameserver.model.actor.instance.FactionWarCpFlag cpFlag)
+	{
+		if (!_running || !FactionWarConfig.isEnabled())
+			return;
+		
+		_checkpoints.onCapture(capturingFactionId, cpFlag);
+		
+		// Also give immediate score for the capture
+		final int points = FactionWarConfig.getPointsPerFlagKill();
+		if (points > 0)
+		{
+			_scores.merge(capturingFactionId, points, Integer::sum);
+			checkWinner();
+		}
+	}
+	
 	public void onPvpKill(int killerFactionId, int victimFactionId, int killerId, int victimId)
 	{
 		if (!_running || !FactionWarConfig.isEnabled() || killerFactionId == victimFactionId)
@@ -566,7 +605,66 @@ public class FactionWarManager
 		// Random spoil drop to the killer's party
 		giveRandomSpoilToParty(killer);
 		
+		// Enchant system
+		handleEnchantSystem(killer);
+		
 		checkWinner();
+	}
+	
+	/**
+	 * Handles the faction enchant system on PvP kill.
+	 */
+	private void handleEnchantSystem(Player killer)
+	{
+		final String mode = FactionWarConfig.getEnchantMode();
+		if (mode == null || mode.equals("OFF"))
+			return;
+		
+		if (mode.equals("PVPSCROLLS"))
+		{
+			if (Rnd.get(100) < FactionWarConfig.getEnchantScrollDropChance())
+			{
+				final int[] scrolls = {729, 730, 960, 959};
+				final int scrollId = scrolls[Rnd.get(scrolls.length)];
+				killer.addItem(scrollId, 1, true);
+				killer.sendMessage("[Faction] Enchant scroll drop!");
+			}
+		}
+		else if (mode.equals("PVPENCHANT"))
+		{
+			killer.addEnchantCnt(1);
+			
+			final net.sf.l2j.gameserver.model.item.instance.ItemInstance enchantItem = killer.getCurrentEnchantItem();
+			if (enchantItem == null || enchantItem.isHeroItem())
+				return;
+			
+			if (enchantItem.getEnchantLevel() >= FactionWarConfig.getMaxItemEnchant())
+				return;
+			
+			final int crystalType = enchantItem.getItem().getCrystalType().ordinal();
+			final boolean isWeapon = enchantItem.isWeapon();
+			final boolean isArmor = enchantItem.isArmor();
+			if (!isWeapon && !isArmor)
+				return;
+			
+			int requiredKills = 0;
+			switch (crystalType)
+			{
+				case 2: requiredKills = FactionWarConfig.getKillsForEnchantB(); break; // B
+				case 3: requiredKills = FactionWarConfig.getKillsForEnchantA(); break; // A
+				case 4: requiredKills = FactionWarConfig.getKillsForEnchantS(); break; // S
+			}
+			if (requiredKills <= 0)
+				return;
+			
+			if (killer.getEnchantCnt() >= requiredKills)
+			{
+				enchantItem.setEnchantLevel(enchantItem.getEnchantLevel() + 1, killer);
+				killer.setEnchantCnt(killer.getEnchantCnt() - requiredKills);
+				killer.sendMessage("[Faction] Item enchanted to +" + enchantItem.getEnchantLevel() + "!");
+				killer.sendPacket(new net.sf.l2j.gameserver.network.serverpackets.InventoryUpdate(killer));
+			}
+		}
 	}
 	
 	/**
@@ -899,6 +997,75 @@ public class FactionWarManager
 		}
 	}
 	
+	/**
+	 * Spawns flags defined in faction_flags.xml for the current map.
+	 * These are additional flag NPCs placed at strategic points around the map.
+	 */
+	private void spawnXmlFlags()
+	{
+		if (FactionWarConfig.getMaps().isEmpty())
+			return;
+		
+		final String mapName = FactionWarConfig.getMaps().get(_currentMapIndex).getName();
+		final java.util.List<FactionFlag> flags = FactionWarConfig.getXmlFlagsForMap(mapName);
+		
+		if (flags.isEmpty())
+		{
+			LOGGER.debug("No XML flags defined for map '{}'.", mapName);
+			return;
+		}
+		
+		for (FactionFlag flag : flags)
+		{
+			if (flag.isCapturable() || flag.getFactionId() <= 0)
+			{
+				// Spawn as capturable war flag NPC (use flag NPC type)
+				try
+				{
+					final Spawn spawn = new Spawn(FactionWarConfig.getFlagNpcId(), true);
+					spawn.setLoc(flag.getX(), flag.getY(), flag.getZ(), 0);
+					final Npc npc = spawn.doSpawn(false);
+					if (npc != null)
+					{
+						npc.setInvul(false);
+						npc.setIsImmobilized(true);
+						npc.setTitle(flag.getName());
+						_xmlFlagSpawns.add(spawn);
+						_xmlFlagNpcs.add(npc);
+					}
+				}
+				catch (Exception e)
+				{
+					LOGGER.error("Failed to spawn XML flag '{}' at ({}, {}, {}).", e, flag.getName(), flag.getX(), flag.getY(), flag.getZ());
+				}
+			}
+			// Non-capturable base flags (faction bases) could be decorative or used for spawn points
+		}
+		
+		if (!_xmlFlagNpcs.isEmpty())
+			LOGGER.info("Spawned {} XML flags for map '{}'.", _xmlFlagNpcs.size(), mapName);
+	}
+	
+	/**
+	 * Despawns all XML-defined flags for the current map.
+	 */
+	private void despawnXmlFlags()
+	{
+		for (Npc npc : _xmlFlagNpcs)
+		{
+			if (npc != null)
+				npc.deleteMe();
+		}
+		_xmlFlagNpcs.clear();
+		
+		for (Spawn spawn : _xmlFlagSpawns)
+		{
+			if (spawn != null)
+				spawn.doDelete();
+		}
+		_xmlFlagSpawns.clear();
+	}
+	
 	private void scheduleFlagRespawn()
 	{
 		if (_flagRespawnTask != null && !_flagRespawnTask.isDone())
@@ -1005,23 +1172,60 @@ public class FactionWarManager
 		}
 	}
 	
-	public void onGuardDied()
+	/**
+	 * Called when a FactionWarGuard dies. Only respawns THAT specific guard
+	 * at its spawn position, instead of respawning ALL guards (old behavior).
+	 */
+	public void onGuardDied(Npc guard)
 	{
-		if (!_running)
+		if (!_running || guard == null)
 			return;
 		
-		scheduleGuardRespawn();
-	}
-	
-	private void scheduleGuardRespawn()
-	{
-		if (_guardRespawnTask != null && !_guardRespawnTask.isDone())
-			_guardRespawnTask.cancel(false);
-		_guardRespawnTask = ThreadPool.schedule(() ->
+		final Location spawnLoc = guard.getSpawnLocation();
+		if (spawnLoc == null)
+			return;
+		
+		// Remove from active lists
+		_goodGuardNpcs.removeIf(n -> n != null && n.getObjectId() == guard.getObjectId());
+		_evilGuardNpcs.removeIf(n -> n != null && n.getObjectId() == guard.getObjectId());
+		
+		// Find and remove the matching Spawn from the parallel list
+		_goodGuardSpawns.removeIf(s -> s != null && s.getNpc() != null && s.getNpc().getObjectId() == guard.getObjectId());
+		_evilGuardSpawns.removeIf(s -> s != null && s.getNpc() != null && s.getNpc().getObjectId() == guard.getObjectId());
+		
+		// Schedule a single guard respawn at the exact spawn position
+		final long delay = FactionWarConfig.getGuardRespawnDelay();
+		ThreadPool.schedule(() ->
 		{
-			if (_running)
-				spawnGuards();
-		}, FactionWarConfig.getGuardRespawnDelay());
+			if (!_running)
+				return;
+			
+			try
+			{
+				final Spawn spawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
+				spawn.setLoc(spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ(), 0);
+				final Npc newGuard = spawn.doSpawn(false);
+				if (newGuard != null)
+				{
+					// Determine if Good or Evil base by proximity to faction spawns
+					final Location goodLoc = getFactionSpawn(FactionWarConfig.getGoodFactionId());
+					if (goodLoc != null && spawnLoc.distance3D(goodLoc) < 500)
+					{
+						_goodGuardSpawns.add(spawn);
+						_goodGuardNpcs.add(newGuard);
+					}
+					else
+					{
+						_evilGuardSpawns.add(spawn);
+						_evilGuardNpcs.add(newGuard);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("Failed to respawn single guard at ({}, {}, {}).", e, spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ());
+			}
+		}, delay);
 	}
 	
 	/**
@@ -1170,12 +1374,14 @@ public class FactionWarManager
 		
 		// Respawn everything on new map
 		despawnFlag();
+		despawnXmlFlags();
 		despawnGuards();
 		_checkpoints.despawn();
 		
 		_currentMapIndex = newIndex;
 		
 		spawnFlag();
+		spawnXmlFlags();
 		spawnGuards();
 		_checkpoints.spawn(_currentMapIndex);
 		
@@ -1263,7 +1469,7 @@ public class FactionWarManager
 			sb.append(" | Time: ").append(timeStr);
 		
 		final String msg = sb.toString();
-		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(msg, 15000, ExShowScreenMessage.SMPOS.TOP_LEFT, false);
+		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(msg, 15000, ExShowScreenMessage.SMPOS.TOP_CENTER, false);
 		
 		for (Player player : World.getInstance().getPlayers())
 		{

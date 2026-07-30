@@ -387,6 +387,8 @@ public final class Player extends Playable
 	
 	private int _factionId;
 	private int _factionPoints;
+	private int _enchantCnt;
+	private int _currentEnchantItemObjId;
 	
 	private int _deathPenaltyBuffLevel;
 	
@@ -2652,6 +2654,17 @@ public final class Player extends Playable
 				{
 					pk.addFactionPoints(rewardPoints);
 					pk.sendMessage("[Faction] +" + rewardPoints + " faction point(s) for killing an enemy!");
+				}
+				
+				// Lose points on death
+				if (net.sf.l2j.gameserver.factionwar.FactionWarConfig.isLosePointsOnDeath())
+				{
+					final int loseAmount = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getPointsLoseAmount();
+					if (loseAmount > 0)
+					{
+						_factionPoints = Math.max(0, _factionPoints - loseAmount);
+						sendMessage("[Faction] -" + loseAmount + " faction point(s) for dying.");
+					}
 				}
 			}
 			
@@ -7225,6 +7238,38 @@ public final class Player extends Playable
 	public void addFactionPoints(int points)
 	{
 		_factionPoints += points;
+	}
+	
+	public int getEnchantCnt()
+	{
+		return _enchantCnt;
+	}
+	
+	public void setEnchantCnt(int cnt)
+	{
+		_enchantCnt = cnt;
+	}
+	
+	public void addEnchantCnt(int cnt)
+	{
+		_enchantCnt += cnt;
+	}
+	
+	public int getCurrentEnchantItemObjId()
+	{
+		return _currentEnchantItemObjId;
+	}
+	
+	public void setCurrentEnchantItemObjId(int objId)
+	{
+		_currentEnchantItemObjId = objId;
+	}
+	
+	public net.sf.l2j.gameserver.model.item.instance.ItemInstance getCurrentEnchantItem()
+	{
+		if (_currentEnchantItemObjId <= 0)
+			return null;
+		return getInventory().getItemByObjectId(_currentEnchantItemObjId);
 	}
 	
 	public void stopToFight()

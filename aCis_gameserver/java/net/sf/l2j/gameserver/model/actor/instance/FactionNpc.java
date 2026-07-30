@@ -7,6 +7,7 @@ import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
@@ -57,9 +58,24 @@ public class FactionNpc extends Folk
 			
 			player.sendMessage("You've decided to fight for " + faction.getName() + ".");
 			
+			// Say texts (broadcast on faction join)
+			if (FactionWarConfig.isEnableSayTexts())
+			{
+				final String playerName = player.getName();
+				final boolean isGood = (id == FactionWarConfig.getGoodFactionId());
+				final String npcText = (isGood ? FactionWarConfig.getGoodNpcText() : FactionWarConfig.getEvilNpcText())
+					.replace("%n", playerName)
+					.replace("%faction%", faction.getName());
+				final String playerText = (isGood ? FactionWarConfig.getGoodPlayerText() : FactionWarConfig.getEvilPlayerText())
+					.replace("%n", playerName)
+					.replace("%faction%", faction.getName());
+				
+				broadcastPacket(new CreatureSay(getObjectId(), SayType.ALL, getName(), npcText));
+				player.broadcastPacket(new CreatureSay(player.getObjectId(), SayType.ALL, playerName, playerText));
+			}
+			
 			player.startAbnormalEffect(AbnormalEffect.MAGIC_CIRCLE);
 			broadcastPacket(new MagicSkillUse(this, player, 1034, 1, 2000, 0));
-			broadcastPacket(new CreatureSay(getObjectId(), SayType.ALL, getName(), "Welcome, warrior. May the light guide your path to " + faction.getName() + "."));
 			
 			ThreadPool.schedule(() ->
 			{

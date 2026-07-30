@@ -37,7 +37,7 @@ public class FactionWarFlag extends Monster
 		
 		if (killer instanceof Player player && player.getFactionId() > 0)
 		{
-			FactionWarManager.getInstance().onFlagKilled(player.getFactionId());
+			FactionWarManager.getInstance().onFlagKilled(player.getFactionId(), player.getObjectId());
 		}
 		
 		return true;

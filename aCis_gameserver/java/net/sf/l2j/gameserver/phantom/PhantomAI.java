@@ -207,10 +207,10 @@ public final class PhantomAI
 				return;
 			}
 			
-			// === FACTION WAR MODE: Skip farming/looting/patrol, focus on PvP ===
+			// === FACTION WAR MODE: PvP + attack war NPCs (flags, checkpoints, guards) ===
 			if (warRunning)
 			{
-				// Skip retaliation check — we directly search for enemies (includes recent attackers)
+				// Priority 1: Attack enemy faction players
 				final Player warTarget = findEnemyFactionPlayerInWar(phantom);
 				if (warTarget != null)
 				{
@@ -218,7 +218,15 @@ public final class PhantomAI
 					return;
 				}
 				
-				// No enemies nearby — move toward the battle area (flag center or checkpoint)
+				// Priority 2: Attack war NPCs (enemy guards, capturable flags and checkpoints)
+				final Monster warNpcTarget = findWarNpcTarget(phantom);
+				if (warNpcTarget != null)
+				{
+					attackNpc(phantom, warNpcTarget, "War npc ");
+					return;
+				}
+				
+				// Priority 3: No enemies nearby — move toward the battle area
 				if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
 				{
 					moveToWarCenter(phantom);
@@ -311,6 +319,27 @@ public final class PhantomAI
 		}
 	}
 	
+	/**
+	 * Attacks an NPC/monster target. Used for war NPCs (flags, checkpoints, guards).
+	 */
+	private static void attackNpc(Player phantom, Monster target, String action)
+	{
+		phantom.setTarget(target);
+		LAST_TARGETS.put(phantom.getObjectId(), new Location(target.getX(), target.getY(), target.getZ()));
+		
+		if (tryUseOffensiveSkill(phantom, target, false))
+			return;
+		
+		if (shouldRestMageMp(phantom))
+		{
+			restMp(phantom);
+			return;
+		}
+		
+		LAST_ACTIONS.put(phantom.getObjectId(), action + target.getName());
+		phantom.getAI().tryToAttack(target, false, false);
+	}
+	
 	private static void attackPlayer(Player phantom, Player target, String action)
 	{
 		phantom.setTarget(target);
@@ -329,6 +358,10 @@ public final class PhantomAI
 		phantom.getAI().tryToAttack(target, true, false);
 	}
 	
+	/**
+	 * Handles phantom death — schedules respawn in town/faction base.
+	 * After respawn, if faction war is running, the phantom returns to the war map.
+	 */
 	private static void handleDeath(Player phantom)
 	{
 		if (!PhantomConfig.respawnInTown())
@@ -376,13 +409,29 @@ public final class PhantomAI
 			if (town != null)
 				phantom.teleportTo(town, 20);
 			
+			// BUG FIX: If faction war is still running, teleport phantom back to war map after respawn
+			if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+			{
+				final Location warSpawn = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
+				if (warSpawn != null)
+				{
+					final int rx = warSpawn.getX() + Rnd.get(-250, 250);
+					final int ry = warSpawn.getY() + Rnd.get(-250, 250);
+					phantom.teleportTo(rx, ry, warSpawn.getZ(), 20);
+					if (phantom.isTeleporting())
+						phantom.onTeleported();
+					
+					PhantomLog.info("Phantom " + phantom.getName() + " returned to war map after death.");
+				}
+			}
+			
 			final Location home = new Location(phantom.getX(), phantom.getY(), phantom.getZ());
 			HOMES.put(phantom.getObjectId(), home);
 			PATROL_POINTS.put(phantom.getObjectId(), nextPatrolPoint(phantom));
 			LAST_ACTIONS.put(phantom.getObjectId(), "Respawn " + (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 ? "faction base" : "town"));
 			phantom.store();
 			
-			if (PhantomConfig.returnToLevelZoneAfterDeath() && PhantomConfig.useLevelZones())
+			if (PhantomConfig.returnToLevelZoneAfterDeath() && PhantomConfig.useLevelZones() && !FactionWarManager.getInstance().isRunning())
 				ThreadPool.schedule(() -> returnToLevelZone(phantom), PhantomConfig.returnToLevelZoneDelayMs());
 			else
 				DEATH_HANDLING.remove(phantom.getObjectId());
@@ -843,6 +892,38 @@ public final class PhantomAI
 		return nearest[0];
 	}
 	
+	/**
+	 * Finds war-related NPC targets (FactionWarFlag, FactionWarCpFlag, FactionWarGuard)
+	 * within the war zone. These are all Monster subclasses, so they can be targeted via Monster.class.
+	 * Enemy guards are attacked; flags and checkpoints are always capturable.
+	 */
+	private static Monster findWarNpcTarget(Player phantom)
+	{
+		final int myFaction = phantom.getFactionId();
+		if (myFaction <= 0)
+			return null;
+		
+		final Monster[] nearest = new Monster[1];
+		final double[] nearestDistance = { Double.MAX_VALUE };
+		
+		// Use war range (same as player search)
+		final int warRange = Math.max(1500, PhantomConfig.aggroRange() * 2);
+		
+		phantom.forEachKnownTypeInRadius(Monster.class, warRange, monster ->
+		{
+			if (monster == null || monster.isDead() || !monster.isVisible() || !monster.isAttackableBy(phantom))
+				return;
+			
+			final double distance = phantom.distance3D(monster);
+			if (distance < nearestDistance[0])
+			{
+				nearest[0] = monster;
+				nearestDistance[0] = distance;
+			}
+		});
+		return nearest[0];
+	}
+	
 	private static void patrol(Player phantom)
 	{
 		if (phantom.isMoving())
@@ -968,11 +1049,6 @@ public final class PhantomAI
 	}
 	
 	/**
-	 * Moves the phantom toward the war zone's flag center or a checkpoint.
-	 * This makes phantoms converge on the battle area when no enemies are nearby,
-	 * keeping the war dynamic and populated.
-	 */
-	/**
 	 * Opens a private sell store for the phantom in neutral zone.
 	 * The phantom sits down and broadcasts a sell store with random items from inventory.
 	 */
@@ -1068,6 +1144,11 @@ public final class PhantomAI
 		}
 	}
 	
+	/**
+	 * Moves the phantom toward the war zone's flag center or a checkpoint.
+	 * This makes phantoms converge on the battle area when no enemies are nearby,
+	 * keeping the war dynamic and populated.
+	 */
 	private static void moveToWarCenter(Player phantom)
 	{
 		try
@@ -1153,6 +1234,7 @@ public final class PhantomAI
 	{
 		ITEM_CLAIMS.entrySet().removeIf(entry -> entry.getValue().phantomId == phantomId);
 	}
+	
 	private static boolean detectAndEscapeStuck(Player phantom)
 	{
 		if (!PhantomConfig.stuckCheckEnabled())
@@ -1264,7 +1346,8 @@ public final class PhantomAI
 			PhantomLog.warn("Geo path validation failed for " + phantom.getName() + ": " + e.getMessage());
 			return destination;
 		}
-	}	
+	}
+	
 	private record TargetClaim(int phantomId, long time)
 	{
 	}

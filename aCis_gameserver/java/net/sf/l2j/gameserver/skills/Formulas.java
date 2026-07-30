@@ -636,6 +636,10 @@ public final class Formulas
 				damage *= attacker.getStatus().calcStat(Stats.PVP_PHYS_SKILL_DMG, 1, null, null);
 		}
 		
+		// Faction class balance modifier (magic attack reduction)
+		if (attackerPlayer != null && target instanceof Player targetPlayer && Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() > 0 && targetPlayer.getFactionId() > 0 && attackerPlayer.getFactionId() != targetPlayer.getFactionId())
+			damage *= net.sf.l2j.gameserver.factionwar.FactionWarConfig.getClassBalanceMAtk();
+		
 		damage *= calcElementalSkillModifier(target, skill);
 		
 		return damage;
@@ -709,7 +713,20 @@ public final class Formulas
 	
 	public static final boolean calcMCrit(Creature actor, Creature target, L2Skill skill)
 	{
-		final int mRate = actor.getStatus().getMCriticalHit(target, skill);
+		int mRate = actor.getStatus().getMCriticalHit(target, skill);
+		
+		// Faction class balance: reduce magic crit rate vs opposite faction
+		if (Config.ENABLE_FACTION_SYSTEM)
+		{
+			final Player actorPlayer = actor.getActingPlayer();
+			final Player targetPlayer = target.getActingPlayer();
+			if (actorPlayer != null && targetPlayer != null && actorPlayer.getFactionId() > 0 && targetPlayer.getFactionId() > 0 && actorPlayer.getFactionId() != targetPlayer.getFactionId())
+			{
+				final int balanceDiv = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getClassBalanceMcrit();
+				if (balanceDiv > 0)
+					mRate /= balanceDiv;
+			}
+		}
 		
 		if (Config.DEVELOPER)
 			LOGGER.info("Current mCritRate: {} / 1000.", mRate);

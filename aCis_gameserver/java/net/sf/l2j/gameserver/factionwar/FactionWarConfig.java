@@ -1,13 +1,21 @@
 package net.sf.l2j.gameserver.factionwar;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.sf.l2j.commons.config.ExProperties;
 import net.sf.l2j.commons.logging.CLogger;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.model.location.Location;
+import net.sf.l2j.gameserver.model.FactionFlag;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 public class FactionWarConfig
 {
@@ -36,6 +44,8 @@ public class FactionWarConfig
 	private static int _mapRotationMinutes;
 	private static int _mapVoteSeconds;
 	private static final List<WarMap> _maps = new ArrayList<>();
+	private static final Map<Integer, List<net.sf.l2j.gameserver.model.FactionFlag>> _xmlFlags = new HashMap<>();
+	private static final Map<String, Integer> _mapFlagIds = new HashMap<>();
 	private static Location _goodSpawnLoc;
 	private static Location _evilSpawnLoc;
 	private static Location _neutralSpawnLoc;
@@ -106,6 +116,11 @@ public class FactionWarConfig
 	private static int _pointsRewardPvp;
 	private static boolean _losePointsOnDeath;
 	private static int _pointsLoseAmount;
+	
+	// Checkpoint capture
+	private static long _checkpointRespawnDelay;
+	private static int _checkpointScoreInterval;
+	private static int _checkpointPointsPerTick;
 	
 	// Flag rewards
 	private static boolean _enableFlagSpItemReward;
@@ -190,6 +205,9 @@ public class FactionWarConfig
 		_checkpointNpcId = props.getProperty("CheckpointNpcId", 90003);
 		_checkpointCount = props.getProperty("CheckpointCount", 3);
 		_checkpointRadius = props.getProperty("CheckpointRadius", 2000);
+		_checkpointRespawnDelay = props.getProperty("CheckpointRespawnDelay", 15) * 1000L;
+		_checkpointScoreInterval = props.getProperty("CheckpointScoreInterval", 30);
+		_checkpointPointsPerTick = props.getProperty("CheckpointPointsPerTick", 1);
 		_mapRotationMinutes = props.getProperty("MapRotationMinutes", 30);
 		_mapVoteSeconds = props.getProperty("MapVoteSeconds", 30);
 		_neutralSpawnLoc = parseLoc(props.getProperty("NeutralSpawnLoc", "147300,25750,-2000"));
@@ -355,6 +373,25 @@ public class FactionWarConfig
 			}
 		}
 		
+		// Parse map <-> flagId mappings
+		_mapFlagIds.clear();
+		final String[] mapFlagEntries = props.getProperty("MapFlagIds", "Gludio,2;Giran,3").split(";");
+		for (String entry : mapFlagEntries)
+		{
+			final String[] parts = entry.trim().split(",");
+			if (parts.length >= 2)
+			{
+				try
+				{
+					_mapFlagIds.put(parts[0].trim(), Integer.parseInt(parts[1].trim()));
+				}
+				catch (NumberFormatException e) { }
+			}
+		}
+		
+		// Load faction_flags.xml
+		loadFactionFlagsXml();
+		
 		if (_maps.isEmpty())
 		{
 			_maps.add(new WarMap("Gludio", -14300, 123700, -3100, 3000, null, null));
@@ -383,6 +420,82 @@ public class FactionWarConfig
 			LOGGER.warn("Invalid number in location: '{}'", s);
 			return null;
 		}
+	}
+	
+	private static void loadFactionFlagsXml()
+	{
+		_xmlFlags.clear();
+		
+		final Path path = Path.of("./data/xml/faction_flags.xml");
+		if (!path.toFile().exists())
+		{
+			LOGGER.warn("faction_flags.xml not found at {}. Skipping XML flag loading.", path);
+			return;
+		}
+		
+		final java.io.File xmlFile = path.toFile();
+		if (!xmlFile.exists())
+			return;
+		
+		try
+		{
+			final javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+			dbf.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD, "");
+			dbf.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+			final javax.xml.parsers.DocumentBuilder db = dbf.newDocumentBuilder();
+			final Document doc = db.parse(xmlFile);
+			
+			final Node listNode = doc.getFirstChild();
+			if (listNode == null)
+				return;
+			
+			final org.w3c.dom.NodeList flagNodes = listNode.getChildNodes();
+			for (int i = 0; i < flagNodes.getLength(); i++)
+			{
+				final Node flagNode = flagNodes.item(i);
+				if (flagNode.getNodeType() != Node.ELEMENT_NODE || !flagNode.getNodeName().equals("flag"))
+					continue;
+				
+				final NamedNodeMap attrs = flagNode.getAttributes();
+				final int mapId = Integer.parseInt(attrs.getNamedItem("mapId").getNodeValue());
+				final String flagName = attrs.getNamedItem("flag_name").getNodeValue();
+				final int factionId = Integer.parseInt(attrs.getNamedItem("faction_id").getNodeValue());
+				final boolean isCapturable = Boolean.parseBoolean(attrs.getNamedItem("isCapturable").getNodeValue());
+				final int x = Integer.parseInt(attrs.getNamedItem("x").getNodeValue());
+				final int y = Integer.parseInt(attrs.getNamedItem("y").getNodeValue());
+				final int z = Integer.parseInt(attrs.getNamedItem("z").getNodeValue());
+				final String flagType = attrs.getNamedItem("flag_type") != null ? attrs.getNamedItem("flag_type").getNodeValue() : "default";
+				
+				final FactionFlag flag = new FactionFlag(mapId, flagName, flagType, factionId, isCapturable, new Location(x, y, z));
+				_xmlFlags.computeIfAbsent(mapId, k -> new ArrayList<>()).add(flag);
+			}
+			LOGGER.info("Loaded {} flags from faction_flags.xml ({} map groups).", _xmlFlags.values().stream().mapToInt(List::size).sum(), _xmlFlags.size());
+		}
+		catch (Exception e)
+		{
+			LOGGER.warn("Failed to parse faction_flags.xml: {}", e.getMessage());
+		}
+	}
+	
+	/**
+	 * Gets the XML-defined flags for a specific map name (looked up via MapFlagIds).
+	 */
+	public static List<FactionFlag> getXmlFlagsForMap(String mapName)
+	{
+		final Integer flagMapId = _mapFlagIds.get(mapName);
+		if (flagMapId == null)
+			return Collections.emptyList();
+		
+		final List<FactionFlag> flags = _xmlFlags.get(flagMapId);
+		return flags != null ? flags : Collections.emptyList();
+	}
+	
+	/**
+	 * Gets the flag map ID for a map name.
+	 */
+	public static int getFlagMapId(String mapName)
+	{
+		return _mapFlagIds.getOrDefault(mapName, -1);
 	}
 	
 	private static void parseItemList(ExProperties props, String key, String defaultVal, java.util.List<int[]> list)
@@ -425,6 +538,9 @@ public class FactionWarConfig
 	public static int getCheckpointNpcId() { return _checkpointNpcId; }
 	public static int getCheckpointCount() { return _checkpointCount; }
 	public static int getCheckpointRadius() { return _checkpointRadius; }
+	public static long getCheckpointRespawnDelay() { return _checkpointRespawnDelay; }
+	public static int getCheckpointScoreInterval() { return _checkpointScoreInterval; }
+	public static int getCheckpointPointsPerTick() { return _checkpointPointsPerTick; }
 	public static int getMapRotationMinutes() { return _mapRotationMinutes; }
 	public static int getMapVoteSeconds() { return _mapVoteSeconds; }
 	public static List<WarMap> getMaps() { return _maps; }

@@ -143,7 +143,7 @@ public class FactionWarGuard extends Monster
 		if (!super.doDie(killer))
 			return false;
 		
-		FactionWarManager.getInstance().onGuardDied();
+		FactionWarManager.getInstance().onGuardDied(this);
 		
 		return true;
 	}
