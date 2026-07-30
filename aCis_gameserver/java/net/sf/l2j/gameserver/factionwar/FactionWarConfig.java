@@ -61,6 +61,12 @@ public class FactionWarConfig
 	private static int _neutralZoneRadius;
 	private static int _warDurationMinutes;
 	
+	// End freeze duration in seconds
+	private static int _endFreezeSeconds;
+	
+	// Unstuck delay in seconds
+	private static int _unstuckDelaySeconds;
+	
 	// Rewards
 	private static int _rewardItemId;
 	private static final int[] _topRewardAmounts = new int[3];
@@ -222,6 +228,8 @@ public class FactionWarConfig
 		_townRestrictionRadius = props.getProperty("TownRestrictionRadius", 1500);
 		_neutralZoneRadius = props.getProperty("NeutralZoneRadius", 2000);
 		_warDurationMinutes = props.getProperty("WarDurationMinutes", 120);
+		_endFreezeSeconds = props.getProperty("EndFreezeSeconds", 5);
+		_unstuckDelaySeconds = props.getProperty("UnstuckDelaySeconds", 10);
 		_rewardItemId = props.getProperty("RewardItemId", 57);
 		_topRewardAmounts[0] = props.getProperty("Top1Reward", 500000);
 		_topRewardAmounts[1] = props.getProperty("Top2Reward", 300000);
@@ -570,6 +578,8 @@ public class FactionWarConfig
 	public static boolean isTownRestriction() { return _townRestriction; }
 	public static int getTownRestrictionRadius() { return _townRestrictionRadius; }
 	public static int getWarDurationMinutes() { return _warDurationMinutes; }
+	public static int getEndFreezeSeconds() { return _endFreezeSeconds; }
+	public static int getUnstuckDelaySeconds() { return _unstuckDelaySeconds; }
 	public static int getNeutralZoneRadius() { return _neutralZoneRadius; }
 	public static int getRewardItemId() { return _rewardItemId; }
 	public static int[] getTopRewardAmounts() { return _topRewardAmounts; }

@@ -67,9 +67,11 @@ public class FactionWarManager
 	private ScheduledFuture<?> _eventEndTask;
 	private ScheduledFuture<?> _scoreboardTask;
 	private ScheduledFuture<?> _countdownTask;
+	private ScheduledFuture<?> _endFreezeTask;
 	private volatile int _winningFaction;
 	private volatile long _startTime;
 	private volatile long _durationMs;
+	private volatile int _lastMainFlagKillerFaction;
 	
 	private volatile boolean _votingActive;
 	private final Map<Integer, Integer> _mapVotes = new HashMap<>();
@@ -305,6 +307,7 @@ public class FactionWarManager
 		
 		_startTime = System.currentTimeMillis();
 		_durationMs = durationMinutes * 60000L;
+		_lastMainFlagKillerFaction = 0;
 		
 		spawnFlag();
 		spawnXmlFlags();
@@ -329,7 +332,8 @@ public class FactionWarManager
 		
 		if (FactionWarConfig.isAnnounceStart())
 		{
-			broadcast("[Faction War] ¡La guerra ha comenzado! Mapa: " + firstMap.getName() + " | Puntuación: " + scoreToWin + (durationMinutes > 0 ? " | " + durationMinutes + "min" : ""));
+			final String durationStr = (durationMinutes > 0) ? " | Duración: " + durationMinutes + "min" : "";
+			broadcast("[Faction War] ¡La guerra ha comenzado! Mapa: " + firstMap.getName() + durationStr);
 		}
 		
 		// Refresh faction visuals for all players (colors, titles)
@@ -341,8 +345,8 @@ public class FactionWarManager
 		// Players must go to the Teleport Manager or the Registrar NPC to enter the war
 		broadcast("[Faction War] ¡La guerra ha comenzado! Ve al Teleport Manager o al Registrador de Guerra en la zona neutral para unirte a la batalla. Mapa: " + firstMap.getName());
 		
-		LOGGER.info("Faction War started. Map: {} (index: {}). Score: {}. Duration: {}min. Teleported {} phantoms.", 
-			firstMap.getName(), _currentMapIndex, scoreToWin, durationMinutes, teleportedPhantoms);
+		LOGGER.info("Faction War started. Map: {} (index: {}). Duration: {}min. Teleported {} phantoms.", 
+			firstMap.getName(), _currentMapIndex, durationMinutes, teleportedPhantoms);
 	}
 	
 	public void stop()
@@ -350,14 +354,21 @@ public class FactionWarManager
 		if (!_running && !_votingPhaseActive)
 			return;
 		
-		// Determine winner BEFORE clearing state
+		// Cancel any pending end-freeze task (avoid double-freeze)
+		cancelTask(_endFreezeTask);
+		
+		// 1. Determine winner — the faction that last killed the main flag
 		final int goodScore = getScore(FactionWarConfig.getGoodFactionId());
 		final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
-		_winningFaction = 0;
-		if (goodScore > evilScore)
-			_winningFaction = FactionWarConfig.getGoodFactionId();
-		else if (evilScore > goodScore)
-			_winningFaction = FactionWarConfig.getEvilFactionId();
+		_winningFaction = _lastMainFlagKillerFaction;
+		// Fallback to score tie-breaker if flag was never captured
+		if (_winningFaction <= 0)
+		{
+			if (goodScore > evilScore)
+				_winningFaction = FactionWarConfig.getGoodFactionId();
+			else if (evilScore > goodScore)
+				_winningFaction = FactionWarConfig.getEvilFactionId();
+		}
 		
 		_running = false;
 		_votingPhaseActive = false;
@@ -370,52 +381,60 @@ public class FactionWarManager
 		cancelTask(_scoreboardTask);
 		cancelTask(_countdownTask);
 		
-		despawnFlag();
-		despawnXmlFlags();
-		despawnGuards();
-		despawnRegistrar();
-		_checkpoints.despawn();
+		// 2. Freeze all players on the battlefield
+		freezeAllPlayers();
 		
-		final int returned = net.sf.l2j.gameserver.phantom.PhantomEngine.returnPhantomsFromWar();
+		// 3. Build and broadcast winner announcement
+		final String winnerMsg = buildWinnerMessage(_winningFaction, goodScore, evilScore);
+		final int freezeSeconds = FactionWarConfig.getEndFreezeSeconds();
 		
 		if (FactionWarConfig.isAnnounceEnd())
 		{
-			final String winnerName;
-			if (_winningFaction == FactionWarConfig.getGoodFactionId())
-				winnerName = "¡LOS BUENOS GANAN!";
-			else if (_winningFaction == FactionWarConfig.getEvilFactionId())
-				winnerName = "¡LOS MALVADOS GANAN!";
-			else
-				winnerName = "¡EMPATE!";
-			
-			// Announce top 3 players
-			final List<FactionWarStats> top3 = getTopPlayers(3);
-			final StringBuilder topMsg = new StringBuilder();
-			topMsg.append("[Faction War] La guerra ha terminado! ").append(winnerName).append(" [").append(goodScore).append(" - ").append(evilScore).append("]");
-			if (!top3.isEmpty())
-			{
-				topMsg.append(" | Top 3:");
-				for (int i = 0; i < top3.size(); i++)
-				{
-					final FactionWarStats s = top3.get(i);
-					topMsg.append(" #").append(i + 1).append(" ").append(s.playerName).append(" (").append(s.points).append("pts)");
-				}
-			}
-			broadcast(topMsg.toString());
-			
-			// Give rewards to top 3 and winning faction
-			giveRewards(top3);
+			broadcast(winnerMsg);
+			final String endMsg = "¡La guerra ha terminado! " + getFactionName(_winningFaction) + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
+			broadcastScreenMessage(endMsg + " | Teletransportando en " + freezeSeconds + "s...", freezeSeconds * 1000);
 		}
 		
-		if (FactionWarConfig.isEnableAutoTeleportToBase())
-			teleportFactionPlayersToBase();
-		else
-			teleportFactionPlayersToNeutral();
-		
-		LOGGER.info("Faction War stopped. Returned {} phantoms.", returned);
-		
-		// Notify EventEngine that FW ended (alternance: FW → event)
-		net.sf.l2j.gameserver.event.EventEngine.getInstance().onFactionWarEnded();
+		// 4. Schedule delayed teleport + cleanup + unfreeze
+		final int winningFaction = _winningFaction;
+		_endFreezeTask = ThreadPool.schedule(() ->
+		{
+			try
+			{
+				// Give rewards
+				if (FactionWarConfig.isAnnounceEnd())
+				{
+					final List<FactionWarStats> top3 = getTopPlayers(3);
+					announceTopPlayers(top3);
+					giveRewards(top3);
+				}
+				
+				// Despawn all war NPCs
+				despawnFlag();
+				despawnXmlFlags();
+				despawnGuards();
+				despawnRegistrar();
+				_checkpoints.despawn();
+				
+				// Return phantoms
+				final int returned = net.sf.l2j.gameserver.phantom.PhantomEngine.returnPhantomsFromWar();
+				
+				// Teleport all faction players to neutral zone
+				teleportFactionPlayersToNeutral();
+				
+				// Unfreeze all players
+				unfreezeAllPlayers();
+				
+				// Notify EventEngine that FW ended (alternance: FW → event)
+				net.sf.l2j.gameserver.event.EventEngine.getInstance().onFactionWarEnded();
+				
+				LOGGER.info("Faction War stopped. Winner: {}. Score: {}-{}. Returned {} phantoms.", getFactionName(winningFaction), goodScore, evilScore, returned);
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("Error during Faction War delayed cleanup.", e);
+			}
+		}, freezeSeconds * 1000L);
 	}
 	
 	/**
@@ -807,6 +826,9 @@ public class FactionWarManager
 		if (!_running || !FactionWarConfig.isEnabled())
 			return;
 		
+		// Track which faction last killed the main flag (determines winner at timer end)
+		_lastMainFlagKillerFaction = killerFactionId;
+		
 		final int points = FactionWarConfig.getPointsPerFlagKill();
 		_scores.merge(killerFactionId, points, Integer::sum);
 		
@@ -878,17 +900,14 @@ public class FactionWarManager
 			scheduleFlagRespawn();
 	}
 	
+	/**
+	 * Checks if any faction reached the score target (for display purposes only).
+	 * The war is TIMED — winner is determined at the end by flag ownership.
+	 */
 	private void checkWinner()
 	{
-		final int target = FactionWarConfig.getScoreToWin();
-		for (int factionId : _scores.keySet())
-		{
-			if (_scores.get(factionId) >= target)
-			{
-				stop();
-				return;
-			}
-		}
+		// Score-based win is disabled. The war ends only when the timer expires.
+		// The winner is the faction that last killed the main flag.
 	}
 	
 	private void teleportFactionToBase(int factionId)
@@ -1464,9 +1483,9 @@ public class FactionWarManager
 		
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[ Faction War ] Good: ").append(goodScore).append(" vs Evil: ").append(evilScore);
-		sb.append(" | Win: ").append(FactionWarConfig.getScoreToWin());
 		if (!timeStr.isEmpty())
 			sb.append(" | Time: ").append(timeStr);
+		sb.append(" | Flag: ").append(_lastMainFlagKillerFaction > 0 ? getFactionName(_lastMainFlagKillerFaction) : "-");
 		
 		final String msg = sb.toString();
 		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(msg, 15000, ExShowScreenMessage.SMPOS.TOP_CENTER, false);
@@ -1518,6 +1537,95 @@ public class FactionWarManager
 			player.broadcastUserInfo();
 		}
 		LOGGER.info("Broadcasted faction visuals to all online players.");
+	}
+	
+	/**
+	 * Freezes all faction players on the battlefield (paralyze + immobilize).
+	 */
+	private void freezeAllPlayers()
+	{
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline() || player.isDead())
+				continue;
+			if (player.getFactionId() == FactionWarConfig.getGoodFactionId() || player.getFactionId() == FactionWarConfig.getEvilFactionId())
+			{
+				player.setIsImmobilized(true);
+				player.setIsParalyzed(true);
+			}
+		}
+	}
+	
+	/**
+	 * Unfreezes all players (reverses freezeAllPlayers).
+	 */
+	private void unfreezeAllPlayers()
+	{
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline())
+				continue;
+			player.setIsImmobilized(false);
+			player.setIsParalyzed(false);
+		}
+	}
+	
+	/**
+	 * Builds a winner announcement string.
+	 */
+	private String buildWinnerMessage(int winningFaction, int goodScore, int evilScore)
+	{
+		final String goodName = FactionWarConfig.getGoodFactionName();
+		final String evilName = FactionWarConfig.getEvilFactionName();
+		
+		if (winningFaction == FactionWarConfig.getGoodFactionId())
+			return "[Faction War] ¡" + goodName + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
+		else if (winningFaction == FactionWarConfig.getEvilFactionId())
+			return "[Faction War] ¡" + evilName + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
+		else
+			return "[Faction War] ¡EMPATE! Nadie capturó la bandera. [" + goodScore + " - " + evilScore + "]";
+	}
+	
+	/**
+	 * Returns the faction display name by ID.
+	 */
+	private String getFactionName(int factionId)
+	{
+		if (factionId == FactionWarConfig.getGoodFactionId())
+			return FactionWarConfig.getGoodFactionName();
+		if (factionId == FactionWarConfig.getEvilFactionId())
+			return FactionWarConfig.getEvilFactionName();
+		return "Neutral";
+	}
+	
+	/**
+	 * Broadcasts an on-screen message to all players.
+	 */
+	private void broadcastScreenMessage(String msg, int displayMs)
+	{
+		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(msg, displayMs, ExShowScreenMessage.SMPOS.TOP_CENTER, false);
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player != null && player.isOnline())
+				player.sendPacket(screenMsg);
+		}
+	}
+	
+	/**
+	 * Announces the top 3 players in chat.
+	 */
+	private void announceTopPlayers(List<FactionWarStats> top3)
+	{
+		if (top3.isEmpty())
+			return;
+		
+		final StringBuilder topMsg = new StringBuilder("[Faction War] Top 3:");
+		for (int i = 0; i < top3.size(); i++)
+		{
+			final FactionWarStats s = top3.get(i);
+			topMsg.append(" #").append(i + 1).append(" ").append(s.playerName).append(" (").append(s.points).append("pts)");
+		}
+		broadcast(topMsg.toString());
 	}
 	
 	private void cancelTask(ScheduledFuture<?> task)
