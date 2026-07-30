@@ -138,8 +138,28 @@ echo.
 echo Gameserver: %GS_DIR%\build\dist\
 echo Datapack:   %DP_DIR%\build\
 echo.
-echo Para copiar al servidor:
-echo   copy "%GS_DIR%\build\dist\gameserver" "C:\server\gameserver"
-echo   copy "%DP_DIR%\build\gameserver\data" "C:\server\gameserver\data"
+
+REM ============================================================
+REM  Copiar automaticamente a C:\Server\gameserver\
+REM ============================================================
 echo.
+echo ========================================
+echo     COPIANDO A C:\Server\gameserver\
+echo ========================================
+echo.
+
+REM Crear directorio si no existe
+if not exist "C:\Server\gameserver\" (
+    mkdir "C:\Server\gameserver\"
+)
+
+REM Copiar gameserver (JARs, configs, scripts)
+xcopy /e /i /y "%GS_DIR%\build\dist\gameserver\*" "C:\Server\gameserver\" >nul
+
+REM Copiar datapack (data, html, scripts)
+xcopy /e /i /y "%DP_DIR%\build\gameserver\data\*" "C:\Server\gameserver\data\" >nul
+
+echo Copiado exitosamente a C:\Server\gameserver\
+echo.
+
 pause

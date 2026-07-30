@@ -90,7 +90,6 @@ public class EnterWorld extends L2GameClientPacket
 		final int objectId = player.getObjectId();
 		
 		LOGGER.info("EnterWorld for {} starting.", player.getName());
-		System.out.println("[DEBUG] EnterWorld for " + player.getName() + " starting.");
 		
 		if (player.isGM())
 		{
@@ -272,10 +271,8 @@ public class EnterWorld extends L2GameClientPacket
 		player.onPlayerEnter();
 		
 		LOGGER.info("EnterWorld for {} - before FactionData.onPlayerEnter", player.getName());
-		System.out.println("[DEBUG] EnterWorld for " + player.getName() + " - before FactionData.onPlayerEnter");
 		FactionData.getInstance().onPlayerEnter(player);
 		LOGGER.info("EnterWorld for {} - after FactionData.onPlayerEnter", player.getName());
-		System.out.println("[DEBUG] EnterWorld for " + player.getName() + " - after FactionData.onPlayerEnter");
 		
 		sendPacket(new SkillCoolTime(player));
 		
@@ -298,7 +295,6 @@ public class EnterWorld extends L2GameClientPacket
 		player.sendPacket(ActionFailed.STATIC_PACKET);
 		
 		LOGGER.info("EnterWorld for {} complete.", player.getName());
-		System.out.println("[DEBUG] EnterWorld for " + player.getName() + " complete.");
 	}
 	
 	@Override

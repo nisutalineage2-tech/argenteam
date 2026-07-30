@@ -29,7 +29,7 @@ public class RequestGameStart extends L2GameClientPacket
 		if (!client.performAction(FloodProtector.CHARACTER_SELECT))
 			return;
 		
-		System.out.println("[DEBUG] RequestGameStart received for slot " + _slot);
+		LOGGER.info("RequestGameStart received for slot {}.", _slot);
 		
 		// we should always be able to acquire the lock but if we cant lock then nothing should be done (ie repeated packet)
 		if (client.getActiveCharLock().tryLock())
@@ -49,7 +49,6 @@ public class RequestGameStart extends L2GameClientPacket
 						return;
 					
 					LOGGER.info("Character '{}' loaded from slot {} for login.", player.getName(), _slot);
-					System.out.println("[DEBUG] Character '" + player.getName() + "' loaded from slot " + _slot + " for login.");
 					
 					player.setClient(client);
 					client.setPlayer(player);
