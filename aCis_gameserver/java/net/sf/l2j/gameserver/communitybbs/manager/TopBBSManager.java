@@ -14,7 +14,10 @@ public class TopBBSManager extends BaseBBSManager
 	public void parseCmd(String command, Player player)
 	{
 		if (command.equals("_bbshome"))
+		{
+			send1002(player);
 			loadStaticHtm("index.htm", player);
+		}
 		else if (command.startsWith("_bbshome;"))
 		{
 			final StringTokenizer st = new StringTokenizer(command, ";");

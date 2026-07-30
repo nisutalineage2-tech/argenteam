@@ -6,8 +6,8 @@ import net.sf.l2j.commons.lang.StringUtil;
 
 public class ShowBoard extends L2GameServerPacket
 {
-	public static final ShowBoard STATIC_SHOWBOARD_102 = new ShowBoard(null, "102");
-	public static final ShowBoard STATIC_SHOWBOARD_103 = new ShowBoard(null, "103");
+	public static final ShowBoard STATIC_SHOWBOARD_102 = new ShowBoard("", "102");
+	public static final ShowBoard STATIC_SHOWBOARD_103 = new ShowBoard("", "103");
 	
 	public static final ShowBoard STATIC_CLOSE = new ShowBoard();
 	

@@ -492,6 +492,7 @@ public class FactionWarNpc extends Folk
 		
 		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
 		html.setHtml(sb.toString());
+		html.replace("%objectId%", String.valueOf(getObjectId()));
 		player.sendPacket(html);
 	}
 }

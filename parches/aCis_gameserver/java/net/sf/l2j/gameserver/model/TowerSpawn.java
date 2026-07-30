@@ -1,0 +1,67 @@
+/*
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+package net.sf.l2j.gameserver.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class TowerSpawn
+{
+	private final int _npcId;
+	private final SpawnLocation _location;
+	private List<Integer> _zoneList;
+	private int _upgradeLevel;
+	
+	public TowerSpawn(int npcId, SpawnLocation location)
+	{
+		_location = location;
+		_npcId = npcId;
+	}
+	
+	public TowerSpawn(int npcId, SpawnLocation location, String[] zoneList)
+	{
+		_location = location;
+		_npcId = npcId;
+		
+		_zoneList = new ArrayList<>();
+		for (String zoneId : zoneList)
+			_zoneList.add(Integer.parseInt(zoneId));
+	}
+	
+	public int getId()
+	{
+		return _npcId;
+	}
+	
+	public SpawnLocation getLocation()
+	{
+		return _location;
+	}
+	
+	public List<Integer> getZoneList()
+	{
+		return _zoneList;
+	}
+	
+	public void setUpgradeLevel(int level)
+	{
+		_upgradeLevel = level;
+	}
+	
+	public int getUpgradeLevel()
+	{
+		return _upgradeLevel;
+	}
+}
