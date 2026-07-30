@@ -153,26 +153,100 @@ public class EventManagerNpc extends Folk
 	
 	private void showEventList(Player player)
 	{
-		final StringBuilder sb = new StringBuilder();
-		sb.append("<html><title>Event Manager</title><body>");
-		sb.append("<center><font color=LEVEL>Event Manager</font></center><br>");
-		sb.append("<img src=\"L2UI.SquareGray\" width=\"290\" height=\"1\">");
+		final int npcObjId = getObjectId();
+		final StringBuilder sb = new StringBuilder(8192);
+		sb.append("<html><body>");
 		
+		// Header
+		sb.append("<center><table width=\"270\" bgcolor=\"000000\"><tr>");
+		sb.append("<td width=\"270\" height=\"32\" align=\"center\"><font color=\"FFD700\" size=\"16\">🏆 Administrador de Eventos 🏆</font></td>");
+		sb.append("</tr></table></center>");
+		sb.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\"><br>");
+		
+		// Check if player is already in an event
+		final boolean alreadyInEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().isPlayerInAnyEvent(player.getObjectId());
+		
+		if (alreadyInEvent)
+		{
+			final AbstractEvent currentEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEventForPlayer(player.getObjectId());
+			if (currentEvent != null)
+			{
+				sb.append("<table width=\"270\" bgcolor=\"1A1A2E\"><tr><td align=\"center\">");
+				sb.append("<font color=\"00FF00\">✓ Estás inscrito en: <b>").append(currentEvent.getData().getEventName()).append("</b></font><br1>");
+				sb.append("<font color=\"808080\" size=\"10\">Estado: ").append(getStateColor(currentEvent.getState())).append("</font><br>");
+				if (currentEvent.getState() == AbstractEvent.State.REGISTER || currentEvent.getState() == AbstractEvent.State.IDLE)
+				{
+					sb.append("<button value=\"❌ Abandonar\" action=\"bypass -h npc_" + npcObjId + "_event_leave\" width=\"100\" height=\"22\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+				}
+				sb.append("</td></tr></table><br>");
+			}
+		}
+		
+		// Events list
 		for (EventConfig.EventData data : EventConfig.getEvents())
 		{
 			if (!data.isEnabled())
 				continue;
 			
-			final AbstractEvent event = EventEngine.getInstance().getEvent(data.getId());
-			final String status = event != null ? event.getState().name() : "N/A";
+			final AbstractEvent event = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEvent(data.getId());
+			if (event == null)
+				continue;
 			
-			sb.append("<table width=\"290\" height=\"40\">");
-			sb.append("<tr>");
-			sb.append("<td width=\"200\">").append(data.getEventName()).append("<br1><font color=\"808080\">").append(status).append("</font></td>");
-			sb.append("<td width=\"90\"><button value=\"Info\" action=\"bypass -h npc_%objectId%_event_info ").append(data.getId()).append("\" width=\"50\" height=\"22\" back=\"L2UI_CH3.Minimap.mapbutton_zoomin1_over\" fore=\"L2UI_CH3.Minimap.mapbutton_zoomin1\"></td>");
-			sb.append("</tr>");
+			final AbstractEvent.State state = event.getState();
+			final int registeredCount = event.getAllPlayers().size();
+			final int minPlayers = data.getMinPlayers();
+			
+			sb.append("<table width=\"270\" cellpadding=\"2\" cellspacing=\"1\" bgcolor=\"" + (state == AbstractEvent.State.RUNNING ? "112211" : state == AbstractEvent.State.REGISTER ? "222211" : "111111") + "\">");
+			
+			// Event name row (use fallback if name is empty)
+			final String displayName = data.getEventName().isEmpty() ? ("Evento #" + data.getId()) : data.getEventName();
+			sb.append("<tr><td width=\"270\" colspan=\"2\"><font color=\"" + getStateHtmlColor(state) + "\">" + getStateIcon(state) + " ").append(displayName).append("</font></td></tr>");
+			
+			// Info row
+			sb.append("<tr><td width=\"140\"><font color=\"808080\" size=\"10\">");
+			sb.append("👥 ").append(registeredCount).append("/").append(minPlayers).append(" jugadores<br1>");
+			sb.append("📊 Nvl ").append(data.getMinLvl()).append("-").append(data.getMaxLvl());
+			sb.append("</font></td>");
+			
+			// Action buttons
+			sb.append("<td width=\"130\" align=\"right\">");
+			if (state == AbstractEvent.State.REGISTER && !alreadyInEvent)
+			{
+				sb.append("<button value=\"✅ Unirse\" action=\"bypass -h npc_" + npcObjId + "_event_join " + data.getId() + "\" width=\"60\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+			}
+			else if (state == AbstractEvent.State.REGISTER && alreadyInEvent)
+			{
+				sb.append("<font color=\"808080\">Ya inscrito</font>");
+			}
+			else if (state == AbstractEvent.State.RUNNING)
+			{
+				sb.append("<font color=\"00FF00\">▶ En curso</font>");
+			}
+			else if (state == AbstractEvent.State.STARTING)
+			{
+				sb.append("<font color=\"FFCC00\">⏳ Iniciando</font>");
+			}
+			else
+			{
+				sb.append("<font color=\"808080\">Esperando</font>");
+			}
+			sb.append("</td></tr>");
+			
+			// Time/status info row
+			final String timeInfo = getEventTimeInfo(event);
+			if (timeInfo != null)
+			{
+				sb.append("<tr><td colspan=\"2\"><font color=\"C0C0C0\" size=\"10\">").append(timeInfo).append("</font></td></tr>");
+			}
+			
 			sb.append("</table>");
-			sb.append("<img src=\"L2UI.SquareGray\" width=\"290\" height=\"1\">");
+			sb.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\">");
+		}
+		
+		// Footer with buffer button
+		if (EventConfig.isEventBufferEnabled())
+		{
+			sb.append("<br><center><button value=\"📦 Buffs para Eventos\" action=\"bypass -h npc_" + npcObjId + "_event_buff\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"></center>");
 		}
 		
 		sb.append("</body></html>");
@@ -180,6 +254,84 @@ public class EventManagerNpc extends Folk
 		final NpcHtmlMessage msg = new NpcHtmlMessage(getObjectId());
 		msg.setHtml(sb.toString());
 		player.sendPacket(msg);
+	}
+	
+	/**
+	 * Returns color-coded state name for display.
+	 */
+	private String getStateColor(AbstractEvent.State state)
+	{
+		switch (state)
+		{
+			case IDLE: return "<font color=\"808080\">IDLE</font>";
+			case REGISTER: return "<font color=\"FFCC00\">INSCRIPCIÓN</font>";
+			case STARTING: return "<font color=\"FFA500\">INICIANDO</font>";
+			case RUNNING: return "<font color=\"00FF00\">EN CURSO</font>";
+			default: return "<font color=\"808080\">" + state.name() + "</font>";
+		}
+	}
+	
+	private String getStateHtmlColor(AbstractEvent.State state)
+	{
+		switch (state)
+		{
+			case RUNNING: return "00FF00";
+			case REGISTER: return "FFCC00";
+			case STARTING: return "FFA500";
+			default: return "808080";
+		}
+	}
+	
+	private String getStateIcon(AbstractEvent.State state)
+	{
+		switch (state)
+		{
+			case RUNNING: return "▶";
+			case REGISTER: return "📋";
+			case STARTING: return "⏳";
+			default: return "💤";
+		}
+	}
+	
+	/**
+	 * Returns time/status info string for an event (when registration closes, time remaining, etc.)
+	 */
+	private String getEventTimeInfo(AbstractEvent event)
+	{
+		final AbstractEvent.State state = event.getState();
+		
+		if (state == AbstractEvent.State.RUNNING)
+		{
+			final int remainingSec = event.getRemainingMatchTime();
+			if (remainingSec > 0)
+			{
+				final int mins = remainingSec / 60;
+				final int secs = remainingSec % 60;
+				if (mins > 0)
+					return "⏱ Tiempo restante: " + mins + "m " + secs + "s";
+				return "⏱ Tiempo restante: " + secs + "s";
+			}
+			return "⏱ Finalizando...";
+		}
+		else if (state == AbstractEvent.State.REGISTER)
+		{
+			final int remainingSec = event.getRemainingRegisterTime();
+			if (remainingSec > 0)
+			{
+				final int mins = remainingSec / 60;
+				final int secs = remainingSec % 60;
+				if (mins > 0)
+					return "⏳ Inscripción cierra en: " + mins + "m " + secs + "s";
+				return "⏳ Inscripción cierra en: " + secs + "s";
+			}
+			return "⏳ Iniciando pronto...";
+		}
+		else if (state == AbstractEvent.State.STARTING)
+		{
+			return "⏳ El evento está por comenzar...";
+		}
+		
+		return null;
 	}
 	
 	@Override

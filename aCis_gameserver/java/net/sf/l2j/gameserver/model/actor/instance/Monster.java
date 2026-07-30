@@ -310,6 +310,9 @@ public class Monster extends Attackable
 	@Override
 	public boolean isAttackableWithoutForceBy(Playable attacker)
 	{
+		if (attacker == null)
+			return false;
+		
 		return isAttackableBy(attacker);
 	}
 	

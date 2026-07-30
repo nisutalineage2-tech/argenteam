@@ -55,7 +55,7 @@ public class FactionWarCpFlag extends Monster
 	@Override
 	public boolean isAttackableBy(Creature attacker)
 	{
-		if (!FactionWarManager.getInstance().isRunning() || isDead())
+		if (attacker == null || !FactionWarManager.getInstance().isRunning() || isDead())
 			return false;
 		
 		final Player player = attacker.getActingPlayer();

@@ -1488,7 +1488,7 @@ public class FactionWarManager
 		sb.append(" | Flag: ").append(_lastMainFlagKillerFaction > 0 ? getFactionName(_lastMainFlagKillerFaction) : "-");
 		
 		final String msg = sb.toString();
-		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(msg, 15000, ExShowScreenMessage.SMPOS.TOP_CENTER, false);
+		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(1, -1, ExShowScreenMessage.SMPOS.TOP_CENTER, false, 1, 0, 0, false, 15000, false, msg);
 		
 		for (Player player : World.getInstance().getPlayers())
 		{
@@ -1603,7 +1603,7 @@ public class FactionWarManager
 	 */
 	private void broadcastScreenMessage(String msg, int displayMs)
 	{
-		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(msg, displayMs, ExShowScreenMessage.SMPOS.TOP_CENTER, false);
+		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(1, -1, ExShowScreenMessage.SMPOS.TOP_CENTER, false, 1, 0, 0, false, displayMs, false, msg);
 		for (Player player : World.getInstance().getPlayers())
 		{
 			if (player != null && player.isOnline())

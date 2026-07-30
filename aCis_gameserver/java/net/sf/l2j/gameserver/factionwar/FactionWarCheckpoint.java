@@ -45,7 +45,9 @@ public class FactionWarCheckpoint
 	private final Map<Integer, ScheduledFuture<?>> _respawnTasks = new HashMap<>();
 	
 	/**
-	 * Spawns the checkpoint NPCs for the given map in a circle around the map center.
+	 * Spawns the checkpoint NPCs for the given map spread across the battlefield.
+	 * Each checkpoint is placed at a distance from the center (equidistant from the main flag)
+	 * but with minimum separation between checkpoints so they don't cluster.
 	 */
 	public void spawn(int mapIndex)
 	{
@@ -55,7 +57,6 @@ public class FactionWarCheckpoint
 			return;
 		
 		final int count = FactionWarConfig.getCheckpointCount();
-		final int radius = FactionWarConfig.getCheckpointRadius();
 		
 		final List<FactionWarConfig.WarMap> maps = FactionWarConfig.getMaps();
 		if (mapIndex < 0 || mapIndex >= maps.size())
@@ -66,22 +67,86 @@ public class FactionWarCheckpoint
 		final int centerY = map.getY();
 		final int centerZ = map.getZ();
 		
+		// Base radius = distance from center flag. We use a radius that is between
+		// 50% and 80% of the guard circle radius, so checkpoints sit between
+		// the center flag and the outer guards/edges.
+		final int baseRadius = FactionWarConfig.getCheckpointRadius();
+		// Minimal separation between any two checkpoints (in units)
+		final int minSeparation = 600;
+		
+		final java.util.List<Location> placed = new java.util.ArrayList<>();
+		
 		for (int i = 0; i < count; i++)
 		{
-			// Avoid spawning exactly on the center flag; offset positions
-			final double angle = (2 * Math.PI * i) / count + (Rnd.nextDouble() * 0.6) - 0.3;
-			final int x = centerX + (int) (radius * Math.cos(angle));
-			final int y = centerY + (int) (radius * Math.sin(angle));
-			final int z = centerZ;
+			// Try up to 30 random positions until we find one far enough from others
+			Location bestLoc = null;
+			int bestDist = 0;
 			
-			final Location loc = new Location(x, y, z);
-			_locations.add(loc);
+			for (int attempt = 0; attempt < 30; attempt++)
+			{
+				// Distribute evenly around the circle but add randomness
+				final double baseAngle = (2 * Math.PI * i) / count;
+				final double angle = baseAngle + (Rnd.nextDouble() * 0.8) - 0.4;
+				
+				// Vary radius slightly to avoid perfect circle clustering
+				final int r = baseRadius + Rnd.get(-150, 150);
+				final int x = centerX + (int) (r * Math.cos(angle));
+				final int y = centerY + (int) (r * Math.sin(angle));
+				final int z = centerZ;
+				
+				// Check minimum distance from already-placed checkpoints
+				int minDist = Integer.MAX_VALUE;
+				for (Location placedLoc : placed)
+				{
+					final int dx = x - placedLoc.getX();
+					final int dy = y - placedLoc.getY();
+					final int dist = (int) Math.sqrt(dx * dx + dy * dy);
+					if (dist < minDist)
+						minDist = dist;
+				}
+				
+				// Also ensure distance from center flag is reasonable
+				final int flagDx = x - centerX;
+				final int flagDy = y - centerY;
+				final int flagDist = (int) Math.sqrt(flagDx * flagDx + flagDy * flagDy);
+				
+				if (placed.isEmpty())
+				{
+					// First checkpoint: just check it's not too close to center
+					if (flagDist >= baseRadius / 2)
+					{
+						bestLoc = new Location(x, y, z);
+						break;
+					}
+				}
+				else if (minDist >= minSeparation && flagDist >= baseRadius / 3)
+				{
+					// Good position: far from other checkpoints and not too close to center
+					if (minDist > bestDist)
+					{
+						bestDist = minDist;
+						bestLoc = new Location(x, y, z);
+					}
+				}
+			}
+			
+			// Fallback: if no valid position found, use the base circle position
+			if (bestLoc == null)
+			{
+				final double angle = (2 * Math.PI * i) / count;
+				final int x = centerX + (int) (baseRadius * Math.cos(angle));
+				final int y = centerY + (int) (baseRadius * Math.sin(angle));
+				bestLoc = new Location(x, y, centerZ);
+			}
+			
+			placed.add(bestLoc);
+			_locations.add(bestLoc);
 			_owners.put(i, 0); // neutral by default
 			
 			try
 			{
 				final Spawn spawn = new Spawn(FactionWarConfig.getCheckpointNpcId(), true);
-				spawn.setLoc(x, y, z, 0);
+				spawn.setLoc(bestLoc.getX(), bestLoc.getY(), bestLoc.getZ(), 0);
 				final Npc npc = spawn.doSpawn(false);
 				if (npc instanceof FactionWarCpFlag cpFlag)
 				{
@@ -100,7 +165,7 @@ public class FactionWarCheckpoint
 			}
 			catch (Exception e)
 			{
-				LOGGER.error("Failed to spawn checkpoint {} at ({}, {}, {}).", e, i, x, y, z);
+				LOGGER.error("Failed to spawn checkpoint {} at ({}, {}, {}).", e, i, bestLoc.getX(), bestLoc.getY(), bestLoc.getZ());
 			}
 		}
 		

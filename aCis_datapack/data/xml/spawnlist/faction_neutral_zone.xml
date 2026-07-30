@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list>
-	<!-- Faction neutral zone NPCs - Talking Island (Peace Zone) -->
-	<territory name="faction_neutral_zone" minZ="-3966" maxZ="-3000">
-		<node x="-84500" y="242800"/>
-		<node x="-84100" y="242800"/>
-		<node x="-84100" y="243200"/>
-		<node x="-84500" y="243200"/>
+	<!-- Faction neutral zone NPCs - Gludin Village (Peace Zone, safe ground level) -->
+	<territory name="faction_neutral_zone" minZ="-3300" maxZ="-2700">
+		<node x="-82800" y="150200"/>
+		<node x="-81600" y="150200"/>
+		<node x="-81600" y="151600"/>
+		<node x="-82800" y="151600"/>
 	</territory>
-	<npcmaker name="faction_neutral_zone_maker" territory="faction_neutral_zone" maximumNpcs="4">
+	<npcmaker name="faction_neutral_zone_maker" territory="faction_neutral_zone" maximumNpcs="5">
 		<ai type="default_maker"/>
-		<npc id="90004" pos="-84300;243000;-3450;16384" total="1" respawn="1min"/>
-		<npc id="90002" pos="-84400;243100;-3450;16384" total="1" respawn="1min"/>
-		<npc id="9999" pos="-84200;243100;-3450;16384" total="1" respawn="1min"/>
-		<npc id="90005" pos="-84100;242900;-3450;16384" total="1" respawn="1min"/>
-		<npc id="90006" pos="-84000;242800;-3450;16384" total="1" respawn="1min"/>
+		<npc id="90004" pos="-82205;151169;-3120;16384" total="1" respawn="1min"/>
+		<npc id="90002" pos="-82205;150569;-3120;16384" total="1" respawn="1min"/>
+		<npc id="9999" pos="-81905;150869;-3120;16384" total="1" respawn="1min"/>
+		<npc id="90005" pos="-82505;150869;-3120;16384" total="1" respawn="1min"/>
+		<npc id="90006" pos="-82005;150969;-3120;16384" total="1" respawn="1min"/>
 	</npcmaker>
 </list>

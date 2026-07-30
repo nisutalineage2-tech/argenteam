@@ -41,6 +41,7 @@ public abstract class AbstractEvent
 	private ScheduledFuture<?> _roundTask;
 	private final List<ScheduledFuture<?>> _countdownTasks = new ArrayList<>();
 	private long _matchStartTime;
+	private long _registerStartTime;
 	private long _matchDurationMs;
 	private int _currentRound;
 	private int _totalRounds;
@@ -99,6 +100,7 @@ public abstract class AbstractEvent
 			return;
 		
 		_state = State.REGISTER;
+		_registerStartTime = System.currentTimeMillis();
 		_allPlayers.clear();
 		_teams.clear();
 		
@@ -646,6 +648,33 @@ public abstract class AbstractEvent
 				task.cancel(false);
 		}
 		_countdownTasks.clear();
+	}
+	
+	/**
+	 * @return remaining match time in seconds, or 0 if not running.
+	 */
+	public final int getRemainingMatchTime()
+	{
+		if (_state != State.RUNNING || _matchDurationMs <= 0 || _matchStartTime <= 0)
+			return 0;
+		
+		final long elapsed = System.currentTimeMillis() - _matchStartTime;
+		final long remaining = Math.max(0, _matchDurationMs - elapsed);
+		return (int) (remaining / 1000);
+	}
+	
+	/**
+	 * @return remaining registration time in seconds, or 0 if not in REGISTER state.
+	 */
+	public final int getRemainingRegisterTime()
+	{
+		if (_state != State.REGISTER || _registerStartTime <= 0)
+			return 0;
+		
+		final long registerDurationMs = EventConfig.getRegisterTime() * 60000L;
+		final long elapsed = System.currentTimeMillis() - _registerStartTime;
+		final long remaining = Math.max(0, registerDurationMs - elapsed);
+		return (int) (remaining / 1000);
 	}
 	
 	protected abstract void onStartRegistering();
