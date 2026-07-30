@@ -87,16 +87,39 @@ echo.
 
 REM Copiar libs, configs y scripts a dist
 echo Copiando librerias y configuracion...
+
+REM --- JARs a ambos ---
 copy "%GS_DIR%\build\l2jserver.jar" "%GS_DIR%\build\dist\login\libs\" >nul
 copy "%GS_DIR%\build\l2jserver.jar" "%GS_DIR%\build\dist\gameserver\libs\" >nul
 copy "%GS_DIR%\lib\*.jar" "%GS_DIR%\build\dist\login\libs\" >nul
 copy "%GS_DIR%\lib\*.jar" "%GS_DIR%\build\dist\gameserver\libs\" >nul
-xcopy /e /i /y "%GS_DIR%\dist\*" "%GS_DIR%\build\dist\login\" >nul
-xcopy /e /i /y "%GS_DIR%\dist\*" "%GS_DIR%\build\dist\gameserver\" >nul
+
+REM --- Scripts gameserver ---
+copy "%GS_DIR%\dist\startGameServer.bat" "%GS_DIR%\build\dist\gameserver\" >nul
+copy "%GS_DIR%\dist\startGameServer.sh" "%GS_DIR%\build\dist\gameserver\" >nul
+copy "%GS_DIR%\dist\GameServer_loop.sh" "%GS_DIR%\build\dist\gameserver\" >nul
+copy "%GS_DIR%\dist\RegisterGameServer.bat" "%GS_DIR%\build\dist\gameserver\" >nul
+copy "%GS_DIR%\dist\RegisterGameServer.sh" "%GS_DIR%\build\dist\gameserver\" >nul
+copy "%GS_DIR%\dist\startSQLAccountManager.bat" "%GS_DIR%\build\dist\gameserver\" >nul
+copy "%GS_DIR%\dist\startSQLAccountManager.sh" "%GS_DIR%\build\dist\gameserver\" >nul
+
+REM --- Scripts login ---
+copy "%GS_DIR%\dist\startLoginServer.bat" "%GS_DIR%\build\dist\login\" >nul
+copy "%GS_DIR%\dist\startLoginServer.sh" "%GS_DIR%\build\dist\login\" >nul
+copy "%GS_DIR%\dist\LoginServer_loop.sh" "%GS_DIR%\build\dist\login\" >nul
+copy "%GS_DIR%\dist\RegisterGameServer.bat" "%GS_DIR%\build\dist\login\" >nul
+copy "%GS_DIR%\dist\RegisterGameServer.sh" "%GS_DIR%\build\dist\login\" >nul
+
+REM --- Config gameserver ---
 xcopy /e /i /y "%GS_DIR%\config\*.properties" "%GS_DIR%\build\dist\gameserver\config\" >nul
-REM Limpiar configs especificas del login en dist del gameserver
 del "%GS_DIR%\build\dist\gameserver\config\banned_ips.properties" 2>nul
 del "%GS_DIR%\build\dist\gameserver\config\loginserver.properties" 2>nul
+
+REM --- Config login ---
+mkdir "%GS_DIR%\build\dist\login\config" 2>nul
+copy "%GS_DIR%\config\loginserver.properties" "%GS_DIR%\build\dist\login\config\" >nul
+copy "%GS_DIR%\config\logging.properties" "%GS_DIR%\build\dist\login\config\" >nul
+copy "%GS_DIR%\config\banned_ips.properties" "%GS_DIR%\build\dist\login\config\" >nul
 
 REM Crear carpeta data y log
 mkdir "%GS_DIR%\build\dist\gameserver\data" 2>nul
