@@ -140,26 +140,42 @@ echo Datapack:   %DP_DIR%\build\
 echo.
 
 REM ============================================================
-REM  Copiar automaticamente a C:\Server\gameserver\
+REM  Copiar automaticamente a C:\server\
+REM  Estructura final:
+REM    C:\server\gameserver\     <- gameserver dist + datapack data
+REM    C:\server\loginserver\    <- login dist
+REM    C:\server\sql\            <- SQL scripts
+REM    C:\server\tools\          <- tools
 REM ============================================================
 echo.
 echo ========================================
-echo     COPIANDO A C:\Server\gameserver\
+echo     COPIANDO A C:\server\
 echo ========================================
 echo.
 
-REM Crear directorio si no existe
-if not exist "C:\Server\gameserver\" (
-    mkdir "C:\Server\gameserver\"
-)
+REM --- gameserver ---
+if not exist "C:\server\gameserver\" mkdir "C:\server\gameserver\"
+xcopy /e /i /y "%GS_DIR%\build\dist\gameserver\*" "C:\server\gameserver\" >nul
+xcopy /e /i /y "%DP_DIR%\build\gameserver\data\*" "C:\server\gameserver\data\" >nul
+echo  + gameserver copiado.
 
-REM Copiar gameserver (JARs, configs, scripts)
-xcopy /e /i /y "%GS_DIR%\build\dist\gameserver\*" "C:\Server\gameserver\" >nul
+REM --- loginserver ---
+if not exist "C:\server\loginserver\" mkdir "C:\server\loginserver\"
+xcopy /e /i /y "%GS_DIR%\build\dist\login\*" "C:\server\loginserver\" >nul
+echo  + loginserver copiado.
 
-REM Copiar datapack (data, html, scripts)
-xcopy /e /i /y "%DP_DIR%\build\gameserver\data\*" "C:\Server\gameserver\data\" >nul
+REM --- sql ---
+if not exist "C:\server\sql\" mkdir "C:\server\sql\"
+xcopy /e /i /y "%DP_DIR%\build\sql\*" "C:\server\sql\" >nul
+echo  + sql copiado.
 
-echo Copiado exitosamente a C:\Server\gameserver\
+REM --- tools ---
+if not exist "C:\server\tools\" mkdir "C:\server\tools\"
+xcopy /e /i /y "%DP_DIR%\build\tools\*" "C:\server\tools\" >nul
+echo  + tools copiado.
+
+echo.
+echo Copiado exitosamente a C:\server\
 echo.
 
 pause
