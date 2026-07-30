@@ -21,7 +21,7 @@ public final class EventConfig
 	private static int _voteTime = 60;
 	private static boolean _voteEnabled = false;
 	private static boolean _schedulerEnabled = true;
-	private static int _managerNpcId = 9999;
+	private static int _managerNpcId = 90007;
 	private static boolean _debug = true;
 	private static boolean _eventBufferEnabled = true;
 	private static int _npcBufferId = 90010;
@@ -41,7 +41,7 @@ public final class EventConfig
 		_voteTime = props.getProperty("VoteTime", 60);
 		_voteEnabled = props.getProperty("VoteEnabled", false);
 		_schedulerEnabled = props.getProperty("SchedulerEnabled", true);
-		_managerNpcId = props.getProperty("ManagerNpcId", 9999);
+		_managerNpcId = props.getProperty("ManagerNpcId", 90007);
 		_debug = props.getProperty("Debug", true);
 		_eventBufferEnabled = props.getProperty("EventBufferEnabled", true);
 		_npcBufferId = props.getProperty("NpcBufferId", 90010);

@@ -11,7 +11,7 @@
 		<ai type="default_maker"/>
 		<npc id="90004" pos="-82205;151169;-3120;16384" total="1" respawn="1min"/>
 		<npc id="90002" pos="-82205;150569;-3120;16384" total="1" respawn="1min"/>
-		<npc id="9999" pos="-81905;150869;-3120;16384" total="1" respawn="1min"/>
+		<npc id="90007" pos="-81905;150869;-3120;16384" total="1" respawn="1min"/>
 		<npc id="90005" pos="-82505;150869;-3120;16384" total="1" respawn="1min"/>
 		<npc id="90006" pos="-82005;150969;-3120;16384" total="1" respawn="1min"/>
 	</npcmaker>

@@ -243,7 +243,7 @@
 		<set name="seedable" val="false"/>
 	</npc>
 	
-	<npc id="9999" idTemplate="31228" name="Event Manager" title="Mini Events" alias="event_manager">
+	<npc id="90007" idTemplate="31228" name="Event Manager" title="Administrador de Eventos" alias="event_manager">
 		<set name="usingServerSideName" val="true"/>
 		<set name="usingServerSideTitle" val="true"/>
 		<set name="type" val="EventManagerNpc"/>

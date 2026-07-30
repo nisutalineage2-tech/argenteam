@@ -1,32 +1,40 @@
-<html><title>Faction Manager</title><body>
-<table width=290>
-	<tr>
-		<td width="290" height="28" align="center"><font color=LEVEL>Faction Manager</font></td>
-	</tr>
+<html><body>
+<center>
+<table width=270 bgcolor=000000>
+<tr><td height=32 align=center><font color=F0D060 size=16>⚔ Administrador de Facción ⚔</font></td></tr>
 </table>
-<img src="L2UI.SquareGray" width="290" height="1">
-<table width=290 height=45 bgcolor="000000">
-	<tr>
-		<td width="32" height="32"><img src="icon.etc_adena_i00" width=32 height=32></td>
-		<td width="255">Order of the Elites<br1><font color="808080">Home: Gludio</font></td>
-		<td width="55"><button value="" action="bypass -h npc_%objectId%_joinFaction 1" width="32" height="22" back="L2UI_CH3.Minimap.mapbutton_zoomin1_over" fore="L2UI_CH3.Minimap.mapbutton_zoomin1"></td>
-	</tr>
+<img src="L2UI.SquareGray" width=270 height=1><br>
+
+<table width=270 bgcolor=111122>
+<tr><td align=center><font color=99CCFF>¡Elige tu bando en la guerra!</font></td></tr>
 </table>
-<img src="L2UI.SquareGray" width="290" height="1">
-<table width=290 height=45>
-	<tr>
-		<td width="32" height="32"><img src="icon.etc_adena_i00" width=32 height=32></td>
-		<td width="255">Shadow Legion<br1><font color="808080">Home: Giran</font></td>
-		<td width="55"><button value="" action="bypass -h npc_%objectId%_joinFaction 2" width="32" height="22" back="L2UI_CH3.Minimap.mapbutton_zoomin1_over" fore="L2UI_CH3.Minimap.mapbutton_zoomin1"></td>
-	</tr>
+<br>
+
+<img src="L2UI.SquareGray" width=270 height=1><br>
+
+<table width=270 cellpadding=4 cellspacing=1>
+<tr>
+<td width=32><img src="icon.etc_crest_blue_i00" width=32 height=32></td>
+<td width=198><font color=00BFFF size=13><b>Furious</b></font><br1><font color=808080 size=10>Facción del Bien</font></td>
+<td width=40 align=center><button value="+" action="bypass -h npc_%objectId%_joinFaction 1" width=32 height=22 back="L2UI_CH3.mapbutton_zoomin2_over" fore="L2UI_CH3.mapbutton_zoomin2"></td>
+</tr>
 </table>
-<img src="L2UI.SquareGray" width="290" height="1">
-<table width=290 height=45 bgcolor="000000">
-	<tr>
-		<td width="32" height="32"><img src="icon.etc_adena_i00" width=32 height=32></td>
-		<td width="255"><font color=FF6666>Leave Faction</font></td>
-		<td width="55"><button value="" action="bypass -h npc_%objectId%_leaveFaction" width="32" height="22" back="L2UI_CH3.Minimap.mapbutton_zoomin1_over" fore="L2UI_CH3.Minimap.mapbutton_zoomin1"></td>
-	</tr>
+<img src="L2UI.SquareGray" width=270 height=1>
+
+<table width=270 cellpadding=4 cellspacing=1>
+<tr>
+<td width=32><img src="icon.etc_crest_red_i00" width=32 height=32></td>
+<td width=198><font color=FF5555 size=13><b>Fast</b></font><br1><font color=808080 size=10>Facción del Mal</font></td>
+<td width=40 align=center><button value="+" action="bypass -h npc_%objectId%_joinFaction 2" width=32 height=22 back="L2UI_CH3.mapbutton_zoomin2_over" fore="L2UI_CH3.mapbutton_zoomin2"></td>
+</tr>
 </table>
-<img src="L2UI.SquareGray" width="290" height="1">
+<img src="L2UI.SquareGray" width=270 height=1><br>
+
+<table width=270 bgcolor=222222>
+<tr><td align=center><font color=FF6666>✖ Abandonar Facción</font>&nbsp;&nbsp;<button value="X" action="bypass -h npc_%objectId%_leaveFaction" width=32 height=22 back="L2UI_CH3.mapbutton_zoomin2_over" fore="L2UI_CH3.mapbutton_zoomin2"></td></tr>
+</table>
+<img src="L2UI.SquareGray" width=270 height=1><br>
+
+<font color=808080 size=10>❖ Las facciones luchan por el control de Aden.<br>¡Únete a una y demuestra tu valía!</font>
+</center>
 </body></html>
