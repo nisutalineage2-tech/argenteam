@@ -2,8 +2,10 @@ package net.sf.l2j.gameserver.factionwar;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -14,15 +16,15 @@ import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.GaugeColor;
 import net.sf.l2j.gameserver.enums.SayType;
-import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Npc;
+import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.model.spawn.Spawn;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;
-import net.sf.l2j.gameserver.model.World;
 
 public class FactionWarManager
 {
@@ -49,6 +51,9 @@ public class FactionWarManager
 	private Npc _registrarNpc;
 	
 	private final FactionWarCheckpoint _checkpoints = new FactionWarCheckpoint();
+	
+	// Anti-farm tracking: killerId -> lastVictimId
+	private final Map<Integer, Integer> _lastKillVictim = new ConcurrentHashMap<>();
 	
 	private ScheduledFuture<?> _mapRotationTask;
 	private ScheduledFuture<?> _mapVoteTask;
@@ -395,7 +400,10 @@ public class FactionWarManager
 			giveRewards(top3);
 		}
 		
-		teleportFactionPlayersToNeutral();
+		if (FactionWarConfig.isEnableAutoTeleportToBase())
+			teleportFactionPlayersToBase();
+		else
+			teleportFactionPlayersToNeutral();
 		
 		LOGGER.info("Faction War stopped. Returned {} phantoms.", returned);
 		
@@ -470,6 +478,18 @@ public class FactionWarManager
 		if (!_running || !FactionWarConfig.isEnabled() || killerFactionId == victimFactionId)
 			return;
 		
+		final Player killer = World.getInstance().getPlayer(killerId);
+		final Player victim = World.getInstance().getPlayer(victimId);
+		if (killer == null || victim == null)
+			return;
+		
+		// Anti-PvP Farm Protection
+		if (isPvpFarming(killer, victim))
+		{
+			killer.sendMessage("[Faction War] No obtienes recompensa por farmear PvP.");
+			return;
+		}
+		
 		final int points = FactionWarConfig.getPointsPerPvpKill();
 		if (points <= 0)
 			return;
@@ -482,8 +502,7 @@ public class FactionWarManager
 		{
 			killerStats = new FactionWarStats();
 			killerStats.playerId = killerId;
-			final net.sf.l2j.gameserver.model.actor.Player killer = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(killerId);
-			killerStats.playerName = (killer != null) ? killer.getName() : "Unknown";
+			killerStats.playerName = killer.getName();
 			killerStats.factionId = killerFactionId;
 			_playerStats.put(killerId, killerStats);
 		}
@@ -495,31 +514,159 @@ public class FactionWarManager
 		{
 			victimStats = new FactionWarStats();
 			victimStats.playerId = victimId;
-			final net.sf.l2j.gameserver.model.actor.Player victim = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(victimId);
-			victimStats.playerName = (victim != null) ? victim.getName() : "Unknown";
+			victimStats.playerName = victim.getName();
 			victimStats.factionId = victimFactionId;
 			_playerStats.put(victimId, victimStats);
 		}
 		victimStats.deaths++;
 		
+		// Track last kill for same-player anti-farm
+		_lastKillVictim.put(killerId, victimId);
+		
 		if (FactionWarConfig.isAnnouncePvpKill())
 			broadcast("[Faction War] PvP kill! Faction " + killerFactionId + " +" + points + " pts");
+		
+		// PvP EXP Reward
+		if (FactionWarConfig.isEnablePvpExpReward())
+		{
+			final int level = killer.getStatus().getLevel();
+			final int expAmount;
+			if (level >= 78)
+				expAmount = FactionWarConfig.getPvpExpRewardThird();
+			else if (level >= 76)
+				expAmount = FactionWarConfig.getPvpExpRewardSecond();
+			else
+				expAmount = FactionWarConfig.getPvpExpRewardFirst();
+			
+			if (expAmount > 0)
+				killer.addExpAndSp(expAmount, 0);
+		}
+		
+		// PvP Item Reward (with castle multiplier & party sharing)
+		if (FactionWarConfig.isEnablePvpItemReward())
+		{
+			int itemCount = FactionWarConfig.getPvpItemRewardCount();
+			if (FactionWarConfig.isEnableCastleRewardMultiplier())
+				itemCount += getCastleRewardBonus(killer);
+			
+			if (itemCount > 0)
+			{
+				killer.addItem(FactionWarConfig.getPvpItemRewardId(), itemCount, true);
+				
+				if (FactionWarConfig.isEnablePartyPvpReward())
+					givePartyReward(killer);
+			}
+		}
 		
 		// Give adena reward to the killer
 		final int adenaReward = FactionWarConfig.getPvpAdenaReward();
 		if (adenaReward > 0)
-		{
-			final net.sf.l2j.gameserver.model.actor.Player killer = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(killerId);
-			if (killer != null && killer.isOnline())
-			{
-				killer.addItem(57, adenaReward, true);
-				
-				// Random spoil drop to the killer's party
-				giveRandomSpoilToParty(killer);
-			}
-		}
+			killer.addItem(57, adenaReward, true);
+		
+		// Random spoil drop to the killer's party
+		giveRandomSpoilToParty(killer);
 		
 		checkWinner();
+	}
+	
+	/**
+	 * Checks if this PvP kill is considered farming (no rewards).
+	 */
+	private boolean isPvpFarming(Player killer, Player victim)
+	{
+		if (killer.getClient() != null && victim.getClient() != null)
+		{
+			// Same IP protection
+			if (FactionWarConfig.isEnableProtectionIP())
+			{
+				final String killerIp = killer.getClient().getConnection().getInetAddress().getHostAddress();
+				final String victimIp = victim.getClient().getConnection().getInetAddress().getHostAddress();
+				if (killerIp != null && killerIp.equals(victimIp))
+					return true;
+			}
+			
+			// Same clan protection
+			if (FactionWarConfig.isEnableProtectionClan() && killer.getClan() != null && victim.getClan() != null && killer.getClanId() == victim.getClanId())
+				return true;
+			
+			// Same ally protection
+			if (FactionWarConfig.isEnableProtectionAlly() && killer.getAllyId() > 0 && killer.getAllyId() == victim.getAllyId())
+				return true;
+		}
+		
+		// Armor check (PDef threshold)
+		if (FactionWarConfig.isEnableProtectionArmour() && victim.getStatus().getPDef(null) < FactionWarConfig.getProtectionArmourAmount())
+			return true;
+		
+		// Same player farm protection
+		if (FactionWarConfig.isEnableProtectionSamePlayer())
+		{
+			final Integer lastVictim = _lastKillVictim.get(killer.getObjectId());
+			if (lastVictim != null && lastVictim == victim.getObjectId())
+				return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Calculates the castle reward bonus for a player based on their clan's castle ownership.
+	 */
+	private int getCastleRewardBonus(Player player)
+	{
+		if (!FactionWarConfig.isEnableCastleRewardMultiplier() || player.getClan() == null || player.getClan().getCastleId() <= 0)
+			return 0;
+		
+		final int castleId = player.getClan().getCastleId();
+		switch (castleId)
+		{
+			case 1: return FactionWarConfig.getCastleRewardGludio();
+			case 2: return FactionWarConfig.getCastleRewardDion();
+			case 3: return FactionWarConfig.getCastleRewardAden();
+			default: return 0;
+		}
+	}
+	
+	/**
+	 * Gives party PvP rewards to the killer's party members.
+	 */
+	private void givePartyReward(Player killer)
+	{
+		final net.sf.l2j.gameserver.model.group.Party party = killer.getParty();
+		if (party == null)
+			return;
+		
+		for (Player member : party.getMembers())
+		{
+			if (member == null || !member.isOnline() || member == killer)
+				continue;
+			
+			if (FactionWarConfig.isPartyRewardOnlySupportClass() && !isSupportClass(member))
+				continue;
+			
+			if (Rnd.get(100) >= FactionWarConfig.getPartyRewardChance())
+				continue;
+			
+			int rewardCount = FactionWarConfig.getPvpItemRewardCount();
+			if (FactionWarConfig.isEnableCastleRewardMultiplier())
+				rewardCount += getCastleRewardBonus(member);
+			
+			if (rewardCount > 0)
+				member.addItem(FactionWarConfig.getPvpItemRewardId(), rewardCount, true);
+		}
+		
+		// Extra bonus for killer when in party
+		if (FactionWarConfig.getKillerPartyBonus() > 0)
+			killer.addItem(FactionWarConfig.getPvpItemRewardId(), FactionWarConfig.getKillerPartyBonus(), true);
+	}
+	
+	/**
+	 * Checks if a player is a support class (healer/buffer).
+	 */
+	private boolean isSupportClass(Player player)
+	{
+		final int classId = player.getClassId().getId();
+		return classId == 15 || classId == 16 || classId == 17 || classId == 29 || classId == 30 || classId == 42 || classId == 43 || classId == 97 || classId == 98 || classId == 105 || classId == 112;
 	}
 	
 	/**
@@ -567,16 +714,53 @@ public class FactionWarManager
 		
 		// Track per-player stats for flag killer
 		FactionWarStats stats = _playerStats.get(killerId);
+		final Player flagPlayer = World.getInstance().getPlayer(killerId);
 		if (stats == null)
 		{
 			stats = new FactionWarStats();
 			stats.playerId = killerId;
-			final net.sf.l2j.gameserver.model.actor.Player player = net.sf.l2j.gameserver.model.World.getInstance().getPlayer(killerId);
-			stats.playerName = (player != null) ? player.getName() : "Unknown";
+			stats.playerName = (flagPlayer != null) ? flagPlayer.getName() : "Unknown";
 			stats.factionId = killerFactionId;
 			_playerStats.put(killerId, stats);
 		}
 		stats.points += points;
+		
+		// Flag capture SP + item rewards
+		if (flagPlayer != null && flagPlayer.isOnline() && FactionWarConfig.isEnableFlagSpItemReward())
+		{
+			final int clanLevel = (flagPlayer.getClan() != null) ? flagPlayer.getClan().getLevel() : 0;
+			
+			// SP reward tiered by clan level
+			final int spReward;
+			final java.util.List<int[]> itemReward;
+			if (clanLevel >= 7)
+			{
+				spReward = FactionWarConfig.getFlagSpRewardThird();
+				itemReward = FactionWarConfig.getFlagItemReward3();
+			}
+			else if (clanLevel >= 5)
+			{
+				spReward = FactionWarConfig.getFlagSpRewardSecond();
+				itemReward = FactionWarConfig.getFlagItemReward2();
+			}
+			else
+			{
+				spReward = FactionWarConfig.getFlagSpRewardFirst();
+				itemReward = FactionWarConfig.getFlagItemReward1();
+			}
+			
+			if (spReward > 0)
+				flagPlayer.addExpAndSp(0, spReward);
+			
+			if (itemReward != null)
+			{
+				for (int[] item : itemReward)
+				{
+					if (item.length >= 2 && item[0] > 0 && item[1] > 0)
+						flagPlayer.addItem(item[0], item[1], true);
+				}
+			}
+		}
 		
 		final int loserFactionId = (killerFactionId == FactionWarConfig.getGoodFactionId())
 			? FactionWarConfig.getEvilFactionId()
@@ -638,6 +822,22 @@ public class FactionWarManager
 			
 			if (player.getFactionId() != 0)
 				player.teleportTo(neutralLoc, 50);
+		}
+	}
+	
+	/**
+	 * Teleports all faction players to their respective faction base spawns.
+	 */
+	private void teleportFactionPlayersToBase()
+	{
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player == null || !player.isOnline() || player.getFactionId() <= 0)
+				continue;
+			
+			final Location baseLoc = getFactionSpawn(player.getFactionId());
+			if (baseLoc != null)
+				player.teleportTo(baseLoc, 50);
 		}
 	}
 	

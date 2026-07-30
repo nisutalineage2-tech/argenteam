@@ -16,6 +16,10 @@ public class FactionWarConfig
 	private static boolean _enabled;
 	private static int _goodFactionId;
 	private static int _evilFactionId;
+	private static String _goodFactionName;
+	private static String _evilFactionName;
+	private static int _goodFactionColor;
+	private static int _evilFactionColor;
 	private static int _scoreToWin;
 	private static int _pointsPerFlagKill;
 	private static int _pointsPerPvpKill;
@@ -54,6 +58,114 @@ public class FactionWarConfig
 	private static int _pvpAdenaReward;
 	private static final java.util.List<int[]> _spoilItems = new java.util.ArrayList<>();
 	
+	// Gameplay
+	private static int _startingLevel;
+	private static int _startingLevelSubClass;
+	private static int _priceForFactionChange;
+	private static boolean _enableAutoTeleportToBase;
+	private static boolean _enableFactionGuards;
+	private static boolean _enablePlayersBalanceLogin;
+	private static boolean _enableMapVoting;
+	private static boolean _enableFactionGuardsSpawn;
+	
+	// Anti-farm
+	private static boolean _enableProtectionIP;
+	private static boolean _enableProtectionClan;
+	private static boolean _enableProtectionAlly;
+	private static boolean _enableProtectionArmour;
+	private static int _protectionArmourAmount;
+	private static boolean _enableProtectionSamePlayer;
+	
+	// Class & equipment
+	private static boolean _enableClassBalance;
+	private static boolean _enableAntiHeavySystem;
+	private static int _killsForSpecShop;
+	private static boolean _forbidUseItem;
+	private static boolean _enableAGradeLimit;
+	private static int _killsForAGradeItem;
+	
+	// PvP EXP
+	private static boolean _enablePvpExpReward;
+	private static int _pvpExpRewardFirst;
+	private static int _pvpExpRewardSecond;
+	private static int _pvpExpRewardThird;
+	
+	// PvP items
+	private static boolean _enablePvpItemReward;
+	private static int _pvpItemRewardId;
+	private static int _pvpItemRewardCount;
+	
+	// Party rewards
+	private static boolean _enablePartyPvpReward;
+	private static boolean _partyRewardOnlySupportClass;
+	private static int _partyRewardChance;
+	private static int _killerPartyBonus;
+	
+	// Faction points
+	private static int _pointsRewardFlag;
+	private static int _pointsRewardPvp;
+	private static boolean _losePointsOnDeath;
+	private static int _pointsLoseAmount;
+	
+	// Flag rewards
+	private static boolean _enableFlagSpItemReward;
+	private static int _flagSpRewardFirst;
+	private static int _flagSpRewardSecond;
+	private static int _flagSpRewardThird;
+	private static final java.util.List<int[]> _flagItemReward1 = new java.util.ArrayList<>();
+	private static final java.util.List<int[]> _flagItemReward2 = new java.util.ArrayList<>();
+	private static final java.util.List<int[]> _flagItemReward3 = new java.util.ArrayList<>();
+	
+	// Castle multiplier
+	private static boolean _enableCastleRewardMultiplier;
+	private static int _castleRewardAden;
+	private static int _castleRewardDion;
+	private static int _castleRewardGludio;
+	
+	// Round end
+	private static int _roundEndSpFirstPlace;
+	private static int _roundEndAdenaFirstPlace;
+	private static int _roundEndAdenaSecondPlace;
+	private static int _roundEndAdenaThirdPlace;
+	private static boolean _enableRoundEndAaReward;
+	private static int _roundEndAaFirstPlace;
+	private static boolean _enableTopPlayerItemReward;
+	private static int _topPlayerItemRewardId;
+	private static int _topPlayerItemRewardAmount;
+	private static boolean _enableWinFactionItemReward;
+	private static int _winFactionItemRewardId;
+	private static int _winFactionItemRewardAmount;
+	
+	// Enchant
+	private static String _enchantMode;
+	private static int _enchantScrollDropChance;
+	private static int _maxItemEnchant;
+	private static int _killsForEnchantB;
+	private static int _killsForEnchantA;
+	private static int _killsForEnchantS;
+	
+	// Class balance
+	private static int _classBalanceMcrit;
+	private static double _classBalanceMAtk;
+	
+	// Say texts
+	private static boolean _enableSayTexts;
+	private static String _goodNpcText;
+	private static String _goodPlayerText;
+	private static String _evilNpcText;
+	private static String _evilPlayerText;
+	
+	// Chaos event
+	private static boolean _enableChaosEvent;
+	private static int _chaosSuperHasteLvl;
+	private static int _chaosEventDuration;
+	private static int _chaosEventInterval;
+	private static int _chaosEventRewardId;
+	private static int _chaosEventRewardAmount;
+	private static boolean _enableAuraTeam;
+	
+	private static Location _newbieSpawnLoc;
+	
 	public static void load()
 	{
 		final ExProperties props = Config.initProperties("./config/factionwar.properties");
@@ -61,6 +173,10 @@ public class FactionWarConfig
 		_enabled = props.getProperty("Enabled", false);
 		_goodFactionId = props.getProperty("GoodFactionId", 1);
 		_evilFactionId = props.getProperty("EvilFactionId", 2);
+		_goodFactionName = props.getProperty("GoodFactionName", "Good");
+		_evilFactionName = props.getProperty("EvilFactionName", "Evil");
+		_goodFactionColor = Integer.parseUnsignedInt(props.getProperty("GoodFactionColor", "0000E0"), 16);
+		_evilFactionColor = Integer.parseUnsignedInt(props.getProperty("EvilFactionColor", "F4FA58"), 16);
 		_scoreToWin = props.getProperty("ScoreToWin", 100);
 		_pointsPerFlagKill = props.getProperty("PointsPerFlagKill", 1);
 		_pointsPerPvpKill = props.getProperty("PointsPerPvpKill", 1);
@@ -95,22 +211,115 @@ public class FactionWarConfig
 		_winningFactionReward = props.getProperty("WinningFactionReward", 50000);
 		_pvpAdenaReward = props.getProperty("PvpAdenaReward", 5000);
 		
+		// Gameplay
+		_startingLevel = props.getProperty("StartingLevel", 76);
+		_startingLevelSubClass = props.getProperty("StartingLevelSubClass", 76);
+		_priceForFactionChange = props.getProperty("PriceForFactionChange", 1000);
+		_enableAutoTeleportToBase = props.getProperty("EnableAutoTeleportToBase", true);
+		_enableFactionGuardsSpawn = props.getProperty("EnableFactionGuards", true);
+		_enablePlayersBalanceLogin = props.getProperty("EnablePlayersBalanceLogin", true);
+		_enableMapVoting = props.getProperty("EnableMapVoting", true);
+		
+		// Anti-farm
+		_enableProtectionIP = props.getProperty("EnableProtectionIP", true);
+		_enableProtectionClan = props.getProperty("EnableProtectionClan", false);
+		_enableProtectionAlly = props.getProperty("EnableProtectionAlly", false);
+		_enableProtectionArmour = props.getProperty("EnableProtectionArmour", true);
+		_protectionArmourAmount = props.getProperty("ProtectionArmourAmount", 300);
+		_enableProtectionSamePlayer = props.getProperty("EnableProtectionSamePlayer", false);
+		
+		// Class & equipment
+		_enableClassBalance = props.getProperty("EnableClassBalance", true);
+		_enableAntiHeavySystem = props.getProperty("EnableAntiHeavySystem", true);
+		_killsForSpecShop = props.getProperty("KillsForSpecShop", 300);
+		_forbidUseItem = props.getProperty("ForbidUseItem", true);
+		_enableAGradeLimit = props.getProperty("EnableAGradeLimit", true);
+		_killsForAGradeItem = props.getProperty("KillsForAGradeItem", 100);
+		
+		// PvP EXP
+		_enablePvpExpReward = props.getProperty("EnablePvpExpReward", true);
+		_pvpExpRewardFirst = props.getProperty("PvpExpRewardFirst", 1000000);
+		_pvpExpRewardSecond = props.getProperty("PvpExpRewardSecond", 2800000);
+		_pvpExpRewardThird = props.getProperty("PvpExpRewardThird", 120000);
+		
+		// PvP items
+		_enablePvpItemReward = props.getProperty("EnablePvpItemReward", true);
+		_pvpItemRewardId = props.getProperty("PvpItemRewardId", 57);
+		_pvpItemRewardCount = props.getProperty("PvpItemRewardCount", 2);
+		
+		// Party rewards
+		_enablePartyPvpReward = props.getProperty("EnablePartyPvpReward", true);
+		_partyRewardOnlySupportClass = props.getProperty("PartyRewardOnlySupportClass", false);
+		_partyRewardChance = props.getProperty("PartyRewardChance", 50);
+		_killerPartyBonus = props.getProperty("KillerPartyBonus", 2);
+		
+		// Faction points
+		_pointsRewardFlag = props.getProperty("PointsRewardFlag", 2);
+		_pointsRewardPvp = props.getProperty("PointsRewardPvp", 3);
+		_losePointsOnDeath = props.getProperty("LosePointsOnDeath", true);
+		_pointsLoseAmount = props.getProperty("PointsLoseAmount", 1);
+		
+		// Flag rewards
+		_enableFlagSpItemReward = props.getProperty("EnableFlagSpItemReward", true);
+		_flagSpRewardFirst = props.getProperty("FlagSpRewardFirst", 157865);
+		_flagSpRewardSecond = props.getProperty("FlagSpRewardSecond", 100875);
+		_flagSpRewardThird = props.getProperty("FlagSpRewardThird", 75405);
+		parseItemList(props, "FlagItemReward1", "57,6", _flagItemReward1);
+		parseItemList(props, "FlagItemReward2", "57,3", _flagItemReward2);
+		parseItemList(props, "FlagItemReward3", "57,2", _flagItemReward3);
+		
+		// Castle multiplier
+		_enableCastleRewardMultiplier = props.getProperty("EnableCastleRewardMultiplier", true);
+		_castleRewardAden = props.getProperty("CastleRewardAden", 4);
+		_castleRewardDion = props.getProperty("CastleRewardDion", 3);
+		_castleRewardGludio = props.getProperty("CastleRewardGludio", 2);
+		
+		// Round end
+		_roundEndSpFirstPlace = props.getProperty("RoundEndSpFirstPlace", 200000);
+		_roundEndAdenaFirstPlace = props.getProperty("RoundEndAdenaFirstPlace", 60);
+		_roundEndAdenaSecondPlace = props.getProperty("RoundEndAdenaSecondPlace", 25);
+		_roundEndAdenaThirdPlace = props.getProperty("RoundEndAdenaThirdPlace", 10);
+		_enableRoundEndAaReward = props.getProperty("EnableRoundEndAaReward", true);
+		_roundEndAaFirstPlace = props.getProperty("RoundEndAaFirstPlace", 3);
+		_enableTopPlayerItemReward = props.getProperty("EnableTopPlayerItemReward", true);
+		_topPlayerItemRewardId = props.getProperty("TopPlayerItemRewardId", 5575);
+		_topPlayerItemRewardAmount = props.getProperty("TopPlayerItemRewardAmount", 8);
+		_enableWinFactionItemReward = props.getProperty("EnableWinFactionItemReward", true);
+		_winFactionItemRewardId = props.getProperty("WinFactionItemRewardId", 5575);
+		_winFactionItemRewardAmount = props.getProperty("WinFactionItemRewardAmount", 5);
+		
+		// Enchant
+		_enchantMode = props.getProperty("EnchantMode", "PVPSCROLLS");
+		_enchantScrollDropChance = props.getProperty("EnchantScrollDropChance", 34);
+		_maxItemEnchant = props.getProperty("MaxItemEnchant", 12);
+		_killsForEnchantB = props.getProperty("KillsForEnchantB", 25);
+		_killsForEnchantA = props.getProperty("KillsForEnchantA", 20);
+		_killsForEnchantS = props.getProperty("KillsForEnchantS", 40);
+		
+		// Class balance
+		_classBalanceMcrit = props.getProperty("ClassBalanceMcrit", 1);
+		_classBalanceMAtk = props.getProperty("ClassBalanceMAtk", 0.8);
+		
+		// Say texts
+		_enableSayTexts = props.getProperty("EnableSayTexts", true);
+		_goodNpcText = props.getProperty("GoodNpcText", "Thanks for Register in %faction% %n!");
+		_goodPlayerText = props.getProperty("GoodPlayerText", "I feel the power !!!");
+		_evilNpcText = props.getProperty("EvilNpcText", "Thanks for Register in %faction% %n!");
+		_evilPlayerText = props.getProperty("EvilPlayerText", "I feel the dark power !!");
+		
+		// Chaos event
+		_enableChaosEvent = props.getProperty("EnableChaosEvent", false);
+		_chaosSuperHasteLvl = props.getProperty("ChaosSuperHasteLvl", 2);
+		_chaosEventDuration = props.getProperty("ChaosEventDuration", 20);
+		_chaosEventInterval = props.getProperty("ChaosEventInterval", 360);
+		_chaosEventRewardId = props.getProperty("ChaosEventRewardId", 57);
+		_chaosEventRewardAmount = props.getProperty("ChaosEventRewardAmount", 99);
+		_enableAuraTeam = props.getProperty("EnableAuraTeam", true);
+		
+		_newbieSpawnLoc = parseLoc(props.getProperty("NewbieSpawnLoc", "45346,49026,-3061"));
+		
 		_spoilItems.clear();
-		final String[] spoilEntries = props.getProperty("SpoilItems", "57,1000;5588,1").split(";");
-		for (String entry : spoilEntries)
-		{
-			final String[] parts = entry.trim().split(",");
-			if (parts.length >= 1)
-			{
-				try
-				{
-					final int itemId = Integer.parseInt(parts[0].trim());
-					final int count = (parts.length >= 2) ? Integer.parseInt(parts[1].trim()) : 1;
-					_spoilItems.add(new int[]{itemId, count});
-				}
-				catch (NumberFormatException e) { }
-			}
-		}
+		parseItemList(props, "SpoilItems", "57,1000", _spoilItems);
 		
 		_goodSpawnLoc = parseLoc(props.getProperty("GoodSpawn", "-84318,244579,-792"));
 		_evilSpawnLoc = parseLoc(props.getProperty("EvilSpawn", "82218,148561,-3472"));
@@ -176,9 +385,33 @@ public class FactionWarConfig
 		}
 	}
 	
+	private static void parseItemList(ExProperties props, String key, String defaultVal, java.util.List<int[]> list)
+	{
+		list.clear();
+		final String[] entries = props.getProperty(key, defaultVal).split(";");
+		for (String entry : entries)
+		{
+			final String[] parts = entry.trim().split(",");
+			if (parts.length >= 1)
+			{
+				try
+				{
+					final int itemId = Integer.parseInt(parts[0].trim());
+					final int count = (parts.length >= 2) ? Integer.parseInt(parts[1].trim()) : 1;
+					list.add(new int[]{itemId, count});
+				}
+				catch (NumberFormatException e) { }
+			}
+		}
+	}
+	
 	public static boolean isEnabled() { return Config.ENABLE_FACTION_SYSTEM && _enabled; }
 	public static int getGoodFactionId() { return _goodFactionId; }
 	public static int getEvilFactionId() { return _evilFactionId; }
+	public static String getGoodFactionName() { return _goodFactionName; }
+	public static String getEvilFactionName() { return _evilFactionName; }
+	public static int getGoodFactionColor() { return _goodFactionColor; }
+	public static int getEvilFactionColor() { return _evilFactionColor; }
 	public static int getScoreToWin() { return _scoreToWin; }
 	public static int getPointsPerFlagKill() { return _pointsPerFlagKill; }
 	public static int getPointsPerPvpKill() { return _pointsPerPvpKill; }
@@ -230,6 +463,113 @@ public class FactionWarConfig
 	public static int getTop3Reward() { return _topRewardAmounts.length > 2 ? _topRewardAmounts[2] : 0; }
 	public static int getPvpAdenaReward() { return _pvpAdenaReward; }
 	public static java.util.List<int[]> getSpoilItems() { return _spoilItems; }
+	
+	// Gameplay getters
+	public static int getStartingLevel() { return _startingLevel; }
+	public static int getStartingLevelSubClass() { return _startingLevelSubClass; }
+	public static int getPriceForFactionChange() { return _priceForFactionChange; }
+	public static boolean isEnableAutoTeleportToBase() { return _enableAutoTeleportToBase; }
+	public static boolean isEnableFactionGuardsSpawn() { return _enableFactionGuardsSpawn; }
+	public static boolean isEnablePlayersBalanceLogin() { return _enablePlayersBalanceLogin; }
+	public static boolean isEnableMapVoting() { return _enableMapVoting; }
+	
+	// Anti-farm getters
+	public static boolean isEnableProtectionIP() { return _enableProtectionIP; }
+	public static boolean isEnableProtectionClan() { return _enableProtectionClan; }
+	public static boolean isEnableProtectionAlly() { return _enableProtectionAlly; }
+	public static boolean isEnableProtectionArmour() { return _enableProtectionArmour; }
+	public static int getProtectionArmourAmount() { return _protectionArmourAmount; }
+	public static boolean isEnableProtectionSamePlayer() { return _enableProtectionSamePlayer; }
+	
+	// Class & equipment getters
+	public static boolean isEnableClassBalance() { return _enableClassBalance; }
+	public static boolean isEnableAntiHeavySystem() { return _enableAntiHeavySystem; }
+	public static int getKillsForSpecShop() { return _killsForSpecShop; }
+	public static boolean isForbidUseItem() { return _forbidUseItem; }
+	public static boolean isEnableAGradeLimit() { return _enableAGradeLimit; }
+	public static int getKillsForAGradeItem() { return _killsForAGradeItem; }
+	
+	// PvP EXP getters
+	public static boolean isEnablePvpExpReward() { return _enablePvpExpReward; }
+	public static int getPvpExpRewardFirst() { return _pvpExpRewardFirst; }
+	public static int getPvpExpRewardSecond() { return _pvpExpRewardSecond; }
+	public static int getPvpExpRewardThird() { return _pvpExpRewardThird; }
+	
+	// PvP item getters
+	public static boolean isEnablePvpItemReward() { return _enablePvpItemReward; }
+	public static int getPvpItemRewardId() { return _pvpItemRewardId; }
+	public static int getPvpItemRewardCount() { return _pvpItemRewardCount; }
+	
+	// Party reward getters
+	public static boolean isEnablePartyPvpReward() { return _enablePartyPvpReward; }
+	public static boolean isPartyRewardOnlySupportClass() { return _partyRewardOnlySupportClass; }
+	public static int getPartyRewardChance() { return _partyRewardChance; }
+	public static int getKillerPartyBonus() { return _killerPartyBonus; }
+	
+	// Faction point getters
+	public static int getPointsRewardFlag() { return _pointsRewardFlag; }
+	public static int getPointsRewardPvp() { return _pointsRewardPvp; }
+	public static boolean isLosePointsOnDeath() { return _losePointsOnDeath; }
+	public static int getPointsLoseAmount() { return _pointsLoseAmount; }
+	
+	// Flag reward getters
+	public static boolean isEnableFlagSpItemReward() { return _enableFlagSpItemReward; }
+	public static int getFlagSpRewardFirst() { return _flagSpRewardFirst; }
+	public static int getFlagSpRewardSecond() { return _flagSpRewardSecond; }
+	public static int getFlagSpRewardThird() { return _flagSpRewardThird; }
+	public static java.util.List<int[]> getFlagItemReward1() { return _flagItemReward1; }
+	public static java.util.List<int[]> getFlagItemReward2() { return _flagItemReward2; }
+	public static java.util.List<int[]> getFlagItemReward3() { return _flagItemReward3; }
+	
+	// Castle multiplier getters
+	public static boolean isEnableCastleRewardMultiplier() { return _enableCastleRewardMultiplier; }
+	public static int getCastleRewardAden() { return _castleRewardAden; }
+	public static int getCastleRewardDion() { return _castleRewardDion; }
+	public static int getCastleRewardGludio() { return _castleRewardGludio; }
+	
+	// Round end getters
+	public static int getRoundEndSpFirstPlace() { return _roundEndSpFirstPlace; }
+	public static int getRoundEndAdenaFirstPlace() { return _roundEndAdenaFirstPlace; }
+	public static int getRoundEndAdenaSecondPlace() { return _roundEndAdenaSecondPlace; }
+	public static int getRoundEndAdenaThirdPlace() { return _roundEndAdenaThirdPlace; }
+	public static boolean isEnableRoundEndAaReward() { return _enableRoundEndAaReward; }
+	public static int getRoundEndAaFirstPlace() { return _roundEndAaFirstPlace; }
+	public static boolean isEnableTopPlayerItemReward() { return _enableTopPlayerItemReward; }
+	public static int getTopPlayerItemRewardId() { return _topPlayerItemRewardId; }
+	public static int getTopPlayerItemRewardAmount() { return _topPlayerItemRewardAmount; }
+	public static boolean isEnableWinFactionItemReward() { return _enableWinFactionItemReward; }
+	public static int getWinFactionItemRewardId() { return _winFactionItemRewardId; }
+	public static int getWinFactionItemRewardAmount() { return _winFactionItemRewardAmount; }
+	
+	// Enchant getters
+	public static String getEnchantMode() { return _enchantMode; }
+	public static int getEnchantScrollDropChance() { return _enchantScrollDropChance; }
+	public static int getMaxItemEnchant() { return _maxItemEnchant; }
+	public static int getKillsForEnchantB() { return _killsForEnchantB; }
+	public static int getKillsForEnchantA() { return _killsForEnchantA; }
+	public static int getKillsForEnchantS() { return _killsForEnchantS; }
+	
+	// Class balance getters
+	public static int getClassBalanceMcrit() { return _classBalanceMcrit; }
+	public static double getClassBalanceMAtk() { return _classBalanceMAtk; }
+	
+	// Say text getters
+	public static boolean isEnableSayTexts() { return _enableSayTexts; }
+	public static String getGoodNpcText() { return _goodNpcText; }
+	public static String getGoodPlayerText() { return _goodPlayerText; }
+	public static String getEvilNpcText() { return _evilNpcText; }
+	public static String getEvilPlayerText() { return _evilPlayerText; }
+	
+	// Chaos event getters
+	public static boolean isEnableChaosEvent() { return _enableChaosEvent; }
+	public static int getChaosSuperHasteLvl() { return _chaosSuperHasteLvl; }
+	public static int getChaosEventDuration() { return _chaosEventDuration; }
+	public static int getChaosEventInterval() { return _chaosEventInterval; }
+	public static int getChaosEventRewardId() { return _chaosEventRewardId; }
+	public static int getChaosEventRewardAmount() { return _chaosEventRewardAmount; }
+	public static boolean isEnableAuraTeam() { return _enableAuraTeam; }
+	
+	public static Location getNewbieSpawnLoc() { return _newbieSpawnLoc; }
 	
 	public static boolean isInNeutralZone(net.sf.l2j.gameserver.model.location.Location loc)
 	{
