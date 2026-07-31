@@ -1487,6 +1487,7 @@ public class FactionWarManager
 			sb.append(timeStr).append(" | ");
 		sb.append("Good: ").append(goodScore).append(" vs Evil: ").append(evilScore);
 		sb.append(" | Flag: ").append(_lastMainFlagKillerFaction > 0 ? getFactionName(_lastMainFlagKillerFaction) : "-");
+		sb.append(" [Faction War]");
 		
 		final String msg = sb.toString();
 		
