@@ -12,12 +12,12 @@ import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.actor.Player;
 
 /**
- * EventEngine — always active scheduler that alternates between Faction War and events.
- * The system runs permanently: Faction War → Event → Faction War → Event, etc.
+ * EventEngine - always active scheduler that alternates between Faction War and events.
+ * The system runs permanently: Faction War -> Event -> Faction War -> Event, etc.
  * 
  * Alternance logic:
- * - onFactionWarEnded() → sets flag so next is an event
- * - onEventEnded() → sets flag so next is Faction War (if enabled)
+ * - onFactionWarEnded() -> sets flag so next is an event
+ * - onEventEnded() -> sets flag so next is Faction War (if enabled)
  * - Scheduler runs every 10 seconds; when nothing is active it starts the appropriate mode.
  */
 public final class EventEngine
@@ -29,8 +29,8 @@ public final class EventEngine
 	private boolean _initialized;
 	
 	/**
-	 * Alternance flag: true → Faction War should start next (if enabled).
-	 * false → an event should start next.
+	 * Alternance flag: true -> Faction War should start next (if enabled).
+	 * false -> an event should start next.
 	 */
 	private volatile boolean _alternanceExpectsFw = true;
 	
@@ -67,7 +67,7 @@ public final class EventEngine
 		}
 		
 		_initialized = true;
-		LOGGER.info("EventEngine initialized with {} events. Alternance: FW ↔ Events.", _events.size());
+		LOGGER.info("EventEngine initialized with {} events. Alternance: FW <-> Events.", _events.size());
 		
 		// Start alternance scheduler
 		startScheduler();
@@ -102,15 +102,15 @@ public final class EventEngine
 	
 	/**
 	 * Scheduler runs every 10 seconds and alternates between FW and events.
-	 * - If anything is running → skip
-	 * - If FW expected (Flag true) and FW enabled → start FW
-	 * - If event expected (Flag false) → start first idle event
+	 * - If anything is running -> skip
+	 * - If FW expected (Flag true) and FW enabled -> start FW
+	 * - If event expected (Flag false) -> start first idle event
 	 * - Fallback: if all events exhausted, start FW (if enabled) or cycle again
 	 */
 	private void startScheduler()
 	{
 		_schedulerTask = ThreadPool.scheduleAtFixedRate(this::runScheduler, 15000, 10000);
-		LOGGER.info("Alternance scheduler started (10-second interval): FW ↔ Events.");
+		LOGGER.info("Alternance scheduler started (10-second interval): FW <-> Events.");
 	}
 	
 	private void runScheduler()
@@ -124,7 +124,7 @@ public final class EventEngine
 			if (FactionWarManager.getInstance().isRunning())
 				return;
 			
-			// Nothing running — decide what to start based on alternance flag
+			// Nothing running - decide what to start based on alternance flag
 			if (Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && _alternanceExpectsFw)
 			{
 				LOGGER.info("Alternance: starting Faction War vote phase (next: events).");
@@ -143,7 +143,7 @@ public final class EventEngine
 				}
 			}
 			
-			// All events exhausted — if FW is enabled, start vote phase; otherwise restart cycle
+			// All events exhausted - if FW is enabled, start vote phase; otherwise restart cycle
 			if (Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled())
 			{
 				LOGGER.info("Alternance: events exhausted, starting Faction War vote phase.");
@@ -151,7 +151,7 @@ public final class EventEngine
 			}
 			else
 			{
-				// FW not enabled — wait for events to become IDLE again and restart cycle
+				// FW not enabled - wait for events to become IDLE again and restart cycle
 				LOGGER.debug("Alternance: nothing to start. Waiting for events to reset.");
 			}
 		}

@@ -45,7 +45,7 @@ public class ZombieEvent extends AbstractEvent
 		for (int i = 0; i < zombieCount && i < shuffled.size(); i++)
 			turnIntoZombie(shuffled.get(i));
 		
-		broadcastToPlayers("[ZH] " + zombieCount + " jugadores se convirtieron en ZOMBIES! ¡Corran!");
+		broadcastToPlayers("[ZH] " + zombieCount + " jugadores se convirtieron en ZOMBIES! Corran!");
 	}
 	
 	@Override
@@ -57,7 +57,7 @@ public class ZombieEvent extends AbstractEvent
 		if (isZombie(killer) && !isZombie(victim))
 		{
 			turnIntoZombie(victim);
-			broadcastToPlayers("[ZH] " + victim.getName() + " fue INFECTADO y se convirtió en Zombie!");
+			broadcastToPlayers("[ZH] " + victim.getName() + " fue INFECTADO y se convirtio en Zombie!");
 			checkHumansRemaining();
 		}
 	}
@@ -69,7 +69,7 @@ public class ZombieEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[ZH] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[ZH] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -126,7 +126,7 @@ public class ZombieEvent extends AbstractEvent
 		_zombies.add(ep);
 		ep.setTeamId(1);
 		
-		p.sendMessage("[ZH] ¡Ahora eres un ZOMBIE! ¡Caza humanos!");
+		p.sendMessage("[ZH] Ahora eres un ZOMBIE! Caza humanos!");
 	}
 	
 	private boolean isZombie(EventPlayer ep)
@@ -137,7 +137,7 @@ public class ZombieEvent extends AbstractEvent
 	private void equipBow(Player player)
 	{
 		player.getInventory().addItem(_humanBowId, 1);
-		player.sendMessage("[ZH] ¡Recibiste un Arco Anti Zombie!");
+		player.sendMessage("[ZH] Recibiste un Arco Anti Zombie!");
 	}
 	
 	private void checkHumansRemaining()
@@ -158,12 +158,12 @@ public class ZombieEvent extends AbstractEvent
 		
 		if (humans == 0)
 		{
-			broadcastToPlayers("[ZH] ¡Todos los humanos infectados! ¡Ganan los Zombies!");
+			broadcastToPlayers("[ZH] Todos los humanos infectados! Ganan los Zombies!");
 			endMatch();
 		}
 		else if (humans == 1 && lastHuman != null)
 		{
-			broadcastToPlayers("[ZH] " + lastHuman.getName() + " es el ÚLTIMO HUMANO EN PIE! ¡Ganan los Humanos!");
+			broadcastToPlayers("[ZH] " + lastHuman.getName() + " es el ULTIMO HUMANO EN PIE! Ganan los Humanos!");
 			endMatch();
 		}
 	}

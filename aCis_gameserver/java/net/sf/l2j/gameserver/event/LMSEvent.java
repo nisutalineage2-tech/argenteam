@@ -41,7 +41,7 @@ public class LMSEvent extends AbstractEvent
 			killer.getPlayer().broadcastTitleInfo();
 		}
 		
-		broadcastToPlayers("[LMS] " + killer.getName() + " mató a " + (victim != null ? victim.getName() : "alguien") + "!");
+		broadcastToPlayers("[LMS] " + killer.getName() + " mato a " + (victim != null ? victim.getName() : "alguien") + "!");
 	}
 	
 	@Override
@@ -56,7 +56,7 @@ public class LMSEvent extends AbstractEvent
 		player.setIsParalyzed(true);
 		player.setTitle("[LMS] Muerto");
 		player.broadcastTitleInfo();
-		player.sendMessage("[LMS] ¡Estás muerto! Espera a que termine el evento.");
+		player.sendMessage("[LMS] Estas muerto! Espera a que termine el evento.");
 		
 		// Check if only one player remains alive
 		checkLastAlive();
@@ -84,7 +84,7 @@ public class LMSEvent extends AbstractEvent
 					leader = ep;
 			}
 		}
-		return "[LMS] Vivos: " + alive + " | Líder: " + (leader != null ? leader.getName() + " (" + leader.getKills() + ")" : "-");
+		return "[LMS] Vivos: " + alive + " | Lider: " + (leader != null ? leader.getName() + " (" + leader.getKills() + ")" : "-");
 	}
 	
 	private void checkLastAlive()
@@ -105,12 +105,12 @@ public class LMSEvent extends AbstractEvent
 		
 		if (alive <= 1 && lastAlive != null)
 		{
-			broadcastToPlayers("[LMS] " + lastAlive.getName() + " es el ÚLTIMO HOMBRE EN PIE! (" + lastAlive.getKills() + " bajas)");
+			broadcastToPlayers("[LMS] " + lastAlive.getName() + " es el ULTIMO HOMBRE EN PIE! (" + lastAlive.getKills() + " bajas)");
 			endMatch();
 		}
 		else if (alive == 0)
 		{
-			broadcastToPlayers("[LMS] ¡Todos están muertos! ¡Es un empate!");
+			broadcastToPlayers("[LMS] Todos estan muertos! Es un empate!");
 			endMatch();
 		}
 	}

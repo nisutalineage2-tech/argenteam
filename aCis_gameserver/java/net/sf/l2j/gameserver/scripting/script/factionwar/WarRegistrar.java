@@ -46,7 +46,7 @@ public class WarRegistrar extends Quest
 		}
 		else
 		{
-			player.sendMessage("Te has registrado en la Faction War! Serás teletransportado cuando comience la guerra.");
+			player.sendMessage("Te has registrado en la Faction War! Seras teletransportado cuando comience la guerra.");
 		}
 		
 		return null;

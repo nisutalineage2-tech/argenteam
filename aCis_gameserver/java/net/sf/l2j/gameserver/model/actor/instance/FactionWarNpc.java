@@ -44,13 +44,13 @@ public class FactionWarNpc extends Folk
 	{
 		if (!FactionWarManager.getInstance().isRunning())
 		{
-			showPanel(player, "La guerra de facciones no está activa en este momento.");
+			showPanel(player, "La guerra de facciones no esta activa en este momento.");
 			return;
 		}
 		
 		if (player.getFactionId() <= 0)
 		{
-			showPanel(player, "No tienes una facción. Habla con el Faction Manager primero.");
+			showPanel(player, "No tienes una faccion. Habla con el Faction Manager primero.");
 			return;
 		}
 		
@@ -63,18 +63,18 @@ public class FactionWarNpc extends Folk
 		
 		// Teleport to faction's base on the war map
 		FactionWarManager.getInstance().teleportToWarMap(player);
-		player.sendMessage("¡Teletransportado a la base de tu facción! ¡Lucha por la gloria!");
+		player.sendMessage("Teletransportado a la base de tu faccion! Lucha por la gloria!");
 	}
 	
 	/**
 	 * Shows checkpoint ownership status to the player.
-	 * Checkpoints are capturable battlegrounds — no direct teleport.
+	 * Checkpoints are capturable battlegrounds - no direct teleport.
 	 */
 	private void handleCheckpointStatus(Player player)
 	{
 		if (!FactionWarManager.getInstance().isRunning())
 		{
-			showPanel(player, "La guerra de facciones no está activa.");
+			showPanel(player, "La guerra de facciones no esta activa.");
 			return;
 		}
 		
@@ -85,7 +85,7 @@ public class FactionWarNpc extends Folk
 		sb.append("<html><body><center><font color=LEVEL>Checkpoints Capturables</font></center><br>");
 		sb.append("Los checkpoints son puntos de batalla. Ataca y capturalos para tu faccion!<br><br>");
 		sb.append("<table width=280>");
-		sb.append("<tr><td width=30><font color=808080>#</font></td><td width=150><font color=808080>Dueño</font></td><td width=100><font color=808080>Estado</font></td></tr>");
+		sb.append("<tr><td width=30><font color=808080>#</font></td><td width=150><font color=808080>Dueno</font></td><td width=100><font color=808080>Estado</font></td></tr>");
 		
 		for (int i = 0; i < count; i++)
 		{
@@ -138,7 +138,7 @@ public class FactionWarNpc extends Folk
 		}
 		catch (NumberFormatException e)
 		{
-			player.sendMessage("Voto inválido.");
+			player.sendMessage("Voto invalido.");
 		}
 	}
 	
@@ -146,7 +146,7 @@ public class FactionWarNpc extends Folk
 	{
 		if (!FactionWarManager.getInstance().isVotingPhaseActive() && !FactionWarManager.getInstance().isRunning())
 		{
-			showPanel(player, "No hay fase de votación activa.");
+			showPanel(player, "No hay fase de votacion activa.");
 			return;
 		}
 		
@@ -178,11 +178,11 @@ public class FactionWarNpc extends Folk
 			}
 			
 			if (buffId >= 1 && buffId <= 3)
-				showBufferPanel(player, "<font color=\"00FF00\">¡Paquete de buffs aplicado con éxito!</font>");
+				showBufferPanel(player, "<font color=\"00FF00\">Paquete de buffs aplicado con exito!</font>");
 		}
 		catch (NumberFormatException e)
 		{
-			showBufferPanel(player, "<font color=\"FF4444\">Error: buff inválido.</font>");
+			showBufferPanel(player, "<font color=\"FF4444\">Error: buff invalido.</font>");
 		}
 	}
 	
@@ -315,7 +315,7 @@ public class FactionWarNpc extends Folk
 	}
 	
 	/**
-	 * Buffer: Muestra la página de buffs individuales con paginación.
+	 * Buffer: Muestra la pagina de buffs individuales con paginacion.
 	 */
 	private void handleBufferPage(Player player, StringTokenizer st)
 	{
@@ -519,13 +519,13 @@ public class FactionWarNpc extends Folk
 		{
 			sb.append("</table><br>");
 			sb.append("<center><font color=\"FFCC00\">Fase de Votacion Activa!</font><br1>");
-			sb.append("<font color=\"C0C0C0\" size=\"11\">Vota por el mapa de batalla usando el botón de abajo.</font><br><br>");
+			sb.append("<font color=\"C0C0C0\" size=\"11\">Vota por el mapa de batalla usando el boton de abajo.</font><br><br>");
 		}
 		else
 		{
 			sb.append("</table><br>");
 			sb.append("<center><font color=\"FF4444\">La guerra de facciones no esta activa.</font><br1>");
-			sb.append("<font color=\"808080\" size=\"11\">Espera a que comience la próxima batalla.</font><br><br>");
+			sb.append("<font color=\"808080\" size=\"11\">Espera a que comience la proxima batalla.</font><br><br>");
 		}
 		
 		// Faction info & actions

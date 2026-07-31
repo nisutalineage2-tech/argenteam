@@ -41,7 +41,7 @@ public class Escape implements IUserCommandHandler
 			final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
 			
 			player.sendPacket(new PlaySound("systemmsg_e.809"));
-			player.sendMessage("[Faction War] Teletransportándote a la zona neutral en " + delaySeconds + " segundos... Espera sin moverte.");
+			player.sendMessage("[Faction War] Teletransportandote a la zona neutral en " + delaySeconds + " segundos... Espera sin moverte.");
 			
 			// Schedule teleport after the configurable delay
 			ThreadPool.schedule(() ->

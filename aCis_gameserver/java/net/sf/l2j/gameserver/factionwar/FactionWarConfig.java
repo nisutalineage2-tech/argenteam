@@ -416,7 +416,7 @@ public class FactionWarConfig
 		final String[] p = s.split(",");
 		if (p.length < 3)
 		{
-			LOGGER.warn("Malformed location: '{}' — expected x,y,z", s);
+			LOGGER.warn("Malformed location: '{}' - expected x,y,z", s);
 			return null;
 		}
 		try

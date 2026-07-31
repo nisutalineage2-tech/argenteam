@@ -304,7 +304,7 @@ public class EventManagerNpc extends Folk
 		switch (state)
 		{
 			case IDLE: return "<font color=\"808080\">IDLE</font>";
-			case REGISTER: return "<font color=\"FFCC00\">INSCRIPCIÓN</font>";
+			case REGISTER: return "<font color=\"FFCC00\">INSCRIPCION</font>";
 			case STARTING: return "<font color=\"FFA500\">INICIANDO</font>";
 			case RUNNING: return "<font color=\"00FF00\">EN CURSO</font>";
 			default: return "<font color=\"808080\">" + state.name() + "</font>";

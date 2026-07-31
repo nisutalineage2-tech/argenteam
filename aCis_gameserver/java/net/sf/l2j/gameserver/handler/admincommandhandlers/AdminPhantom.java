@@ -338,7 +338,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			}
 			catch (Exception e)
 			{
-				showPanel(player, "Usage: factionall <factionId> — assigns ALL phantoms without faction to the given faction.");
+				showPanel(player, "Usage: factionall <factionId> - assigns ALL phantoms without faction to the given faction.");
 				return;
 			}
 			

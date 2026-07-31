@@ -36,7 +36,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 /**
- * DungeonEngine — always-on singleton that manages PvE dungeon instances.
+ * DungeonEngine - always-on singleton that manages PvE dungeon instances.
  * Loads dungeon templates from XML and offers them on a configurable timer.
  */
 public final class DungeonEngine
@@ -80,7 +80,7 @@ public final class DungeonEngine
 		return SingletonHolder.INSTANCE;
 	}
 	
-	// ─── Initialization ───────────────────────────────────────────
+	// --- Initialization -------------------------------------------
 	
 	public void init()
 	{
@@ -107,7 +107,7 @@ public final class DungeonEngine
 		_spawnZ = props.getProperty("SpawnZ", -3450);
 	}
 	
-	// ─── XML loading (manual, no IXmlReader) ──────────────────────
+	// --- XML loading (manual, no IXmlReader) ----------------------
 	
 	private void loadTemplates()
 	{
@@ -223,7 +223,7 @@ public final class DungeonEngine
 		_templates.put(id, new DungeonTemplate(id, name, minPlayers, maxPlayers, minLevel, maxLevel, cooldownHours, rewards, rewardHtm, enterHtm, stages));
 	}
 	
-	// ─── Scheduler ────────────────────────────────────────────────
+	// --- Scheduler ------------------------------------------------
 	
 	private void startScheduler()
 	{
@@ -246,7 +246,7 @@ public final class DungeonEngine
 		}
 	}
 	
-	// ─── Registration ─────────────────────────────────────────────
+	// --- Registration ---------------------------------------------
 	
 	public void openRegistration(int dungeonId)
 	{
@@ -348,7 +348,7 @@ public final class DungeonEngine
 		LOGGER.info("Dungeon {} started with {} players (instance {}).", template.getName(), players.size(), dungeon.getId());
 	}
 	
-	// ─── Status ───────────────────────────────────────────────────
+	// --- Status ---------------------------------------------------
 	
 	public boolean isRegistrationOpen() { return _registrationOpen; }
 	public boolean isEnabled() { return _enabled; }
@@ -381,7 +381,7 @@ public final class DungeonEngine
 		_registrationOpen = false;
 	}
 	
-	// ─── Cooldown tracking (by objectId) ─────────────────────────
+	// --- Cooldown tracking (by objectId) -------------------------
 	
 	public boolean isOnCooldown(Player player, int dungeonId)
 	{
@@ -429,7 +429,7 @@ public final class DungeonEngine
 		return Math.max(0, (cooldownMs - elapsed) / 1000);
 	}
 	
-	// ─── Player dungeon tracking ────────────────────────────────
+	// --- Player dungeon tracking --------------------------------
 	
 	private final Map<Integer, DungeonInstance> _playerDungeonMap = new ConcurrentHashMap<>();
 	
@@ -458,14 +458,14 @@ public final class DungeonEngine
 			di.onPlayerDeath(player);
 	}
 	
-	// ─── NPC methods ───────────────────────────────────────────────
+	// --- NPC methods -----------------------------------------------
 	
 	public int getSpawnX() { return _spawnX; }
 	public int getSpawnY() { return _spawnY; }
 	public int getSpawnZ() { return _spawnZ; }
 	public int getRegistrationMinutes() { return _registrationMinutes; }
 	
-	// ─── Database ─────────────────────────────────────────────────
+	// --- Database -------------------------------------------------
 	
 	private void loadCooldowns()
 	{
@@ -520,7 +520,7 @@ public final class DungeonEngine
 		});
 	}
 	
-	// ─── Utility ──────────────────────────────────────────────────
+	// --- Utility --------------------------------------------------
 	
 	private void broadcast(String msg)
 	{

@@ -33,9 +33,9 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Raid] ¡Pelea!");
+				ep.getPlayer().setTitle("[Raid] Pelea!");
 				ep.getPlayer().broadcastTitleInfo();
-				ep.getPlayer().sendMessage("[Raid] ¡Un jefe de raid aparecerá pronto! ¡Mata a los enemigos primero y luego al jefe!");
+				ep.getPlayer().sendMessage("[Raid] Un jefe de raid aparecera pronto! Mata a los enemigos primero y luego al jefe!");
 			}
 		}
 		
@@ -87,7 +87,7 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 			_bossSpawn.doSpawn(false);
 			_bossAlive = true;
 			
-			broadcastToPlayers("[Raid] ¡El JEFE DE RAID ha aparecido en el centro! ¡Mátalo para ganar!");
+			broadcastToPlayers("[Raid] El JEFE DE RAID ha aparecido en el centro! Matalo para ganar!");
 		}
 		catch (Exception e)
 		{
@@ -133,7 +133,7 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 		final EventTeam winnerTeam = getTeam(ep.getTeamId());
 		if (winnerTeam != null)
 		{
-			broadcastToPlayers("[Raid] ¡El equipo " + winnerTeam.getName() + " mató al jefe de raid! ¡Ganan!");
+			broadcastToPlayers("[Raid] El equipo " + winnerTeam.getName() + " mato al jefe de raid! Ganan!");
 			endMatch();
 		}
 	}
@@ -145,7 +145,7 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 			return;
 		
 		// No respawn for killed players (they stay dead)
-		broadcastToPlayers("[Raid] " + killer.getName() + " mató a " + victim.getName() + "! ¡Sin respawn!");
+		broadcastToPlayers("[Raid] " + killer.getName() + " mato a " + victim.getName() + "! Sin respawn!");
 	}
 	
 	@Override
@@ -158,7 +158,7 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 		final Player player = victim.getPlayer();
 		player.setTitle("[Raid] Muerto");
 		player.broadcastTitleInfo();
-		player.sendMessage("[Raid] ¡Estás muerto! Espera a que tu equipo mate al jefe o te revivan!");
+		player.sendMessage("[Raid] Estas muerto! Espera a que tu equipo mate al jefe o te revivan!");
 	}
 	
 	@Override

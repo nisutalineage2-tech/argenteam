@@ -78,11 +78,11 @@ public class FactionWarBBSManager extends BaseBBSManager
 		if (!running && winningFaction > 0)
 		{
 			final Faction winF = FactionData.getInstance().getFaction(winningFaction);
-			sb.append("<center><font color=FFD700 size=16>¡GANADOR: ").append(winF != null ? winF.getName() : "Faction " + winningFaction).append("!</font></center><br>");
+			sb.append("<center><font color=FFD700 size=16>GANADOR: ").append(winF != null ? winF.getName() : "Faction " + winningFaction).append("!</font></center><br>");
 		}
 		else if (!running)
 		{
-			sb.append("<center><font color=808080>No hay guerra activa. La próxima comenzará automáticamente.</font></center><br>");
+			sb.append("<center><font color=808080>No hay guerra activa. La proxima comenzara automaticamente.</font></center><br>");
 		}
 		
 		// Top 10 leaderboard
@@ -93,7 +93,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 			sb.append("<table width=600 bgcolor=222222>");
 			sb.append("<tr><td width=40><font color=808080>#</font></td>");
 			sb.append("<td width=240><font color=808080>Jugador</font></td>");
-			sb.append("<td width=120><font color=808080>Facción</font></td>");
+			sb.append("<td width=120><font color=808080>Faccion</font></td>");
 			sb.append("<td width=60 align=center><font color=808080>Kills</font></td>");
 			sb.append("<td width=60 align=center><font color=808080>Muertes</font></td>");
 			sb.append("<td width=80 align=center><font color=808080>Puntos</font></td></tr>");
@@ -121,7 +121,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 		}
 		else if (running)
 		{
-			sb.append("<br><center><font color=808080>Aún no hay estadísticas. ¡Participa en la guerra!</font></center>");
+			sb.append("<br><center><font color=808080>Aun no hay estadisticas. Participa en la guerra!</font></center>");
 		}
 		
 		// Reward info
@@ -130,7 +130,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 		sb.append("<tr><td><font color=808080>#1: </font><font color=FFD700>").append(FactionWarConfig.getTop1Reward()).append("x Adena</font></td></tr>");
 		sb.append("<tr><td><font color=808080>#2: </font><font color=C0C0C0>").append(FactionWarConfig.getTop2Reward()).append("x Adena</font></td></tr>");
 		sb.append("<tr><td><font color=808080>#3: </font><font color=CD7F32>").append(FactionWarConfig.getTop3Reward()).append("x Adena</font></td></tr>");
-		sb.append("<tr><td><font color=808080>Facción ganadora: </font><font color=FFD700>").append(FactionWarConfig.getWinningFactionReward()).append("x Adena</font> cada miembro</td></tr>");
+		sb.append("<tr><td><font color=808080>Faccion ganadora: </font><font color=FFD700>").append(FactionWarConfig.getWinningFactionReward()).append("x Adena</font> cada miembro</td></tr>");
 		sb.append("</table>");
 		
 		// Refresh button

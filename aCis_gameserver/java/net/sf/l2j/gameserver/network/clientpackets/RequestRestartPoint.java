@@ -144,13 +144,13 @@ public final class RequestRestartPoint extends L2GameClientPacket
 			{
 				if (player.getFactionId() != 0 && FactionWarManager.getInstance().isRunning())
 				{
-					// War is running — send to neutral zone (surrender/rendición)
+					// War is running - send to neutral zone (surrender/rendicion)
 					loc = FactionWarConfig.getNeutralSpawnLoc();
 					player.sendMessage("[Faction War] Has muerto en batalla. Ve al Registrador de Guerra para volver a tu base.");
 				}
 				else if (player.getFactionId() != 0)
 				{
-					// No war — normal faction home respawn
+					// No war - normal faction home respawn
 					final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
 					if (faction != null && faction.getHomeLocation() != null)
 						loc = faction.getHomeLocation();

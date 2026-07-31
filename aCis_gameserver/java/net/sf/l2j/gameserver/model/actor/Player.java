@@ -2716,7 +2716,7 @@ public final class Player extends Playable
 		}
 		else
 		{
-			// Environmental death (no killer) — still notify the event so respawns work.
+			// Environmental death (no killer) - still notify the event so respawns work.
 			net.sf.l2j.gameserver.event.EventEngine.getInstance().onPlayerDie(this, null);
 		}
 		

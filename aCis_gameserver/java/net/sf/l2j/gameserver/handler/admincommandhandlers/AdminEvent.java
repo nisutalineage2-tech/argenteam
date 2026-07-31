@@ -5,7 +5,7 @@ import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 
 /**
- * AdminEvent stub — events are disabled. FactionWar is the only game mode.
+ * AdminEvent stub - events are disabled. FactionWar is the only game mode.
  */
 public class AdminEvent implements IAdminCommandHandler
 {

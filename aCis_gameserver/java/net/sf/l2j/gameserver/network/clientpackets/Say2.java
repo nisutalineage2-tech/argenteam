@@ -173,7 +173,7 @@ public final class Say2 extends L2GameClientPacket
 				// Already in an event?
 				if (eventEngine.isPlayerInAnyEvent(player.getObjectId()))
 				{
-					player.sendMessage("[Event] Ya estás registrado en un evento. Usa .eventleave para salir.");
+					player.sendMessage("[Event] Ya estas registrado en un evento. Usa .eventleave para salir.");
 					return;
 				}
 				
@@ -202,14 +202,14 @@ public final class Say2 extends L2GameClientPacket
 					event = eventEngine.getActiveEvent();
 					if (event == null)
 					{
-						player.sendMessage("[Event] No hay ningún evento abierto en este momento.");
+						player.sendMessage("[Event] No hay ningun evento abierto en este momento.");
 						return;
 					}
 				}
 				
 				if (event.getState() != AbstractEvent.State.REGISTER)
 				{
-					player.sendMessage("[Event] El evento " + event.getData().getEventName() + " no está en fase de registro.");
+					player.sendMessage("[Event] El evento " + event.getData().getEventName() + " no esta en fase de registro.");
 					return;
 				}
 				
@@ -222,7 +222,7 @@ public final class Say2 extends L2GameClientPacket
 				}
 				
 				if (event.registerPlayer(player))
-					player.sendMessage("[Event] ¡Registrado en " + event.getData().getEventName() + "!");
+					player.sendMessage("[Event] Registrado en " + event.getData().getEventName() + "!");
 				break;
 			}
 			case ".eventleave":
@@ -230,7 +230,7 @@ public final class Say2 extends L2GameClientPacket
 				final AbstractEvent event = eventEngine.getEventForPlayer(player.getObjectId());
 				if (event == null)
 				{
-					player.sendMessage("[Event] No estás en ningún evento.");
+					player.sendMessage("[Event] No estas en ningun evento.");
 					return;
 				}
 				if (event.unregisterPlayer(player.getObjectId()))
@@ -258,7 +258,7 @@ public final class Say2 extends L2GameClientPacket
 			}
 		}
 		
-		player.sendMessage("[Simon] No hay una ronda de Simón Dice en curso.");
+		player.sendMessage("[Simon] No hay una ronda de Simon Dice en curso.");
 	}
 	
 	private static void handleFactionCommands(Player player, String cmd, String[] parts)

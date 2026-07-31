@@ -10,7 +10,7 @@ import net.sf.l2j.gameserver.network.serverpackets.AbstractNpcInfo.NpcInfo;
 /**
  * A capturable checkpoint NPC used in Faction War.
  * <ul>
- *   <li>Initially neutral (no owner) — any faction player can attack it.</li>
+ *   <li>Initially neutral (no owner) - any faction player can attack it.</li>
  *   <li>When killed, the checkpoint becomes owned by the killer's faction.</li>
  *   <li>While owned, the checkpoint grants periodic score to the owning faction.</li>
  *   <li>Enemy players can attack an owned checkpoint to capture it for themselves.</li>

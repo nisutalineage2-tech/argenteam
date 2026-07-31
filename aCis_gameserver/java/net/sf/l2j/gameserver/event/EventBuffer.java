@@ -165,7 +165,7 @@ public final class EventBuffer
 		
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<html><body><center>");
-		sb.append("<font color=\"LEVEL\">Selección de Buffs del Evento</font><br>");
+		sb.append("<font color=\"LEVEL\">Seleccion de Buffs del Evento</font><br>");
 		sb.append("Selecciona hasta ").append(maxBuffs).append(" buffs:<br><br>");
 		sb.append("<table width=\"280\">");
 		

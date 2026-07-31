@@ -29,7 +29,7 @@ public class HuntingGroundsEvent extends AbstractEvent
 			final Player p = ep.getPlayer();
 			p.setTitle("[Hunt] " + p.getName());
 			p.broadcastTitleInfo();
-			p.sendMessage("[Hunt] ¡Un disparo, una muerte! ¡Usa tu arco!");
+			p.sendMessage("[Hunt] Un disparo, una muerte! Usa tu arco!");
 		}
 	}
 	
@@ -49,7 +49,7 @@ public class HuntingGroundsEvent extends AbstractEvent
 			killer.getPlayer().broadcastTitleInfo();
 		}
 		
-		broadcastToPlayers("[Hunt] " + killer.getName() + " disparó a " + victim.getName() + "!");
+		broadcastToPlayers("[Hunt] " + killer.getName() + " disparo a " + victim.getName() + "!");
 	}
 	
 	@Override
@@ -59,7 +59,7 @@ public class HuntingGroundsEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Hunt] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[Hunt] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);

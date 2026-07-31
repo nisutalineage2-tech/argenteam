@@ -44,7 +44,7 @@ public class SimonSaysEvent extends AbstractEvent
 			{
 				ep.getPlayer().setTitle("[Simon] Vivo");
 				ep.getPlayer().broadcastTitleInfo();
-				ep.getPlayer().sendMessage("[Simon] ¡Di exactamente lo que yo diga lo más rápido posible!");
+				ep.getPlayer().sendMessage("[Simon] Di exactamente lo que yo diga lo mas rapido posible!");
 			}
 		}
 		
@@ -83,9 +83,9 @@ public class SimonSaysEvent extends AbstractEvent
 			_eliminated.add(ep);
 			p.setIsImmobilized(true);
 			p.setIsParalyzed(true);
-			p.setTitle("[Simon] ¡Lento!");
+			p.setTitle("[Simon] Lento!");
 			p.broadcastTitleInfo();
-			p.sendMessage("[Simon] ¡Demasiado lento! ¡Estás eliminado!");
+			p.sendMessage("[Simon] Demasiado lento! Estas eliminado!");
 			broadcastToPlayers("[Simon] " + ep.getName() + " fue demasiado lento!");
 		}
 		
@@ -108,9 +108,9 @@ public class SimonSaysEvent extends AbstractEvent
 			_eliminated.add(ep);
 			player.setIsImmobilized(true);
 			player.setIsParalyzed(true);
-			player.setTitle("[Simon] ¡Equivocado!");
+			player.setTitle("[Simon] Equivocado!");
 			player.broadcastTitleInfo();
-			player.sendMessage("[Simon] ¡Palabra incorrecta! ¡Estás eliminado!");
+			player.sendMessage("[Simon] Palabra incorrecta! Estas eliminado!");
 			broadcastToPlayers("[Simon] " + ep.getName() + " dijo la palabra incorrecta!");
 			
 			checkRemaining();
@@ -118,7 +118,7 @@ public class SimonSaysEvent extends AbstractEvent
 		else
 		{
 			// Correct!
-			player.sendMessage("[Simon] ¡Correcto! Sobrevives esta ronda!");
+			player.sendMessage("[Simon] Correcto! Sobrevives esta ronda!");
 		}
 		
 		return true;
@@ -139,13 +139,13 @@ public class SimonSaysEvent extends AbstractEvent
 		if (alive <= 1 && winner != null)
 		{
 			cancelTask(_roundTask);
-			broadcastToPlayers("[Simon] " + winner.getName() + " gana Simón Dice!");
+			broadcastToPlayers("[Simon] " + winner.getName() + " gana Simon Dice!");
 			endMatch();
 		}
 		else if (alive <= 0)
 		{
 			cancelTask(_roundTask);
-			broadcastToPlayers("[Simon] ¡Todos fueron eliminados!");
+			broadcastToPlayers("[Simon] Todos fueron eliminados!");
 			endMatch();
 		}
 		else

@@ -106,7 +106,7 @@ public abstract class AbstractEvent
 		
 		onStartRegistering();
 		
-		broadcastEvent("[Event] " + _data.getEventName() + " ¡inscripción abierta! Visita al Event Manager o usa .eventjoin " + _data.getId() + " para unirte.");
+		broadcastEvent("[Event] " + _data.getEventName() + " inscripcion abierta! Visita al Event Manager o usa .eventjoin " + _data.getId() + " para unirte.");
 		sendEventPopup();
 		autoRegisterPhantoms();
 		
@@ -162,7 +162,7 @@ public abstract class AbstractEvent
 			}
 		}
 		
-		broadcastEvent("[Event] " + _data.getEventName() + " ¡ha comenzado! ¡Buena suerte!");
+		broadcastEvent("[Event] " + _data.getEventName() + " ha comenzado! Buena suerte!");
 		
 		// Send SetupGauge bar to each player + start scorebar updates every 10 seconds
 		if (_matchDurationMs > 0)
@@ -235,7 +235,7 @@ public abstract class AbstractEvent
 		// Send ranking before clearing
 		final String ranking = buildRanking();
 		broadcastToPlayers(ranking);
-		broadcastEvent("[Event] " + _data.getEventName() + " ¡terminó! Ganador: " + (winner != null ? winner.getName() + "!" : "¡Empate!"));
+		broadcastEvent("[Event] " + _data.getEventName() + " termino! Ganador: " + (winner != null ? winner.getName() + "!" : "Empate!"));
 		
 		if (winner != null)
 			rewardPlayers(winner);
@@ -277,7 +277,7 @@ public abstract class AbstractEvent
 		}
 		
 		player.sendMessage("[Event] Te uniste a " + _data.getEventName() + "! (" + _allPlayers.size() + " jugadores)");
-		broadcastEvent("[Event] " + player.getName() + " se unió a " + _data.getEventName() + "! (" + _allPlayers.size() + " jugadores)");
+		broadcastEvent("[Event] " + player.getName() + " se unio a " + _data.getEventName() + "! (" + _allPlayers.size() + " jugadores)");
 		
 		return true;
 	}
@@ -332,7 +332,7 @@ public abstract class AbstractEvent
 		
 		_allPlayers.remove(ep);
 		ep.getPlayer().sendMessage("[Event] Saliste de " + _data.getEventName() + ".");
-		broadcastEvent("[Event] " + ep.getName() + " abandonó " + _data.getEventName() + ". (" + _allPlayers.size() + " jugadores)");
+		broadcastEvent("[Event] " + ep.getName() + " abandono " + _data.getEventName() + ". (" + _allPlayers.size() + " jugadores)");
 		
 		return true;
 	}
@@ -591,7 +591,7 @@ public abstract class AbstractEvent
 	private void sendEventPopup()
 	{
 		final ConfirmDlg dlg = new ConfirmDlg(SystemMessageId.EVENT);
-		dlg.addString(_data.getEventName() + " - ¿Quieres registrarte?");
+		dlg.addString(_data.getEventName() + " - Quieres registrarte?");
 		dlg.addZoneName(_data.getPositionAll());
 		dlg.addTime(45000);
 		dlg.addRequesterId(_data.getId());
@@ -711,7 +711,7 @@ public abstract class AbstractEvent
 			return;
 		}
 		
-		broadcastEvent("[Event] ¡Ronda " + _currentRound + "/" + _totalRounds + " comienza!");
+		broadcastEvent("[Event] Ronda " + _currentRound + "/" + _totalRounds + " comienza!");
 		
 		// Teleport players back to team spawns for new round
 		for (EventTeam team : _teams)

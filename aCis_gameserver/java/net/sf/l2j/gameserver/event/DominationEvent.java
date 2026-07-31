@@ -39,7 +39,7 @@ public class DominationEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Dom] ¡Pelea!");
+				ep.getPlayer().setTitle("[Dom] Pelea!");
 				ep.getPlayer().broadcastTitleInfo();
 			}
 		}
@@ -59,7 +59,7 @@ public class DominationEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Dom] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[Dom] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -120,7 +120,7 @@ public class DominationEvent extends AbstractEvent
 			if (blue != null)
 			{
 				blue.addScore(_pointsPerTick);
-				broadcastToPlayers("[Dom] ¡Azul anota! (" + blueInZone + " vs " + redInZone + " en zona)");
+				broadcastToPlayers("[Dom] Azul anota! (" + blueInZone + " vs " + redInZone + " en zona)");
 			}
 		}
 		else if (redInZone > blueInZone)
@@ -129,7 +129,7 @@ public class DominationEvent extends AbstractEvent
 			if (red != null)
 			{
 				red.addScore(_pointsPerTick);
-				broadcastToPlayers("[Dom] ¡Rojo anota! (" + redInZone + " vs " + blueInZone + " en zona)");
+				broadcastToPlayers("[Dom] Rojo anota! (" + redInZone + " vs " + blueInZone + " en zona)");
 			}
 		}
 	}

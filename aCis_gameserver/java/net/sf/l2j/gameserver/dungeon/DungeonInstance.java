@@ -67,7 +67,7 @@ public class DungeonInstance
 		return false;
 	}
 	
-	// ─── Stage lifecycle ──────────────────────────────────────────
+	// --- Stage lifecycle ------------------------------------------
 	
 	private void beginFirstStage()
 	{
@@ -148,7 +148,7 @@ public class DungeonInstance
 			player.sendMessage("You will be resurrected if your team completes this stage.");
 	}
 	
-	// ─── Reward ───────────────────────────────────────────────────
+	// --- Reward ---------------------------------------------------
 	
 	private void rewardPlayers()
 	{
@@ -176,7 +176,7 @@ public class DungeonInstance
 		}
 	}
 	
-	// ─── Helper methods ───────────────────────────────────────────
+	// --- Helper methods -------------------------------------------
 	
 	private void teleportToStage()
 	{

@@ -184,7 +184,7 @@ public final class PhantomAI
 			}
 			
 			// === EVENT MODE: while a registered event is RUNNING, the phantom fights the event ===
-			// (no farming, no patrol, no level-zone teleports — they would pull the phantom away from the arena)
+			// (no farming, no patrol, no level-zone teleports - they would pull the phantom away from the arena)
 			// Single lookup: getEventForPlayer() returns the event or null (avoids iterating events twice per tick).
 			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
 			if (event != null)
@@ -195,7 +195,7 @@ public final class PhantomAI
 					return;
 				}
 				
-				// Registered but event not started yet — behave normally until teleport.
+				// Registered but event not started yet - behave normally until teleport.
 				LAST_ACTIONS.put(phantom.getObjectId(), "Event waiting");
 			}
 			
@@ -220,7 +220,7 @@ public final class PhantomAI
 				
 				if (phantom.getOperateType() != OperateType.NONE || phantom.isSitting())
 				{
-					// Already in store mode or sitting — skip loot/monsters
+					// Already in store mode or sitting - skip loot/monsters
 					LAST_ACTIONS.put(phantom.getObjectId(), "Neutral store");
 					return;
 				}
@@ -255,7 +255,7 @@ public final class PhantomAI
 					return;
 				}
 				
-				// Priority 3: No enemies nearby — move toward the battle area
+				// Priority 3: No enemies nearby - move toward the battle area
 				if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
 				{
 					moveToWarCenter(phantom);
@@ -401,12 +401,12 @@ public final class PhantomAI
 				handleDominationRole(phantom, event);
 				return;
 			}
-			case 7 -> // LuckyChests: open chests — prioritize them over players
+			case 7 -> // LuckyChests: open chests - prioritize them over players
 			{
 				handleLuckyChestsRole(phantom, event);
 				return;
 			}
-			case 16 -> // RaidInTheMiddle: kill the boss — go for it even with enemies nearby
+			case 16 -> // RaidInTheMiddle: kill the boss - go for it even with enemies nearby
 			{
 				handleRaidRole(phantom, event);
 				return;
@@ -440,7 +440,7 @@ public final class PhantomAI
 			return;
 		}
 		
-		// Priority 3: no targets nearby — converge on the event center
+		// Priority 3: no targets nearby - converge on the event center
 		if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
 		{
 			moveToEventCenter(phantom, event);
@@ -515,7 +515,7 @@ public final class PhantomAI
 			
 			if (nearest != null)
 			{
-				// On the chest — open it (interact) instead of fighting.
+				// On the chest - open it (interact) instead of fighting.
 				if (bestDistance <= 100)
 				{
 					LAST_ACTIONS.put(phantom.getObjectId(), "Chest opening");
@@ -540,7 +540,7 @@ public final class PhantomAI
 			}
 		}
 		
-		// No chests available — generic behavior.
+		// No chests available - generic behavior.
 		handleGenericEventMode(phantom, event);
 	}
 	
@@ -562,7 +562,7 @@ public final class PhantomAI
 					return;
 				}
 				
-				// Boss spawned but not yet visible in range — move to its location.
+				// Boss spawned but not yet visible in range - move to its location.
 				final Location bossLoc = raidEvent.getBossLocation();
 				if (bossLoc != null && !phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
 				{
@@ -573,7 +573,7 @@ public final class PhantomAI
 			}
 			else if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
 			{
-				// Boss not spawned yet — pre-position at the middle between team spawns.
+				// Boss not spawned yet - pre-position at the middle between team spawns.
 				final Location mid = raidEvent.getBossLocation();
 				if (mid != null)
 				{
@@ -717,7 +717,7 @@ public final class PhantomAI
 	}
 	
 	/**
-	 * Handles phantom death — schedules respawn in town/faction base.
+	 * Handles phantom death - schedules respawn in town/faction base.
 	 * After respawn, if faction war is running, the phantom returns to the war map.
 	 * If an event is running, the phantom returns to its event team spawn instead of town.
 	 */
@@ -1542,7 +1542,7 @@ public final class PhantomAI
 			final Location center = currentMap.getCenter();
 			if (phantom.distance3D(center) <= 800)
 			{
-				// Already near center — patrol around the flag area
+				// Already near center - patrol around the flag area
 				final Location patrolPoint = withSpread(phantom, center, 400);
 				LAST_ACTIONS.put(phantom.getObjectId(), "War patrol");
 				moveTo(phantom, patrolPoint, "War patrol");

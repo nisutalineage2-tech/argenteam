@@ -192,7 +192,7 @@ public class FactionWarManager
 		
 		final int voteSeconds = FactionWarConfig.getMapVoteSeconds();
 		
-		broadcast("[Faction War] ¡La guerra de facciones se acerca! Vota por el mapa: \" .votemap \"");
+		broadcast("[Faction War] La guerra de facciones se acerca! Vota por el mapa: \" .votemap \"");
 		
 		// Send voting HTML to all faction players
 		sendVotePopup();
@@ -232,12 +232,12 @@ public class FactionWarManager
 		if (bestVotes == 0 || _currentVoteMaps == null)
 		{
 			chosen = FactionWarConfig.getMaps().get(Rnd.get(FactionWarConfig.getMaps().size()));
-			broadcast("[Faction War] ¡Nadie votó! Mapa aleatorio: " + chosen.getName());
+			broadcast("[Faction War] Nadie voto! Mapa aleatorio: " + chosen.getName());
 		}
 		else
 		{
 			chosen = _currentVoteMaps.get(bestIndex);
-			broadcast("[Faction War] ¡Mapa elegido: " + chosen.getName() + " (" + bestVotes + " votos)! La guerra comienza en 10 segundos...");
+			broadcast("[Faction War] Mapa elegido: " + chosen.getName() + " (" + bestVotes + " votos)! La guerra comienza en 10 segundos...");
 		}
 		
 		// Find the map index in the full map list
@@ -333,8 +333,8 @@ public class FactionWarManager
 		
 		if (FactionWarConfig.isAnnounceStart())
 		{
-			final String durationStr = (durationMinutes > 0) ? " | Duración: " + durationMinutes + "min" : "";
-			broadcast("[Faction War] ¡La guerra ha comenzado! Mapa: " + firstMap.getName() + durationStr);
+			final String durationStr = (durationMinutes > 0) ? " | Duracion: " + durationMinutes + "min" : "";
+			broadcast("[Faction War] La guerra ha comenzado! Mapa: " + firstMap.getName() + durationStr);
 		}
 		
 		// Refresh faction visuals for all players (colors, titles)
@@ -344,7 +344,7 @@ public class FactionWarManager
 		final int teleportedPhantoms = net.sf.l2j.gameserver.phantom.PhantomEngine.teleportPhantomsToWar();
 		
 		// Players must go to the Teleport Manager or the Registrar NPC to enter the war
-		broadcast("[Faction War] ¡La guerra ha comenzado! Ve al Teleport Manager o al Registrador de Guerra en la zona neutral para unirte a la batalla. Mapa: " + firstMap.getName());
+		broadcast("[Faction War] La guerra ha comenzado! Ve al Teleport Manager o al Registrador de Guerra en la zona neutral para unirte a la batalla. Mapa: " + firstMap.getName());
 		
 		LOGGER.info("Faction War started. Map: {} (index: {}). Duration: {}min. Teleported {} phantoms.", 
 			firstMap.getName(), _currentMapIndex, durationMinutes, teleportedPhantoms);
@@ -358,7 +358,7 @@ public class FactionWarManager
 		// Cancel any pending end-freeze task (avoid double-freeze)
 		cancelTask(_endFreezeTask);
 		
-		// 1. Determine winner — the faction that last killed the main flag
+		// 1. Determine winner - the faction that last killed the main flag
 		final int goodScore = getScore(FactionWarConfig.getGoodFactionId());
 		final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
 		_winningFaction = _lastMainFlagKillerFaction;
@@ -392,7 +392,7 @@ public class FactionWarManager
 		if (FactionWarConfig.isAnnounceEnd())
 		{
 			broadcast(winnerMsg);
-			final String endMsg = "¡La guerra ha terminado! " + getFactionName(_winningFaction) + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
+			final String endMsg = "La guerra ha terminado! " + getFactionName(_winningFaction) + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
 			broadcastScreenMessage(endMsg + " | Teletransportando en " + freezeSeconds + "s...", freezeSeconds * 1000);
 		}
 		
@@ -426,7 +426,7 @@ public class FactionWarManager
 				// Unfreeze all players
 				unfreezeAllPlayers();
 				
-				// Notify EventEngine that FW ended (alternance: FW → event)
+				// Notify EventEngine that FW ended (alternance: FW -> event)
 				net.sf.l2j.gameserver.event.EventEngine.getInstance().onFactionWarEnded();
 				
 				LOGGER.info("Faction War stopped. Winner: {}. Score: {}-{}. Returned {} phantoms.", getFactionName(winningFaction), goodScore, evilScore, returned);
@@ -460,7 +460,7 @@ public class FactionWarManager
 			final Player player = World.getInstance().getPlayer(stats.playerId);
 			if (player != null && player.isOnline())
 			{					player.addItem(rewardItemId, topRewards[i], true);
-				broadcast("[Faction War] ¡" + stats.playerName + " queda #" + (i + 1) + " y recibe " + topRewards[i] + "x " + getItemName(rewardItemId) + "!");
+				broadcast("[Faction War] " + stats.playerName + " queda #" + (i + 1) + " y recibe " + topRewards[i] + "x " + getItemName(rewardItemId) + "!");
 			}
 		}
 		
@@ -476,7 +476,7 @@ public class FactionWarManager
 					count++;
 				}
 			}
-			broadcast("[Faction War] ¡La facción ganadora recibe " + winReward + "x " + getItemName(rewardItemId) + "! (" + count + " miembros premiados)");
+			broadcast("[Faction War] La faccion ganadora recibe " + winReward + "x " + getItemName(rewardItemId) + "! (" + count + " miembros premiados)");
 		}
 	}
 	
@@ -532,7 +532,7 @@ public class FactionWarManager
 		}
 		
 		// On-screen flash + sound when a checkpoint is captured
-		broadcastCaptureFlash("¡" + getFactionName(capturingFactionId) + " capturó un checkpoint!", new PlaySound("ItemSound2.race_start"));
+		broadcastCaptureFlash("" + getFactionName(capturingFactionId) + " capturo un checkpoint!", new PlaySound("ItemSound2.race_start"));
 	}
 	
 	public void onPvpKill(int killerFactionId, int victimFactionId, int killerId, int victimId)
@@ -899,7 +899,7 @@ public class FactionWarManager
 			broadcast("[Faction War] " + getScoreboard());
 		
 		// On-screen flash + victory sound when the main flag is captured
-		broadcastCaptureFlash("¡" + getFactionName(killerFactionId) + " capturó la BANDERA principal! +" + points + " pts", new PlaySound(1, "Siege_Victory"));
+		broadcastCaptureFlash("" + getFactionName(killerFactionId) + " capturo la BANDERA principal! +" + points + " pts", new PlaySound(1, "Siege_Victory"));
 		
 		checkWinner();
 		
@@ -909,7 +909,7 @@ public class FactionWarManager
 	
 	/**
 	 * Checks if any faction reached the score target (for display purposes only).
-	 * The war is TIMED — winner is determined at the end by flag ownership.
+	 * The war is TIMED - winner is determined at the end by flag ownership.
 	 */
 	private void checkWinner()
 	{
@@ -1272,7 +1272,7 @@ public class FactionWarManager
 		
 		final int voteSeconds = FactionWarConfig.getMapVoteSeconds();
 		
-		broadcast("[Faction War] ¡Vota por el próximo mapa! Tienes " + voteSeconds + " segundos. Usa .votemap o habla con el Registrador.");
+		broadcast("[Faction War] Vota por el proximo mapa! Tienes " + voteSeconds + " segundos. Usa .votemap o habla con el Registrador.");
 		
 		sendVotePopup();
 		
@@ -1329,7 +1329,7 @@ public class FactionWarManager
 		html.replace("%SECONDS%", String.valueOf(FactionWarConfig.getMapVoteSeconds()));
 		player.sendPacket(html);
 		
-		player.sendPacket(new ExShowScreenMessage("¡Vota por el mapa de la guerra!", 10000, ExShowScreenMessage.SMPOS.TOP_CENTER, false));
+		player.sendPacket(new ExShowScreenMessage("Vota por el mapa de la guerra!", 10000, ExShowScreenMessage.SMPOS.TOP_CENTER, false));
 	}
 	
 	public void onPlayerVote(Player player, int mapIndex)
@@ -1349,7 +1349,7 @@ public class FactionWarManager
 		_votedPlayers.add(player.getObjectId());
 		_mapVotes.merge(mapIndex, 1, Integer::sum);
 		
-		player.sendMessage("[Faction War] ¡Voto registrado por " + _currentVoteMaps.get(mapIndex).getName() + "!");
+		player.sendMessage("[Faction War] Voto registrado por " + _currentVoteMaps.get(mapIndex).getName() + "!");
 	}
 	
 	/**
@@ -1377,12 +1377,12 @@ public class FactionWarManager
 		if (bestVotes == 0 || _currentVoteMaps == null)
 		{
 			chosen = FactionWarConfig.getMaps().get(Rnd.get(FactionWarConfig.getMaps().size()));
-			broadcast("[Faction War] ¡Nadie votó! Mapa aleatorio seleccionado: " + chosen.getName());
+			broadcast("[Faction War] Nadie voto! Mapa aleatorio seleccionado: " + chosen.getName());
 		}
 		else
 		{
 			chosen = _currentVoteMaps.get(bestIndex);
-			broadcast("[Faction War] ¡Mapa votado: " + chosen.getName() + "! (" + bestVotes + " votos)");
+			broadcast("[Faction War] Mapa votado: " + chosen.getName() + "! (" + bestVotes + " votos)");
 		}
 		
 		int newIndex = -1;
@@ -1488,7 +1488,7 @@ public class FactionWarManager
 		final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
 		final String timeStr = getRemainingTimeStr();
 		
-		// Compact one-line message at the very top of screen — the event TIME leads so it's always visible first
+		// Compact one-line message at the very top of screen - the event TIME leads so it's always visible first
 		final StringBuilder sb = new StringBuilder();
 		if (!timeStr.isEmpty())
 			sb.append(timeStr).append(" | ");
@@ -1599,11 +1599,11 @@ public class FactionWarManager
 		final String evilName = FactionWarConfig.getEvilFactionName();
 		
 		if (winningFaction == FactionWarConfig.getGoodFactionId())
-			return "[Faction War] ¡" + goodName + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
+			return "[Faction War] " + goodName + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
 		else if (winningFaction == FactionWarConfig.getEvilFactionId())
-			return "[Faction War] ¡" + evilName + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
+			return "[Faction War] " + evilName + " gana manteniendo la bandera! [" + goodScore + " - " + evilScore + "]";
 		else
-			return "[Faction War] ¡EMPATE! Nadie capturó la bandera. [" + goodScore + " - " + evilScore + "]";
+			return "[Faction War] EMPATE! Nadie capturo la bandera. [" + goodScore + " - " + evilScore + "]";
 	}
 	
 	/**
