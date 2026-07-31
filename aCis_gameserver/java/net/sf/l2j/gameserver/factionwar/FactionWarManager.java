@@ -323,7 +323,9 @@ public class FactionWarManager
 		if (durationMinutes > 0)
 		{
 			_eventEndTask = ThreadPool.schedule(() -> stop(), _durationMs);
-		}			sendGaugeToAllPlayers();
+		}
+		
+		sendGaugeToAllPlayers();
 		_scoreboardTask = ThreadPool.scheduleAtFixedRate(this::broadcastScoreboardWithTime, 3000, 3000);
 		
 		final FactionWarConfig.WarMap firstMap = FactionWarConfig.getMaps().get(_currentMapIndex);
@@ -1491,16 +1493,18 @@ public class FactionWarManager
 		// showEffect=true + showFading=true for a smoother look; size=1 small so it doesn't block clicks
 		final ExShowScreenMessage screenMsg = new ExShowScreenMessage(1, -1, ExShowScreenMessage.SMPOS.TOP_CENTER, false, 1, 0, 0, true, 4000, true, msg);
 		
-		// Send SetupGauge with remaining time so the client shows a real-time progress bar
-		final long remaining = Math.max(0, _durationMs - (System.currentTimeMillis() - _startTime));
-		final SetupGauge gauge = new SetupGauge(GaugeColor.RED, (int) remaining, (int) _durationMs);
-		
 		for (Player player : World.getInstance().getPlayers())
 		{
 			if (player != null && player.isOnline())
 			{
 				player.sendPacket(screenMsg);
-				player.sendPacket(gauge);
+				
+				// Real-time progress bar for the remaining time (only when the war is timed)
+				if (_durationMs > 0)
+				{
+					final long remaining = Math.max(0, _durationMs - (System.currentTimeMillis() - _startTime));
+					player.sendPacket(new SetupGauge(GaugeColor.RED, (int) remaining, (int) _durationMs));
+				}
 			}
 		}
 	}
