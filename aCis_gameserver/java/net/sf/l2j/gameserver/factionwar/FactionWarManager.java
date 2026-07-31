@@ -25,6 +25,7 @@ import net.sf.l2j.gameserver.model.spawn.Spawn;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
+import net.sf.l2j.gameserver.network.serverpackets.PlaySound;
 import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;
 
 public class FactionWarManager
@@ -529,6 +530,9 @@ public class FactionWarManager
 			_scores.merge(capturingFactionId, points, Integer::sum);
 			checkWinner();
 		}
+		
+		// On-screen flash + sound when a checkpoint is captured
+		broadcastCaptureFlash("¡" + getFactionName(capturingFactionId) + " capturó un checkpoint!", new PlaySound("ItemSound2.race_start"));
 	}
 	
 	public void onPvpKill(int killerFactionId, int victimFactionId, int killerId, int victimId)
@@ -893,6 +897,9 @@ public class FactionWarManager
 		
 		if (FactionWarConfig.isAnnounceScore())
 			broadcast("[Faction War] " + getScoreboard());
+		
+		// On-screen flash + victory sound when the main flag is captured
+		broadcastCaptureFlash("¡" + getFactionName(killerFactionId) + " capturó la BANDERA principal! +" + points + " pts", new PlaySound(1, "Siege_Victory"));
 		
 		checkWinner();
 		
@@ -1621,6 +1628,23 @@ public class FactionWarManager
 		{
 			if (player != null && player.isOnline())
 				player.sendPacket(screenMsg);
+		}
+	}
+	
+	/**
+	 * Broadcasts an on-screen flash (glow effect) + sound to all online players.
+	 * Used to highlight main flag and checkpoint captures.
+	 */
+	private void broadcastCaptureFlash(String message, PlaySound sound)
+	{
+		final ExShowScreenMessage flash = new ExShowScreenMessage(1, -1, ExShowScreenMessage.SMPOS.MIDDLE_CENTER, false, 0, 0, 0, true, 5000, true, message);
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player != null && player.isOnline())
+			{
+				player.sendPacket(flash);
+				player.sendPacket(sound);
+			}
 		}
 	}
 	
