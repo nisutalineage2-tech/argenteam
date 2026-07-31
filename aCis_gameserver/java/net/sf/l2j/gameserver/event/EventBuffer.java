@@ -165,8 +165,8 @@ public final class EventBuffer
 		
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<html><body><center>");
-		sb.append("<font color=\"LEVEL\">Event Buff Selection</font><br>");
-		sb.append("Select up to ").append(maxBuffs).append(" buffs:<br><br>");
+		sb.append("<font color=\"LEVEL\">Selección de Buffs del Evento</font><br>");
+		sb.append("Selecciona hasta ").append(maxBuffs).append(" buffs:<br><br>");
 		sb.append("<table width=\"280\">");
 		
 		int col = 0;
@@ -199,7 +199,7 @@ public final class EventBuffer
 			sb.append("</tr>");
 		
 		sb.append("</table><br>");
-		sb.append("<button value=\"Clear All\" action=\"bypass -h npc_").append(npcObjId).append("_event_buff_clear\" width=\"100\" height=\"20\" back=\"sek.cbui94\" fore=\"sek.cbui92\">");
+		sb.append("<button value=\"Limpiar Todo\" action=\"bypass -h npc_").append(npcObjId).append("_event_buff_clear\" width=\"100\" height=\"20\" back=\"sek.cbui94\" fore=\"sek.cbui92\">");
 		sb.append("</center></body></html>");
 		
 		final NpcHtmlMessage html = new NpcHtmlMessage(npcObjId);
@@ -221,7 +221,7 @@ public final class EventBuffer
 			buffs.add(skillId);
 		else
 		{
-			player.sendMessage("You can only select up to " + maxBuffs + " buffs.");
+			player.sendMessage("Solo puedes seleccionar hasta " + maxBuffs + " buffs.");
 			return;
 		}
 		
@@ -248,7 +248,7 @@ public final class EventBuffer
 			LOGGER.warn("Failed to clear event buffs for player {}: {}", e, player.getObjectId());
 		}
 		
-		player.sendMessage("Event buffs cleared.");
+		player.sendMessage("Buffs del evento eliminados.");
 	}
 	
 	/**

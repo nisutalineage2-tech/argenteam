@@ -29,7 +29,7 @@ public class HuntingGroundsEvent extends AbstractEvent
 			final Player p = ep.getPlayer();
 			p.setTitle("[Hunt] " + p.getName());
 			p.broadcastTitleInfo();
-			p.sendMessage("[Hunt] One shot, one kill! Use your bow!");
+			p.sendMessage("[Hunt] ¡Un disparo, una muerte! ¡Usa tu arco!");
 		}
 	}
 	
@@ -45,11 +45,11 @@ public class HuntingGroundsEvent extends AbstractEvent
 		
 		if (killer.isOnline())
 		{
-			killer.getPlayer().setTitle("[Hunt] " + killer.getKills() + " kills");
+			killer.getPlayer().setTitle("[Hunt] " + killer.getKills() + " bajas");
 			killer.getPlayer().broadcastTitleInfo();
 		}
 		
-		broadcastToPlayers("[Hunt] " + killer.getName() + " shot " + victim.getName() + "!");
+		broadcastToPlayers("[Hunt] " + killer.getName() + " disparó a " + victim.getName() + "!");
 	}
 	
 	@Override
@@ -59,7 +59,7 @@ public class HuntingGroundsEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Hunt] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[Hunt] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -97,6 +97,6 @@ public class HuntingGroundsEvent extends AbstractEvent
 		final java.util.List<EventTeam> teams = getTeams();
 		if (teams.size() < 2)
 			return null;
-		return "[Hunt] Blue: " + teams.get(0).getScore() + " - Red: " + teams.get(1).getScore();
+		return "[Hunt] Azul: " + teams.get(0).getScore() + " - Rojo: " + teams.get(1).getScore();
 	}
 }

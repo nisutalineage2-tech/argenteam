@@ -39,10 +39,10 @@ public class MutantEvent extends AbstractEvent
 		{
 			if (killer.isOnline())
 			{
-				killer.getPlayer().setTitle("[Mut] " + killer.getKills() + "k");
+				killer.getPlayer().setTitle("[Mut] " + killer.getKills() + " bajas");
 				killer.getPlayer().broadcastTitleInfo();
 			}
-			broadcastToPlayers("[Mutant] The Mutant " + killer.getName() + " killed " + (victim != null ? victim.getName() : "someone") + "!");
+			broadcastToPlayers("[Mutant] El Mutante " + killer.getName() + " mató a " + (victim != null ? victim.getName() : "alguien") + "!");
 		}
 	}
 	
@@ -57,12 +57,12 @@ public class MutantEvent extends AbstractEvent
 		if (victim == _currentMutant)
 		{
 			removeMutant(victim);
-			broadcastToPlayers("[Mutant] " + victim.getName() + " was killed! A new Mutant rises!");
+			broadcastToPlayers("[Mutant] " + victim.getName() + " fue eliminado! ¡Un nuevo Mutante surge!");
 			pickNewMutant();
 		}
 		else
 		{
-			player.sendMessage("[Mutant] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+			player.sendMessage("[Mutant] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 			
 			player.disableAllSkills();
 			player.setIsImmobilized(true);
@@ -130,7 +130,7 @@ public class MutantEvent extends AbstractEvent
 		if (_currentMutant.isOnline())
 		{
 			final Player p = _currentMutant.getPlayer();
-			p.setTitle("[Mut] 0k");
+			p.setTitle("[Mut] 0 bajas");
 			p.broadcastTitleInfo();
 			
 			final L2Skill skill = p.getSkill(_mutantSkillId);
@@ -139,7 +139,7 @@ public class MutantEvent extends AbstractEvent
 			
 			p.startAbnormalEffect(AbnormalEffect.FLAME);
 			
-			broadcastToPlayers("[Mutant] " + _currentMutant.getName() + " is now the MUTANT!");
+			broadcastToPlayers("[Mutant] " + _currentMutant.getName() + " ¡ahora es el MUTANTE!");
 		}
 	}
 	
@@ -155,6 +155,6 @@ public class MutantEvent extends AbstractEvent
 	@Override
 	protected String getScorebar()
 	{
-		return "[Mutant] " + (_currentMutant != null ? _currentMutant.getName() + " (" + _currentMutant.getKills() + ")" : "-") + " | Players: " + getAllPlayers().size();
+		return "[Mutant] " + (_currentMutant != null ? _currentMutant.getName() + " (" + _currentMutant.getKills() + ")" : "-") + " | Jugadores: " + getAllPlayers().size();
 	}
 }

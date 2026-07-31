@@ -29,7 +29,7 @@ public class DMEvent extends AbstractEvent
 			if (!ep.isOnline())
 				continue;
 			
-			ep.getPlayer().setTitle("[DM] Kills: 0");
+			ep.getPlayer().setTitle("[DM] Bajas: 0");
 			ep.getPlayer().broadcastTitleInfo();
 		}
 	}
@@ -42,7 +42,7 @@ public class DMEvent extends AbstractEvent
 		
 		if (killer.isOnline())
 		{
-			killer.getPlayer().setTitle("[DM] Kills: " + killer.getKills());
+			killer.getPlayer().setTitle("[DM] Bajas: " + killer.getKills());
 			killer.getPlayer().broadcastTitleInfo();
 		}
 		
@@ -50,7 +50,7 @@ public class DMEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				final CreatureSay cs = new CreatureSay(0, SayType.ALL, "DM", killer.getName() + " killed " + (victim != null ? victim.getName() : "someone") + "! (" + killer.getKills() + " kills)");
+				final CreatureSay cs = new CreatureSay(0, SayType.ALL, "DM", killer.getName() + " mató a " + (victim != null ? victim.getName() : "alguien") + "! (" + killer.getKills() + " bajas)");
 				ep.getPlayer().sendPacket(cs);
 			}
 		}
@@ -64,7 +64,7 @@ public class DMEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[DM] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[DM] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		// Disable skills and immobilize during respawn delay
 		player.disableAllSkills();
@@ -92,7 +92,7 @@ public class DMEvent extends AbstractEvent
 			player.setIsImmobilized(false);
 			
 			player.teleportTo(respawnX, respawnY, respawnZ, 0);
-			player.sendMessage("[DM] You have been revived and healed!");
+			player.sendMessage("[DM] ¡Has sido revivido y curado!");
 		}, getData().getRespawnDelay() * 1000L);
 	}
 	
@@ -116,6 +116,6 @@ public class DMEvent extends AbstractEvent
 				top = ep;
 			}
 		}
-		return "[DM] Leader: " + (top != null ? top.getName() + " (" + maxKills + ")" : "-") + " | Players: " + getAllPlayers().size();
+		return "[DM] Líder: " + (top != null ? top.getName() + " (" + maxKills + ")" : "-") + " | Jugadores: " + getAllPlayers().size();
 	}
 }

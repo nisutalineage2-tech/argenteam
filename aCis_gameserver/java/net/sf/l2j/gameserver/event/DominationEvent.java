@@ -39,7 +39,7 @@ public class DominationEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Dom] Fight!");
+				ep.getPlayer().setTitle("[Dom] ¡Pelea!");
 				ep.getPlayer().broadcastTitleInfo();
 			}
 		}
@@ -59,7 +59,7 @@ public class DominationEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Dom] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[Dom] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -120,7 +120,7 @@ public class DominationEvent extends AbstractEvent
 			if (blue != null)
 			{
 				blue.addScore(_pointsPerTick);
-				broadcastToPlayers("[Dom] Blue scores! (" + blueInZone + " vs " + redInZone + " in zone)");
+				broadcastToPlayers("[Dom] ¡Azul anota! (" + blueInZone + " vs " + redInZone + " en zona)");
 			}
 		}
 		else if (redInZone > blueInZone)
@@ -129,7 +129,7 @@ public class DominationEvent extends AbstractEvent
 			if (red != null)
 			{
 				red.addScore(_pointsPerTick);
-				broadcastToPlayers("[Dom] Red scores! (" + redInZone + " vs " + blueInZone + " in zone)");
+				broadcastToPlayers("[Dom] ¡Rojo anota! (" + redInZone + " vs " + blueInZone + " en zona)");
 			}
 		}
 	}
@@ -147,6 +147,6 @@ public class DominationEvent extends AbstractEvent
 		final java.util.List<EventTeam> teams = getTeams();
 		if (teams.size() < 2)
 			return null;
-		return "[Dom] Blue: " + teams.get(0).getScore() + " - Red: " + teams.get(1).getScore();
+		return "[Dom] Azul: " + teams.get(0).getScore() + " - Rojo: " + teams.get(1).getScore();
 	}
 }

@@ -32,7 +32,7 @@ public class TvTEvent extends AbstractEvent
 				continue;
 			
 			final String teamName = ep.getTeamId() == 0 ? getData().getTeam1Name() : getData().getTeam2Name();
-			ep.getPlayer().setTitle("[" + teamName + "] Kills: 0");
+			ep.getPlayer().setTitle("[" + teamName + "] Bajas: 0");
 			ep.getPlayer().broadcastTitleInfo();
 		}
 	}
@@ -55,7 +55,7 @@ public class TvTEvent extends AbstractEvent
 		if (killer.isOnline())
 		{
 			final String teamName = killer.getTeamId() == 0 ? getData().getTeam1Name() : getData().getTeam2Name();
-			killer.getPlayer().setTitle("[" + teamName + "] Kills: " + killer.getKills());
+			killer.getPlayer().setTitle("[" + teamName + "] Bajas: " + killer.getKills());
 			killer.getPlayer().broadcastTitleInfo();
 		}
 		
@@ -66,20 +66,20 @@ public class TvTEvent extends AbstractEvent
 			if (!rewardStr.isEmpty())
 			{
 				grantReward(killer.getPlayer(), rewardStr);
-				killer.getPlayer().sendPacket(new ExShowScreenMessage("[TvT] Kill Streak x" + killer.getKillStreak() + "! Reward received!", 5000, ExShowScreenMessage.SMPOS.MIDDLE_CENTER, true));
+				killer.getPlayer().sendPacket(new ExShowScreenMessage("[TvT] ¡Racha de bajas x" + killer.getKillStreak() + "! ¡Recompensa recibida!", 5000, ExShowScreenMessage.SMPOS.MIDDLE_CENTER, true));
 			}
-			broadcastEvent("[TvT] " + killer.getName() + " reached " + killer.getKillStreak() + " kill streak!");
+			broadcastEvent("[TvT] " + killer.getName() + " alcanzó " + killer.getKillStreak() + " bajas consecutivas!");
 		}
 		
 		for (EventTeam team : getTeams())
 		{
-			team.broadcast("[TvT] " + killer.getName() + " killed " + victim.getName() + "!");
+			team.broadcast("[TvT] " + killer.getName() + " mató a " + victim.getName() + "!");
 		}
 		
 		// Check score limit
 		if (killerTeam != null && killerTeam.getScore() >= SCORE_LIMIT)
 		{
-			broadcastEvent("[TvT] " + killerTeam.getName() + " reached " + SCORE_LIMIT + " kills! Victory!");
+			broadcastEvent("[TvT] " + killerTeam.getName() + " alcanzó " + SCORE_LIMIT + " bajas! ¡Victoria!");
 			endMatch();
 		}
 	}
@@ -92,7 +92,7 @@ public class TvTEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[TvT] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[TvT] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		// Disable skills and immobilize during respawn delay
 		player.disableAllSkills();
@@ -120,7 +120,7 @@ public class TvTEvent extends AbstractEvent
 			player.setIsImmobilized(false);
 			
 			player.teleportTo(respawnX, respawnY, respawnZ, 0);
-			player.sendMessage("[TvT] You have been revived and healed!");
+			player.sendMessage("[TvT] ¡Has sido revivido y curado!");
 		}, getData().getRespawnDelay() * 1000L);
 	}
 	
@@ -138,6 +138,6 @@ public class TvTEvent extends AbstractEvent
 		
 		final EventTeam blue = teams.get(0);
 		final EventTeam red = teams.get(1);
-		return blue.getName() + ": " + blue.getScore() + " - " + red.getName() + ": " + red.getScore() + " | Win: " + SCORE_LIMIT;
+		return blue.getName() + ": " + blue.getScore() + " - " + red.getName() + ": " + red.getScore() + " | Meta: " + SCORE_LIMIT;
 	}
 }

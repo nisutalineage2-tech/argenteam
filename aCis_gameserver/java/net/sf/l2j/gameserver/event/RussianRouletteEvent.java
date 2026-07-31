@@ -37,9 +37,9 @@ public class RussianRouletteEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Roulette] Alive");
+				ep.getPlayer().setTitle("[Roulette] Vivo");
 				ep.getPlayer().broadcastTitleInfo();
-				ep.getPlayer().sendMessage("[Roulette] Choose a chest! One will explode!");
+				ep.getPlayer().sendMessage("[Roulette] ¡Elige un cofre! ¡Uno explotará!");
 			}
 		}
 		
@@ -63,7 +63,7 @@ public class RussianRouletteEvent extends AbstractEvent
 			_currentChests.add(new Chest(i, x, y, center.getZ()));
 		}
 		
-		broadcastToPlayers("[Roulette] Round " + (_eliminated.size() + 1) + "! Choose a chest! (" + _roundTime + "s)");
+		broadcastToPlayers("[Roulette] ¡Ronda " + (_eliminated.size() + 1) + "! ¡Elige un cofre! (" + _roundTime + "s)");
 		
 		_roundTask = ThreadPool.schedule(this::resolveRound, _roundTime * 1000L);
 	}
@@ -78,7 +78,7 @@ public class RussianRouletteEvent extends AbstractEvent
 		final Chest boomChest = _currentChests.get(boomIndex);
 		boomChest.setExploded(true);
 		
-		broadcastToPlayers("[Roulette] Chest " + (boomIndex + 1) + " EXPLODED!");
+		broadcastToPlayers("[Roulette] ¡El cofre " + (boomIndex + 1) + " EXPLOTÓ!");
 		
 		// Find who chose that chest and eliminate them
 		for (EventPlayer ep : getAllPlayers())
@@ -93,10 +93,10 @@ public class RussianRouletteEvent extends AbstractEvent
 				final Player p = ep.getPlayer();
 				p.setIsImmobilized(true);
 				p.setIsParalyzed(true);
-				p.setTitle("[Roulet] Out R" + (_eliminated.size()));
+				p.setTitle("[Roulette] Fuera R" + (_eliminated.size()));
 				p.broadcastTitleInfo();
-				p.sendMessage("[Roulette] You chose the wrong chest! You're out!");
-				broadcastToPlayers("[Roulette] " + ep.getName() + " was eliminated!");
+				p.sendMessage("[Roulette] ¡Elegiste el cofre equivocado! ¡Estás fuera!");
+				broadcastToPlayers("[Roulette] " + ep.getName() + " fue eliminado!");
 			}
 		}
 		
@@ -113,12 +113,12 @@ public class RussianRouletteEvent extends AbstractEvent
 		
 		if (alive <= 1 && winner != null)
 		{
-			broadcastToPlayers("[Roulette] " + winner.getName() + " wins Russian Roulette!");
+			broadcastToPlayers("[Roulette] " + winner.getName() + " gana la Ruleta Rusa!");
 			endMatch();
 		}
 		else if (alive <= 0)
 		{
-			broadcastToPlayers("[Roulette] Everyone died! It's a draw!");
+			broadcastToPlayers("[Roulette] ¡Todos murieron! ¡Es un empate!");
 			endMatch();
 		}
 		else
@@ -148,7 +148,7 @@ public class RussianRouletteEvent extends AbstractEvent
 			return;
 		
 		ep.setTeamId(chestIndex); // Store chest choice in team ID
-		player.sendMessage("[Roulette] You chose Chest " + (chestIndex + 1) + "!");
+		player.sendMessage("[Roulette] Elegiste el cofre " + (chestIndex + 1) + "!");
 	}
 	
 	@Override
@@ -173,7 +173,7 @@ public class RussianRouletteEvent extends AbstractEvent
 	protected String getScorebar()
 	{
 		int alive = getAllPlayers().size() - _eliminated.size();
-		return "[Roulette] Alive: " + alive + " | Round: " + (_eliminated.size() + 1);
+		return "[Roulette] Vivos: " + alive + " | Ronda: " + (_eliminated.size() + 1);
 	}
 	
 	public java.util.List<Chest> getCurrentChests() { return _currentChests; }

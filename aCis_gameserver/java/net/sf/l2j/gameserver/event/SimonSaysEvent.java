@@ -42,9 +42,9 @@ public class SimonSaysEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Simon] Alive");
+				ep.getPlayer().setTitle("[Simon] Vivo");
 				ep.getPlayer().broadcastTitleInfo();
-				ep.getPlayer().sendMessage("[Simon] Say exactly what I say as fast as possible!");
+				ep.getPlayer().sendMessage("[Simon] ¡Di exactamente lo que yo diga lo más rápido posible!");
 			}
 		}
 		
@@ -56,9 +56,9 @@ public class SimonSaysEvent extends AbstractEvent
 		_waitingForAnswer = true;
 		_currentWord = WORDS[Rnd.get(WORDS.length)];
 		
-		broadcastToPlayers("[Simon] --- NEW ROUND ---");
-		broadcastToPlayers("[Simon] Say this word: " + _currentWord);
-		broadcastToPlayers("[Simon] Type .simon " + _currentWord + " in chat!");
+		broadcastToPlayers("[Simon] --- NUEVA RONDA ---");
+		broadcastToPlayers("[Simon] Di esta palabra: " + _currentWord);
+		broadcastToPlayers("[Simon] Escribe .simon " + _currentWord + " en el chat!");
 		
 		_roundTask = ThreadPool.schedule(this::resolveRound, _roundTime * 1000L);
 	}
@@ -83,10 +83,10 @@ public class SimonSaysEvent extends AbstractEvent
 			_eliminated.add(ep);
 			p.setIsImmobilized(true);
 			p.setIsParalyzed(true);
-			p.setTitle("[Simon] Slow!");
+			p.setTitle("[Simon] ¡Lento!");
 			p.broadcastTitleInfo();
-			p.sendMessage("[Simon] Too slow! You're eliminated!");
-			broadcastToPlayers("[Simon] " + ep.getName() + " was too slow!");
+			p.sendMessage("[Simon] ¡Demasiado lento! ¡Estás eliminado!");
+			broadcastToPlayers("[Simon] " + ep.getName() + " fue demasiado lento!");
 		}
 		
 		checkRemaining();
@@ -108,17 +108,17 @@ public class SimonSaysEvent extends AbstractEvent
 			_eliminated.add(ep);
 			player.setIsImmobilized(true);
 			player.setIsParalyzed(true);
-			player.setTitle("[Simon] Wrong!");
+			player.setTitle("[Simon] ¡Equivocado!");
 			player.broadcastTitleInfo();
-			player.sendMessage("[Simon] Wrong word! You're eliminated!");
-			broadcastToPlayers("[Simon] " + ep.getName() + " said the wrong word!");
+			player.sendMessage("[Simon] ¡Palabra incorrecta! ¡Estás eliminado!");
+			broadcastToPlayers("[Simon] " + ep.getName() + " dijo la palabra incorrecta!");
 			
 			checkRemaining();
 		}
 		else
 		{
 			// Correct!
-			player.sendMessage("[Simon] Correct! You survive this round!");
+			player.sendMessage("[Simon] ¡Correcto! Sobrevives esta ronda!");
 		}
 		
 		return true;
@@ -139,13 +139,13 @@ public class SimonSaysEvent extends AbstractEvent
 		if (alive <= 1 && winner != null)
 		{
 			cancelTask(_roundTask);
-			broadcastToPlayers("[Simon] " + winner.getName() + " wins Simon Says!");
+			broadcastToPlayers("[Simon] " + winner.getName() + " gana Simón Dice!");
 			endMatch();
 		}
 		else if (alive <= 0)
 		{
 			cancelTask(_roundTask);
-			broadcastToPlayers("[Simon] Everyone is eliminated!");
+			broadcastToPlayers("[Simon] ¡Todos fueron eliminados!");
 			endMatch();
 		}
 		else
@@ -177,7 +177,7 @@ public class SimonSaysEvent extends AbstractEvent
 	protected String getScorebar()
 	{
 		int alive = getAllPlayers().size() - _eliminated.size();
-		return "[Simon] Alive: " + alive + " | Round: " + (_eliminated.size() + 1);
+		return "[Simon] Vivos: " + alive + " | Ronda: " + (_eliminated.size() + 1);
 	}
 	
 	public boolean isWaitingForAnswer() { return _waitingForAnswer; }

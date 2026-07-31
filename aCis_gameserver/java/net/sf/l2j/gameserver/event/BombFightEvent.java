@@ -33,7 +33,7 @@ public class BombFightEvent extends AbstractEvent
 			final L2Skill bombSkill = SkillTable.getInstance().getInfo(BOMB_SKILL_ID, 1);
 			if (bombSkill != null)
 				p.addSkill(bombSkill, false);
-			p.sendMessage("[Bomb] You have the Bomb skill! Use it to kill enemies!");
+			p.sendMessage("[Bomb] ¡Tienes la habilidad de Bomba! ¡Úsala para matar enemigos!");
 			p.setTitle("[Bomb] " + p.getName());
 			p.broadcastTitleInfo();
 		}
@@ -59,9 +59,9 @@ public class BombFightEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.setTitle("[Bomb] Dead");
+		player.setTitle("[Bomb] Muerto");
 		player.broadcastTitleInfo();
-		player.sendMessage("[Bomb] You have been eliminated! Wait for the next round.");
+		player.sendMessage("[Bomb] ¡Has sido eliminado! Espera a la próxima ronda.");
 	}
 	
 	@Override
@@ -88,7 +88,7 @@ public class BombFightEvent extends AbstractEvent
 			if (ep.getTeamId() == 0) aliveBlue++;
 			else if (ep.getTeamId() == 1) aliveRed++;
 		}
-		return "[Bomb] Blue: " + aliveBlue + " alive | Red: " + aliveRed + " alive";
+		return "[Bomb] Azul: " + aliveBlue + " vivos | Rojo: " + aliveRed + " vivos";
 	}
 	
 	private void checkTeamAlive()
@@ -107,17 +107,17 @@ public class BombFightEvent extends AbstractEvent
 		
 		if (aliveBlue == 0 && aliveRed > 0)
 		{
-			broadcastToPlayers("[Bomb] Red team wins! All Blue players eliminated!");
+			broadcastToPlayers("[Bomb] ¡El equipo Rojo gana! ¡Todos los jugadores Azules eliminados!");
 			endMatch();
 		}
 		else if (aliveRed == 0 && aliveBlue > 0)
 		{
-			broadcastToPlayers("[Bomb] Blue team wins! All Red players eliminated!");
+			broadcastToPlayers("[Bomb] ¡El equipo Azul gana! ¡Todos los jugadores Rojos eliminados!");
 			endMatch();
 		}
 		else if (aliveBlue == 0 && aliveRed == 0)
 		{
-			broadcastToPlayers("[Bomb] Both teams eliminated! It's a draw!");
+			broadcastToPlayers("[Bomb] ¡Ambos equipos eliminados! ¡Es un empate!");
 			endMatch();
 		}
 	}

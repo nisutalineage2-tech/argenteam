@@ -34,7 +34,7 @@ public class ZombieEvent extends AbstractEvent
 				continue;
 			final Player p = ep.getPlayer();
 			equipBow(p);
-			p.setTitle("[ZH] Human");
+			p.setTitle("[ZH] Humano");
 			p.broadcastTitleInfo();
 		}
 		
@@ -45,7 +45,7 @@ public class ZombieEvent extends AbstractEvent
 		for (int i = 0; i < zombieCount && i < shuffled.size(); i++)
 			turnIntoZombie(shuffled.get(i));
 		
-		broadcastToPlayers("[ZH] " + zombieCount + " players turned into ZOMBIES! Run!");
+		broadcastToPlayers("[ZH] " + zombieCount + " jugadores se convirtieron en ZOMBIES! ¡Corran!");
 	}
 	
 	@Override
@@ -57,7 +57,7 @@ public class ZombieEvent extends AbstractEvent
 		if (isZombie(killer) && !isZombie(victim))
 		{
 			turnIntoZombie(victim);
-			broadcastToPlayers("[ZH] " + victim.getName() + " was INFECTED and turned into a Zombie!");
+			broadcastToPlayers("[ZH] " + victim.getName() + " fue INFECTADO y se convirtió en Zombie!");
 			checkHumansRemaining();
 		}
 	}
@@ -69,7 +69,7 @@ public class ZombieEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[ZH] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[ZH] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -126,7 +126,7 @@ public class ZombieEvent extends AbstractEvent
 		_zombies.add(ep);
 		ep.setTeamId(1);
 		
-		p.sendMessage("[ZH] You are now a ZOMBIE! Hunt humans!");
+		p.sendMessage("[ZH] ¡Ahora eres un ZOMBIE! ¡Caza humanos!");
 	}
 	
 	private boolean isZombie(EventPlayer ep)
@@ -137,7 +137,7 @@ public class ZombieEvent extends AbstractEvent
 	private void equipBow(Player player)
 	{
 		player.getInventory().addItem(_humanBowId, 1);
-		player.sendMessage("[ZH] You received an Anti Zombie Bow!");
+		player.sendMessage("[ZH] ¡Recibiste un Arco Anti Zombie!");
 	}
 	
 	private void checkHumansRemaining()
@@ -158,12 +158,12 @@ public class ZombieEvent extends AbstractEvent
 		
 		if (humans == 0)
 		{
-			broadcastToPlayers("[ZH] All humans infected! Zombies win!");
+			broadcastToPlayers("[ZH] ¡Todos los humanos infectados! ¡Ganan los Zombies!");
 			endMatch();
 		}
 		else if (humans == 1 && lastHuman != null)
 		{
-			broadcastToPlayers("[ZH] " + lastHuman.getName() + " is the LAST HUMAN STANDING! Humans win!");
+			broadcastToPlayers("[ZH] " + lastHuman.getName() + " es el ÚLTIMO HUMANO EN PIE! ¡Ganan los Humanos!");
 			endMatch();
 		}
 	}
@@ -181,6 +181,6 @@ public class ZombieEvent extends AbstractEvent
 			else
 				humans++;
 		}
-		return "[ZH] Humans: " + humans + " | Zombies: " + zombies;
+		return "[ZH] Humanos: " + humans + " | Zombies: " + zombies;
 	}
 }

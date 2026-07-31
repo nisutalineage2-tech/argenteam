@@ -24,7 +24,7 @@ public class LMSEvent extends AbstractEvent
 		{
 			if (!ep.isOnline())
 				continue;
-			ep.getPlayer().setTitle("[LMS] Alive");
+			ep.getPlayer().setTitle("[LMS] Vivo");
 			ep.getPlayer().broadcastTitleInfo();
 		}
 	}
@@ -37,11 +37,11 @@ public class LMSEvent extends AbstractEvent
 		
 		if (killer.isOnline())
 		{
-			killer.getPlayer().setTitle("[LMS] " + killer.getKills() + " kills");
+			killer.getPlayer().setTitle("[LMS] " + killer.getKills() + " bajas");
 			killer.getPlayer().broadcastTitleInfo();
 		}
 		
-		broadcastToPlayers("[LMS] " + killer.getName() + " killed " + (victim != null ? victim.getName() : "someone") + "!");
+		broadcastToPlayers("[LMS] " + killer.getName() + " mató a " + (victim != null ? victim.getName() : "alguien") + "!");
 	}
 	
 	@Override
@@ -54,9 +54,9 @@ public class LMSEvent extends AbstractEvent
 		final Player player = victim.getPlayer();
 		player.setIsImmobilized(true);
 		player.setIsParalyzed(true);
-		player.setTitle("[LMS] Dead");
+		player.setTitle("[LMS] Muerto");
 		player.broadcastTitleInfo();
-		player.sendMessage("[LMS] You are dead! Wait for the event to end.");
+		player.sendMessage("[LMS] ¡Estás muerto! Espera a que termine el evento.");
 		
 		// Check if only one player remains alive
 		checkLastAlive();
@@ -84,7 +84,7 @@ public class LMSEvent extends AbstractEvent
 					leader = ep;
 			}
 		}
-		return "[LMS] Alive: " + alive + " | Leader: " + (leader != null ? leader.getName() + " (" + leader.getKills() + ")" : "-");
+		return "[LMS] Vivos: " + alive + " | Líder: " + (leader != null ? leader.getName() + " (" + leader.getKills() + ")" : "-");
 	}
 	
 	private void checkLastAlive()
@@ -105,12 +105,12 @@ public class LMSEvent extends AbstractEvent
 		
 		if (alive <= 1 && lastAlive != null)
 		{
-			broadcastToPlayers("[LMS] " + lastAlive.getName() + " is the LAST MAN STANDING! (" + lastAlive.getKills() + " kills)");
+			broadcastToPlayers("[LMS] " + lastAlive.getName() + " es el ÚLTIMO HOMBRE EN PIE! (" + lastAlive.getKills() + " bajas)");
 			endMatch();
 		}
 		else if (alive == 0)
 		{
-			broadcastToPlayers("[LMS] Everyone is dead! It's a draw!");
+			broadcastToPlayers("[LMS] ¡Todos están muertos! ¡Es un empate!");
 			endMatch();
 		}
 	}

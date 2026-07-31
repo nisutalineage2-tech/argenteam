@@ -41,7 +41,7 @@ public class DoubleDominationEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[2Dom] Fight!");
+				ep.getPlayer().setTitle("[2Dom] ¡Pelea!");
 				ep.getPlayer().broadcastTitleInfo();
 			}
 		}
@@ -61,7 +61,7 @@ public class DoubleDominationEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[2Dom] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[2Dom] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -128,7 +128,7 @@ public class DoubleDominationEvent extends AbstractEvent
 			if (blue != null)
 			{
 				blue.addScore(_pointsPerTick);
-				broadcastToPlayers("[2Dom] Blue dominates both zones! +" + _pointsPerTick);
+				broadcastToPlayers("[2Dom] ¡Azul domina ambas zonas! +" + _pointsPerTick);
 			}
 		}
 		else if (redDominates)
@@ -137,7 +137,7 @@ public class DoubleDominationEvent extends AbstractEvent
 			if (red != null)
 			{
 				red.addScore(_pointsPerTick);
-				broadcastToPlayers("[2Dom] Red dominates both zones! +" + _pointsPerTick);
+				broadcastToPlayers("[2Dom] ¡Rojo domina ambas zonas! +" + _pointsPerTick);
 			}
 		}
 	}
@@ -151,6 +151,6 @@ public class DoubleDominationEvent extends AbstractEvent
 		final java.util.List<EventTeam> teams = getTeams();
 		if (teams.size() < 2)
 			return null;
-		return "[2Dom] Blue: " + teams.get(0).getScore() + " - Red: " + teams.get(1).getScore();
+		return "[2Dom] Azul: " + teams.get(0).getScore() + " - Rojo: " + teams.get(1).getScore();
 	}
 }

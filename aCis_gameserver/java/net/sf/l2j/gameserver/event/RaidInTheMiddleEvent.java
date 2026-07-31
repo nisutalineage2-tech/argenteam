@@ -33,9 +33,9 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[Raid] Fight!");
+				ep.getPlayer().setTitle("[Raid] ¡Pelea!");
 				ep.getPlayer().broadcastTitleInfo();
-				ep.getPlayer().sendMessage("[Raid] A raid boss will spawn soon! Kill the enemies first, then the boss!");
+				ep.getPlayer().sendMessage("[Raid] ¡Un jefe de raid aparecerá pronto! ¡Mata a los enemigos primero y luego al jefe!");
 			}
 		}
 		
@@ -87,7 +87,7 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 			_bossSpawn.doSpawn(false);
 			_bossAlive = true;
 			
-			broadcastToPlayers("[Raid] The RAID BOSS has appeared in the middle! Kill it to win!");
+			broadcastToPlayers("[Raid] ¡El JEFE DE RAID ha aparecido en el centro! ¡Mátalo para ganar!");
 		}
 		catch (Exception e)
 		{
@@ -133,7 +133,7 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 		final EventTeam winnerTeam = getTeam(ep.getTeamId());
 		if (winnerTeam != null)
 		{
-			broadcastToPlayers("[Raid] " + winnerTeam.getName() + " team killed the raid boss! They win!");
+			broadcastToPlayers("[Raid] ¡El equipo " + winnerTeam.getName() + " mató al jefe de raid! ¡Ganan!");
 			endMatch();
 		}
 	}
@@ -145,7 +145,7 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 			return;
 		
 		// No respawn for killed players (they stay dead)
-		broadcastToPlayers("[Raid] " + killer.getName() + " killed " + victim.getName() + "! No respawn!");
+		broadcastToPlayers("[Raid] " + killer.getName() + " mató a " + victim.getName() + "! ¡Sin respawn!");
 	}
 	
 	@Override
@@ -156,9 +156,9 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 		
 		// Player stays dead - no respawn
 		final Player player = victim.getPlayer();
-		player.setTitle("[Raid] Dead");
+		player.setTitle("[Raid] Muerto");
 		player.broadcastTitleInfo();
-		player.sendMessage("[Raid] You are dead! Wait for your team to kill the boss or be revived!");
+		player.sendMessage("[Raid] ¡Estás muerto! Espera a que tu equipo mate al jefe o te revivan!");
 	}
 	
 	@Override
@@ -185,6 +185,6 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 			if (ep.getTeamId() == 0) blueAlive++;
 			else if (ep.getTeamId() == 1) redAlive++;
 		}
-		return "[Raid] Blue: " + blueAlive + " alive | Red: " + redAlive + " alive | Boss: " + (_bossAlive ? "Alive" : "Dead");
+		return "[Raid] Azul: " + blueAlive + " vivos | Rojo: " + redAlive + " vivos | Jefe: " + (_bossAlive ? "Vivo" : "Muerto");
 	}
 }

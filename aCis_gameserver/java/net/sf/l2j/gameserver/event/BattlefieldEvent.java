@@ -38,9 +38,9 @@ public class BattlefieldEvent extends AbstractEvent
 			final L2Skill captureSkill = SkillTable.getInstance().getInfo(CAPTURE_SKILL_ID, 1);
 			if (captureSkill != null)
 				p.addSkill(captureSkill, false);
-			p.setTitle("[BF] Fight!");
+			p.setTitle("[BF] ¡Pelea!");
 			p.broadcastTitleInfo();
-			p.sendMessage("[BF] Use the Capture skill on flags to capture them for your team!");
+			p.sendMessage("[BF] ¡Usa la habilidad Capturar en las banderas para capturarlas para tu equipo!");
 		}
 		
 		final Location center = getData().getPositionAll();
@@ -76,7 +76,7 @@ public class BattlefieldEvent extends AbstractEvent
 		if (team != null)
 		{
 			team.addScore(10);
-			broadcastToPlayers("[BF] " + ep.getName() + " captured a flag for " + team.getName() + "!");
+			broadcastToPlayers("[BF] " + ep.getName() + " capturó una bandera para " + team.getName() + "!");
 		}
 	}
 	
@@ -90,7 +90,7 @@ public class BattlefieldEvent extends AbstractEvent
 		if (killerTeam != null)
 			killerTeam.addScore(1);
 		
-		broadcastToPlayers("[BF] " + killer.getName() + " killed " + victim.getName() + "!");
+		broadcastToPlayers("[BF] " + killer.getName() + " mató a " + victim.getName() + "!");
 	}
 	
 	@Override
@@ -100,7 +100,7 @@ public class BattlefieldEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[BF] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[BF] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -152,7 +152,7 @@ public class BattlefieldEvent extends AbstractEvent
 			if (f.getOwnerTeam() == 0) blueFlags++;
 			else if (f.getOwnerTeam() == 1) redFlags++;
 		}
-		return "[BF] Blue: " + teams.get(0).getScore() + " (" + blueFlags + " flags) | Red: " + teams.get(1).getScore() + " (" + redFlags + " flags)";
+		return "[BF] Azul: " + teams.get(0).getScore() + " (" + blueFlags + " banderas) | Rojo: " + teams.get(1).getScore() + " (" + redFlags + " banderas)";
 	}
 	
 	public java.util.List<Flag> getFlags() { return _flags; }

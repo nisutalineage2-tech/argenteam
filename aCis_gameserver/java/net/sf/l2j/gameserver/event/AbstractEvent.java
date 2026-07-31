@@ -106,7 +106,7 @@ public abstract class AbstractEvent
 		
 		onStartRegistering();
 		
-		broadcastEvent("[Event] " + _data.getEventName() + " registration open! Visit the Event Manager or use .eventjoin " + _data.getId() + " to join.");
+		broadcastEvent("[Event] " + _data.getEventName() + " ¡inscripción abierta! Visita al Event Manager o usa .eventjoin " + _data.getId() + " para unirte.");
 		sendEventPopup();
 		autoRegisterPhantoms();
 		
@@ -122,13 +122,13 @@ public abstract class AbstractEvent
 		
 		if (_allPlayers.size() < _data.getMinPlayers())
 		{
-			broadcastEvent("[Event] " + _data.getEventName() + " cancelled - not enough players (" + _allPlayers.size() + "/" + _data.getMinPlayers() + ").");
+			broadcastEvent("[Event] " + _data.getEventName() + " cancelado - jugadores insuficientes (" + _allPlayers.size() + "/" + _data.getMinPlayers() + ").");
 			stop();
 			return;
 		}
 		
 		_state = State.STARTING;
-		broadcastEvent("[Event] " + _data.getEventName() + " starting in 10 seconds!");
+		broadcastEvent("[Event] " + _data.getEventName() + " comienza en 10 segundos!");
 		
 		_startTask = ThreadPool.schedule(this::startMatch, 10000);
 	}
@@ -162,7 +162,7 @@ public abstract class AbstractEvent
 			}
 		}
 		
-		broadcastEvent("[Event] " + _data.getEventName() + " has started! Good luck!");
+		broadcastEvent("[Event] " + _data.getEventName() + " ¡ha comenzado! ¡Buena suerte!");
 		
 		// Send SetupGauge bar to each player + start scorebar updates every 10 seconds
 		if (_matchDurationMs > 0)
@@ -235,7 +235,7 @@ public abstract class AbstractEvent
 		// Send ranking before clearing
 		final String ranking = buildRanking();
 		broadcastToPlayers(ranking);
-		broadcastEvent("[Event] " + _data.getEventName() + " ended! Winner: " + (winner != null ? winner.getName() + "!" : "Draw!"));
+		broadcastEvent("[Event] " + _data.getEventName() + " ¡terminó! Ganador: " + (winner != null ? winner.getName() + "!" : "¡Empate!"));
 		
 		if (winner != null)
 			rewardPlayers(winner);
@@ -276,8 +276,8 @@ public abstract class AbstractEvent
 			player.broadcastUserInfo();
 		}
 		
-		player.sendMessage("[Event] You joined " + _data.getEventName() + "! (" + _allPlayers.size() + " players)");
-		broadcastEvent("[Event] " + player.getName() + " joined " + _data.getEventName() + "! (" + _allPlayers.size() + " players)");
+		player.sendMessage("[Event] Te uniste a " + _data.getEventName() + "! (" + _allPlayers.size() + " jugadores)");
+		broadcastEvent("[Event] " + player.getName() + " se unió a " + _data.getEventName() + "! (" + _allPlayers.size() + " jugadores)");
 		
 		return true;
 	}
@@ -331,8 +331,8 @@ public abstract class AbstractEvent
 			return false;
 		
 		_allPlayers.remove(ep);
-		ep.getPlayer().sendMessage("[Event] You left " + _data.getEventName() + ".");
-		broadcastEvent("[Event] " + ep.getName() + " left " + _data.getEventName() + ". (" + _allPlayers.size() + " players)");
+		ep.getPlayer().sendMessage("[Event] Saliste de " + _data.getEventName() + ".");
+		broadcastEvent("[Event] " + ep.getName() + " abandonó " + _data.getEventName() + ". (" + _allPlayers.size() + " jugadores)");
 		
 		return true;
 	}
@@ -465,7 +465,7 @@ public abstract class AbstractEvent
 		sorted.sort((a, b) -> Integer.compare(b.getKills(), a.getKills()));
 		
 		final StringBuilder sb = new StringBuilder();
-		sb.append("[Event] Top Kills:");
+		sb.append("[Event] Top de Bajas:");
 		int rank = 1;
 		for (EventPlayer ep : sorted)
 		{
@@ -528,7 +528,7 @@ public abstract class AbstractEvent
 					final int itemId = Integer.parseInt(parts[0].trim());
 					final int count = Integer.parseInt(parts[1].trim());
 					player.getInventory().addItem(itemId, count);
-					player.sendMessage("[Event] Received " + count + "x " + itemId + ".");
+					player.sendMessage("[Event] Recibiste " + count + "x " + itemId + ".");
 				}
 				catch (NumberFormatException e)
 				{
@@ -591,7 +591,7 @@ public abstract class AbstractEvent
 	private void sendEventPopup()
 	{
 		final ConfirmDlg dlg = new ConfirmDlg(SystemMessageId.EVENT);
-		dlg.addString(_data.getEventName() + " - Want to register?");
+		dlg.addString(_data.getEventName() + " - ¿Quieres registrarte?");
 		dlg.addZoneName(_data.getPositionAll());
 		dlg.addTime(45000);
 		dlg.addRequesterId(_data.getId());
@@ -643,13 +643,13 @@ public abstract class AbstractEvent
 			
 			final long delayMs = (_matchDurationMs - (sec * 1000L));
 			final int announcementSec = sec;
-			final String timeStr = sec >= 60 ? (sec / 60) + " minute(s)" : sec + " second(s)";
+			final String timeStr = sec >= 60 ? (sec / 60) + " minuto(s)" : sec + " segundo(s)";
 			
 			_countdownTasks.add(ThreadPool.schedule(() ->
 			{
 				if (_state != State.RUNNING)
 					return;
-				broadcastEvent("[Event] " + _data.getEventName() + ": " + timeStr + " remaining!");
+				broadcastEvent("[Event] " + _data.getEventName() + ": " + timeStr + " restantes!");
 			}, delayMs));
 		}
 	}
@@ -711,7 +711,7 @@ public abstract class AbstractEvent
 			return;
 		}
 		
-		broadcastEvent("[Event] Round " + _currentRound + "/" + _totalRounds + " starts!");
+		broadcastEvent("[Event] ¡Ronda " + _currentRound + "/" + _totalRounds + " comienza!");
 		
 		// Teleport players back to team spawns for new round
 		for (EventTeam team : _teams)

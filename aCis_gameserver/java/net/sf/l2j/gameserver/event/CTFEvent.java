@@ -53,7 +53,7 @@ public class CTFEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().sendMessage("[CTF] Flags are placed! Capture the enemy flag!");
+				ep.getPlayer().sendMessage("[CTF] ¡Las banderas están colocadas! ¡Captura la bandera enemiga!");
 			}
 		}
 	}
@@ -72,7 +72,7 @@ public class CTFEvent extends AbstractEvent
 		
 		for (EventTeam team : getTeams())
 		{
-			team.broadcast("[CTF] " + killer.getName() + " killed " + victim.getName() + "!");
+			team.broadcast("[CTF] " + killer.getName() + " mató a " + victim.getName() + "!");
 		}
 	}
 	
@@ -84,7 +84,7 @@ public class CTFEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[CTF] You died! Respawning in " + getData().getRespawnDelay() + " seconds...");
+		player.sendMessage("[CTF] ¡Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -110,7 +110,7 @@ public class CTFEvent extends AbstractEvent
 			player.setIsImmobilized(false);
 			
 			player.teleportTo(respawnX, respawnY, respawnZ, 0);
-			player.sendMessage("[CTF] You have been revived and healed!");
+			player.sendMessage("[CTF] ¡Has sido revivido y curado!");
 		}, getData().getRespawnDelay() * 1000L);
 	}
 	
@@ -163,7 +163,7 @@ public class CTFEvent extends AbstractEvent
 						for (EventPlayer p : getAllPlayers())
 						{
 							if (p.isOnline())
-								p.getPlayer().sendMessage("[CTF] " + getTeam(capturedFlag.getTeamId()).getName() + "'s flag has respawned!");
+								p.getPlayer().sendMessage("[CTF] ¡La bandera de " + getTeam(capturedFlag.getTeamId()).getName() + " ha reaparecido!");
 						}
 					}, 30000);
 					break;
@@ -194,10 +194,10 @@ public class CTFEvent extends AbstractEvent
 		
 		for (EventTeam team : getTeams())
 		{
-			team.broadcast("[CTF] " + captor.getName() + " captured " + flagTeam.getName() + "'s flag! +10 points!");
+			team.broadcast("[CTF] " + captor.getName() + " capturó la bandera de " + flagTeam.getName() + "! ¡+10 puntos!");
 		}
 		
-		captor.sendMessage("[CTF] You captured the enemy flag!");
+		captor.sendMessage("[CTF] ¡Capturaste la bandera enemiga!");
 	}
 	
 	private static class CTFFlag

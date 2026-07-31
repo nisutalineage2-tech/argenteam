@@ -6,6 +6,7 @@ import java.util.logging.Logger;	import net.sf.l2j.Config;
 	import net.sf.l2j.gameserver.enums.SayType;
 	import net.sf.l2j.gameserver.event.AbstractEvent;
 	import net.sf.l2j.gameserver.event.EventEngine;
+	import net.sf.l2j.gameserver.event.SimonSaysEvent;
 	import net.sf.l2j.gameserver.handler.ChatHandler;
 	import net.sf.l2j.gameserver.handler.IChatHandler;
 	import net.sf.l2j.gameserver.model.actor.Player;
@@ -146,6 +147,13 @@ public final class Say2 extends L2GameClientPacket
 			return;
 		}
 		
+		// Simon Says answer (.simon <word>)
+		if (cmd.equals(".simon"))
+		{
+			handleSimonSays(player, parts);
+			return;
+		}
+		
 		// Faction commands
 		if (cmd.equals(".charge") || cmd.equals(".finfo") || cmd.equals(".fhelp") || cmd.equals(".votemap"))
 		{
@@ -230,6 +238,27 @@ public final class Say2 extends L2GameClientPacket
 				break;
 			}
 		}
+	}
+	
+	private static void handleSimonSays(Player player, String[] parts)
+	{
+		if (parts.length < 2 || parts[1].isEmpty())
+		{
+			player.sendMessage("[Simon] Uso: .simon <palabra>");
+			return;
+		}
+		
+		for (AbstractEvent event : EventEngine.getInstance().getAllEvents())
+		{
+			if (event instanceof SimonSaysEvent simon && simon.getState() == AbstractEvent.State.RUNNING)
+			{
+				if (!simon.onPlayerSay(parts[1], player))
+					player.sendMessage("[Simon] No hay una palabra pendiente de responder.");
+				return;
+			}
+		}
+		
+		player.sendMessage("[Simon] No hay una ronda de Simón Dice en curso.");
 	}
 	
 	private static void handleFactionCommands(Player player, String cmd, String[] parts)
