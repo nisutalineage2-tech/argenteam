@@ -1,11 +1,11 @@
 package net.sf.l2j.gameserver.event;
 
 import net.sf.l2j.commons.logging.CLogger;
-import net.sf.l2j.gameserver.data.xml.NpcData;
-import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
-import net.sf.l2j.gameserver.model.actor.Player;
-import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
-import net.sf.l2j.gameserver.model.spawn.Spawn;
+import net.sf.l2j.gameserver.data.xml.NpcData;	import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
+	import net.sf.l2j.gameserver.model.actor.Player;
+	import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
+	import net.sf.l2j.gameserver.model.location.Location;
+	import net.sf.l2j.gameserver.model.spawn.Spawn;
 
 public class RaidInTheMiddleEvent extends AbstractEvent
 {
@@ -93,6 +93,30 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 		{
 			LOGGER.error("Failed to spawn raid boss.", e);
 		}
+	}
+	
+	/**
+	 * @return the NPC id of the raid boss (configurable via Event_{id}_BossNpcId).
+	 */
+	public int getBossNpcId()
+	{
+		return _bossNpcId;
+	}
+	
+	/**
+	 * @return true if the raid boss is currently alive and spawned.
+	 */
+	public boolean isBossAlive()
+	{
+		return _bossAlive;
+	}
+	
+	/**
+	 * @return the boss spawn location (middle between team spawns), or null if not spawned yet.
+	 */
+	public Location getBossLocation()
+	{
+		return (_bossSpawn != null && _bossSpawn.getNpc() != null) ? new Location(_bossSpawn.getNpc().getX(), _bossSpawn.getNpc().getY(), _bossSpawn.getNpc().getZ()) : null;
 	}
 	
 	// Called from RaidBoss.doDie() when the raid boss dies

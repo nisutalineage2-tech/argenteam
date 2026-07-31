@@ -19,11 +19,12 @@ import net.sf.l2j.gameserver.data.xml.RestartPointData;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.enums.actors.OperateType;
-import net.sf.l2j.gameserver.enums.skills.SkillType;
-import net.sf.l2j.gameserver.event.AbstractEvent;
-import net.sf.l2j.gameserver.event.EventEngine;
-import net.sf.l2j.gameserver.event.EventPlayer;
-import net.sf.l2j.gameserver.event.EventTeam;
+import net.sf.l2j.gameserver.enums.skills.SkillType;	import net.sf.l2j.gameserver.event.AbstractEvent;
+	import net.sf.l2j.gameserver.event.EventEngine;
+	import net.sf.l2j.gameserver.event.EventPlayer;
+	import net.sf.l2j.gameserver.event.EventTeam;
+	import net.sf.l2j.gameserver.event.LuckyChestsEvent;
+	import net.sf.l2j.gameserver.event.RaidInTheMiddleEvent;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
@@ -388,11 +389,40 @@ public final class PhantomAI
 	
 	/**
 	 * Event mode: the phantom fights the running event like a real participant.
-	 * Priority 1: attack enemy event participants (opposite team).
-	 * Priority 2: attack event objective NPCs (chests, boss, guards — Monster subclass).
-	 * Priority 3: move toward the event arena center to converge on the fight.
+	 * Dispatches to an event-specific role when one exists, otherwise uses the
+	 * generic behavior (enemies -> objective NPCs -> converge on center).
 	 */
 	private static void handleEventMode(Player phantom, AbstractEvent event)
+	{
+		switch (event.getData().getId())
+		{
+			case 8 -> // Domination: hold the capture zone instead of chasing far away
+			{
+				handleDominationRole(phantom, event);
+				return;
+			}
+			case 7 -> // LuckyChests: open chests — prioritize them over players
+			{
+				handleLuckyChestsRole(phantom, event);
+				return;
+			}
+			case 16 -> // RaidInTheMiddle: kill the boss — go for it even with enemies nearby
+			{
+				handleRaidRole(phantom, event);
+				return;
+			}
+			default ->
+			{
+			}
+		}
+		
+		handleGenericEventMode(phantom, event);
+	}
+	
+	/**
+	 * Generic event behavior: enemies -> objective NPCs -> converge on the center.
+	 */
+	private static void handleGenericEventMode(Player phantom, AbstractEvent event)
 	{
 		// Priority 1: enemy event participants (opposite team, or any participant for FFA)
 		final Player eventTarget = findEventEnemy(phantom, event);
@@ -421,6 +451,143 @@ public final class PhantomAI
 	}
 	
 	/**
+	 * Domination role: the phantom moves to the capture zone and holds it,
+	 * only fighting enemies that come to contest the zone.
+	 */
+	private static void handleDominationRole(Player phantom, AbstractEvent event)
+	{
+		final Location zone = event.getData().getPositionAll();
+		if (zone == null)
+		{
+			handleGenericEventMode(phantom, event);
+			return;
+		}
+		
+		// Fight enemies that are contesting the zone.
+		final Player contestant = findEventEnemy(phantom, event);
+		if (contestant != null && phantom.distance3D(zone) <= Math.max(600, event.getData().getPositionRadius() * 3))
+		{
+			attackPlayer(phantom, contestant, "Dom defend ");
+			return;
+		}
+		
+		// If already inside the zone, hold position.
+		if (phantom.isIn3DRadius(zone, Math.max(300, event.getData().getPositionRadius())))
+		{
+			LAST_ACTIONS.put(phantom.getObjectId(), "Dom holding zone");
+			if (phantom.isSitting())
+				phantom.standUp();
+			return;
+		}
+		
+		// Move into the zone.
+		if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+		{
+			final int offsetX = Rnd.get(-150, 150);
+			final int offsetY = Rnd.get(-150, 150);
+			LAST_ACTIONS.put(phantom.getObjectId(), "Dom to zone");
+			moveTo(phantom, new Location(zone.getX() + offsetX, zone.getY() + offsetY, zone.getZ()), "Dom to zone");
+		}
+	}
+	
+	/**
+	 * LuckyChests role: the phantom heads to the nearest unopened chest.
+	 * Enemies are only attacked while traveling or when directly in the way.
+	 */
+	private static void handleLuckyChestsRole(Player phantom, AbstractEvent event)
+	{
+		if (event instanceof LuckyChestsEvent chestEvent)
+		{
+			// Find the nearest unopened chest.
+			LuckyChestsEvent.Chest nearest = null;
+			double bestDistance = Double.MAX_VALUE;
+			for (LuckyChestsEvent.Chest chest : chestEvent.getChests())
+			{
+				if (chest.isOpened())
+					continue;
+				final double distance = phantom.distance3D(new Location(chest.getX(), chest.getY(), chest.getZ()));
+				if (distance < bestDistance)
+				{
+					bestDistance = distance;
+					nearest = chest;
+				}
+			}
+			
+			if (nearest != null)
+			{
+				// On the chest — open it (interact) instead of fighting.
+				if (bestDistance <= 100)
+				{
+					LAST_ACTIONS.put(phantom.getObjectId(), "Chest opening");
+					chestEvent.openChest(chestEvent.getChests().indexOf(nearest), phantom);
+					return;
+				}
+				
+				// Fight anyone blocking the path, then continue to the chest.
+				final Player blocker = findEventEnemy(phantom, event);
+				if (blocker != null && phantom.distance3D(blocker) < bestDistance)
+				{
+					attackPlayer(phantom, blocker, "Chest defend ");
+					return;
+				}
+				
+				if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+				{
+					LAST_ACTIONS.put(phantom.getObjectId(), "Chest to " + nearest.getX() + "," + nearest.getY());
+					moveTo(phantom, new Location(nearest.getX(), nearest.getY(), nearest.getZ()), "Chest hunt");
+				}
+				return;
+			}
+		}
+		
+		// No chests available — generic behavior.
+		handleGenericEventMode(phantom, event);
+	}
+	
+	/**
+	 * RaidInTheMiddle role: the phantom rushes the raid boss and focuses it,
+	 * even when enemy players are nearby (they can't steal the kill that way).
+	 */
+	private static void handleRaidRole(Player phantom, AbstractEvent event)
+	{
+		if (event instanceof RaidInTheMiddleEvent raidEvent)
+		{
+			// If the boss is alive, attack it with priority over enemy players.
+			if (raidEvent.isBossAlive())
+			{
+				final Monster boss = findEventNpcById(phantom, raidEvent.getBossNpcId());
+				if (boss != null && !boss.isDead())
+				{
+					attackNpc(phantom, boss, "Raid boss ");
+					return;
+				}
+				
+				// Boss spawned but not yet visible in range — move to its location.
+				final Location bossLoc = raidEvent.getBossLocation();
+				if (bossLoc != null && !phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+				{
+					LAST_ACTIONS.put(phantom.getObjectId(), "Raid to boss");
+					moveTo(phantom, bossLoc, "Raid to boss");
+					return;
+				}
+			}
+			else if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+			{
+				// Boss not spawned yet — pre-position at the middle between team spawns.
+				final Location mid = raidEvent.getBossLocation();
+				if (mid != null)
+				{
+					LAST_ACTIONS.put(phantom.getObjectId(), "Raid pre-position");
+					moveTo(phantom, mid, "Raid pre-position");
+					return;
+				}
+			}
+		}
+		
+		handleGenericEventMode(phantom, event);
+	}
+	
+	/**
 	 * Finds the nearest enemy event participant.
 	 * Uses event.canAttack() so teammates are never targeted and FFA events target anyone.
 	 */
@@ -445,6 +612,34 @@ public final class PhantomAI
 			if (distance < nearestDistance[0])
 			{
 				nearest[0] = player;
+				nearestDistance[0] = distance;
+			}
+		});
+		return nearest[0];
+	}
+	
+	/**
+	 * Finds the nearest attackable NPC with the given NPC id within event range.
+	 * Used to focus the raid boss even when enemy players are nearby.
+	 */
+	private static Monster findEventNpcById(Player phantom, int npcId)
+	{
+		final Monster[] nearest = new Monster[1];
+		final double[] nearestDistance = { Double.MAX_VALUE };
+		final int range = Math.max(1500, PhantomConfig.aggroRange() * 3);
+		
+		phantom.forEachKnownTypeInRadius(Monster.class, range, monster ->
+		{
+			if (monster == null || monster.isDead() || !monster.isVisible() || !monster.isAttackableBy(phantom))
+				return;
+			
+			if (monster.getNpcId() != npcId)
+				return;
+			
+			final double distance = phantom.distance3D(monster);
+			if (distance < nearestDistance[0])
+			{
+				nearest[0] = monster;
 				nearestDistance[0] = distance;
 			}
 		});
