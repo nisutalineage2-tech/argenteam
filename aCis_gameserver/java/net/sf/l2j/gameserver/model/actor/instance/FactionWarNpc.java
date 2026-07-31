@@ -427,28 +427,14 @@ public class FactionWarNpc extends Folk
 	
 	public void showPanel(Player player, String message)
 	{
-		// TEMP DIAGNOSTICO: HTML basico con la misma estructura que
-		// mods/faction/90004.htm (funciona). Si con esto el cliente NO
-		// crashea, el problema esta en el contenido del panel original.
-		final StringBuilder sb = new StringBuilder(2048);
-		sb.append("<html><body>");
-		sb.append("<center>");
-		sb.append("<br>");
-		sb.append("<img src=\"L2UI_CH3.herotower_deco\" width=256 height=32>");
-		sb.append("<br>");
-		sb.append("<table width=270 bgcolor=000000>");
-		sb.append("<tr><td height=32 align=center><font color=F0D060 size=16> Registrador de Guerra </font></td></tr>");
-		sb.append("</table>");
-		sb.append("<img src=\"L2UI.SquareGray\" width=270 height=1><br>");
-		sb.append("<table width=270 bgcolor=111122>");
-		sb.append("<tr><td align=center><font color=99CCFF>Panel basico de prueba.</font></td></tr>");
-		sb.append("</table>");
-		sb.append("<br>");
-		sb.append("</center>");
-		sb.append("</body></html>");
-		
+		// TEST DE CONTROL: envia el MISMO archivo estatico que el Faction Manager
+		// (90004.htm) que SI funciona, via setFile (mismo camino que FactionNpc).
+		// Si con esto el registrar NO crashea con evento activo -> el problema es
+		// el contenido dinamico del panel. Si crashea igual -> el problema es el
+		// NPC/paquete, no el contenido.
 		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
-		html.setHtml(sb.toString());
+		html.setFile("data/html/mods/faction/90004.htm");
+		html.replace("%objectId%", getObjectId());
 		player.sendPacket(html);
 	}
 	
