@@ -20,7 +20,12 @@ public class WarRegistrar extends Quest
 	@Override
 	public String onTalk(Npc npc, Player player)
 	{
-		if (!FactionWarConfig.isEnabled() || !FactionWarManager.getInstance().isRunning())
+		final FactionWarManager manager = FactionWarManager.getInstance();
+		
+		// The registrar is active during BOTH the voting phase and the running war.
+		// Players can register in the neutral zone while the vote is open; they are
+		// only teleported once the war is actually running.
+		if (!FactionWarConfig.isEnabled() || (!manager.isRunning() && !manager.isVotingPhaseActive()))
 		{
 			showHtml(player, "war_registrar_not_active.htm");
 			return null;
@@ -33,8 +38,16 @@ public class WarRegistrar extends Quest
 		}
 		
 		FactionWarRegistry.getInstance().register(player);
-		FactionWarManager.getInstance().teleportToWarMap(player);
-		player.sendMessage("Te has registrado en la Faction War! Buena suerte.");
+		
+		if (manager.isRunning())
+		{
+			manager.teleportToWarMap(player);
+			player.sendMessage("Te has registrado en la Faction War! Buena suerte.");
+		}
+		else
+		{
+			player.sendMessage("Te has registrado en la Faction War! Serás teletransportado cuando comience la guerra.");
+		}
 		
 		return null;
 	}

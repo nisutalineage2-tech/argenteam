@@ -2,14 +2,14 @@ package net.sf.l2j.gameserver.network.clientpackets;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-
-import net.sf.l2j.Config;
-import net.sf.l2j.gameserver.enums.SayType;
-import net.sf.l2j.gameserver.handler.ChatHandler;
-import net.sf.l2j.gameserver.handler.IChatHandler;
-import net.sf.l2j.gameserver.model.actor.Player;
-import net.sf.l2j.gameserver.network.SystemMessageId;
+import java.util.logging.Logger;	import net.sf.l2j.Config;
+	import net.sf.l2j.gameserver.enums.SayType;
+	import net.sf.l2j.gameserver.event.AbstractEvent;
+	import net.sf.l2j.gameserver.event.EventEngine;
+	import net.sf.l2j.gameserver.handler.ChatHandler;
+	import net.sf.l2j.gameserver.handler.IChatHandler;
+	import net.sf.l2j.gameserver.model.actor.Player;
+	import net.sf.l2j.gameserver.network.SystemMessageId;
 
 public final class Say2 extends L2GameClientPacket
 {
@@ -139,11 +139,96 @@ public final class Say2 extends L2GameClientPacket
 		final String[] parts = text.split(" ", 3);
 		final String cmd = parts[0].toLowerCase();
 		
+		// Event commands
+		if (cmd.equals(".eventjoin") || cmd.equals(".eventleave"))
+		{
+			handleEventCommands(player, cmd, parts);
+			return;
+		}
+		
 		// Faction commands
 		if (cmd.equals(".charge") || cmd.equals(".finfo") || cmd.equals(".fhelp") || cmd.equals(".votemap"))
 		{
 			handleFactionCommands(player, cmd, parts);
 			return;
+		}
+	}
+	
+	private static void handleEventCommands(Player player, String cmd, String[] parts)
+	{
+		final EventEngine eventEngine = EventEngine.getInstance();
+		
+		switch (cmd)
+		{
+			case ".eventjoin":
+			{
+				// Already in an event?
+				if (eventEngine.isPlayerInAnyEvent(player.getObjectId()))
+				{
+					player.sendMessage("[Event] Ya estás registrado en un evento. Usa .eventleave para salir.");
+					return;
+				}
+				
+				// Resolve the target event: by id or the currently open one
+				final AbstractEvent event;
+				if (parts.length >= 2)
+				{
+					try
+					{
+						final int eventId = Integer.parseInt(parts[1]);
+						event = eventEngine.getEvent(eventId);
+						if (event == null)
+						{
+							player.sendMessage("[Event] No existe un evento con id " + eventId + ". Usa .eventjoin sin argumentos para unirte al evento abierto.");
+							return;
+						}
+					}
+					catch (NumberFormatException e)
+					{
+						player.sendMessage("[Event] Uso: .eventjoin o .eventjoin <id>");
+						return;
+					}
+				}
+				else
+				{
+					event = eventEngine.getActiveEvent();
+					if (event == null)
+					{
+						player.sendMessage("[Event] No hay ningún evento abierto en este momento.");
+						return;
+					}
+				}
+				
+				if (event.getState() != AbstractEvent.State.REGISTER)
+				{
+					player.sendMessage("[Event] El evento " + event.getData().getEventName() + " no está en fase de registro.");
+					return;
+				}
+				
+				// Level requirements
+				final int level = player.getStatus().getLevel();
+				if (level < event.getData().getMinLvl() || level > event.getData().getMaxLvl())
+				{
+					player.sendMessage("[Event] Tu nivel (" + level + ") no cumple los requisitos (" + event.getData().getMinLvl() + "-" + event.getData().getMaxLvl() + ").");
+					return;
+				}
+				
+				if (event.registerPlayer(player))
+					player.sendMessage("[Event] ¡Registrado en " + event.getData().getEventName() + "!");
+				break;
+			}
+			case ".eventleave":
+			{
+				final AbstractEvent event = eventEngine.getEventForPlayer(player.getObjectId());
+				if (event == null)
+				{
+					player.sendMessage("[Event] No estás en ningún evento.");
+					return;
+				}
+				if (event.unregisterPlayer(player.getObjectId()))
+					player.sendMessage("[Event] Te has salido de " + event.getData().getEventName() + ".");
+				break;
+			}
 		}
 	}
 	
