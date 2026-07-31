@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.l2j.commons.logging.CLogger;
-import net.sf.l2j.commons.pool.ConnectionPool;
-
-import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.commons.pool.ConnectionPool;	import net.sf.l2j.gameserver.model.actor.Player;
+	import net.sf.l2j.gameserver.phantom.PhantomEngine;
+	import net.sf.l2j.gameserver.phantom.PhantomLog;
 
 /**
  * Tracks per-player statistics across event sessions (kills, deaths, wins, losses).
@@ -55,9 +55,16 @@ public final class EventStats
 				continue;
 			
 			final boolean isWinner = (winnerTeamId >= 0 && ep.getTeamId() == winnerTeamId);
+			final int wins = isWinner ? 1 : 0;
+			final int losses = isWinner ? 0 : 1;
 			final int playerObjId = ep.getObjectId();
 			
-			saveStats(playerObjId, eventId, isWinner ? 1 : 0, isWinner ? 0 : 1, ep.getKills(), ep.getDeaths(), ep.getKills());
+			saveStats(playerObjId, eventId, wins, losses, ep.getKills(), ep.getDeaths(), ep.getKills());
+			
+			// Phantom diagnostic: makes event_stats persistence by phantoms verifiable in log/phantoms.log.
+			// Includes the objectId (unique key of event_stats.player) for cross-verification against the DB.
+			if (PhantomEngine.isPhantom(playerObjId))
+				PhantomLog.info("Persisted event stats for phantom " + ep.getName() + " (objId=" + playerObjId + ", event=" + eventId + ", wins=" + wins + ", losses=" + losses + ", kills=" + ep.getKills() + ", deaths=" + ep.getDeaths() + ")");
 		}
 	}
 	
