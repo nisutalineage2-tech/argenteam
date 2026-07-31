@@ -1,5 +1,7 @@
 package net.sf.l2j.gameserver.model.actor.instance;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import net.sf.l2j.gameserver.event.AbstractEvent;
@@ -46,17 +48,14 @@ public class EventManagerNpc extends Folk
 		}
 		else if (currentCommand.startsWith("event_"))
 		{
-			if (!st.hasMoreTokens())
+			final String action = currentCommand.substring("event_".length());
+			if (action.isEmpty())
 				return;
-			
-			final String action = st.nextToken();
 			
 			if (action.equals("join"))
 			{
 				if (!st.hasMoreTokens())
-					return;
-				
-				final int eventId;
+					return;				final int eventId;
 				try
 				{
 					eventId = Integer.parseInt(st.nextToken());
@@ -106,12 +105,30 @@ public class EventManagerNpc extends Folk
 			}
 			else if (action.equals("list"))
 			{
-				showEventList(player);
+				showEventList(player, 0);
+			}
+			else if (action.equals("page"))
+			{
+				int page = 0;
+				if (st.hasMoreTokens())
+				{
+					try
+					{
+						page = Integer.parseInt(st.nextToken());
+					}
+					catch (NumberFormatException e)
+					{
+						// keep page 0
+					}
+				}
+				showEventList(player, page);
 			}
 			else if (action.equals("info"))
 			{
 				if (!st.hasMoreTokens())
-					return;					final int eventId;
+					return;
+				
+				final int eventId;
 					try
 					{
 						eventId = Integer.parseInt(st.nextToken());
@@ -149,9 +166,30 @@ public class EventManagerNpc extends Folk
 			super.onBypassFeedback(player, command);
 	}
 	
-	private void showEventList(Player player)
+	private void showEventList(Player player, int page)
 	{
 		final int npcObjId = getObjectId();
+		
+		// Collect enabled events (only those with an active EventEngine instance).
+		final List<EventConfig.EventData> events = new ArrayList<>();
+		for (EventConfig.EventData data : EventConfig.getEvents())
+		{
+			if (!data.isEnabled())
+				continue;
+			
+			if (net.sf.l2j.gameserver.event.EventEngine.getInstance().getEvent(data.getId()) == null)
+				continue;
+			
+			events.add(data);
+		}
+		
+		// Pagination: 8 events per page to stay under the client HTML limit (8192 chars).
+		final int pageSize = 8;
+		final int totalPages = Math.max(1, (events.size() + pageSize - 1) / pageSize);
+		final int currentPage = Math.max(0, Math.min(page, totalPages - 1));
+		final int start = currentPage * pageSize;
+		final int end = Math.min(start + pageSize, events.size());
+		
 		final StringBuilder sb = new StringBuilder(4096);
 		sb.append("<html><body>");
 		
@@ -178,12 +216,10 @@ public class EventManagerNpc extends Folk
 			}
 		}
 		
-		// Events list
-		for (EventConfig.EventData data : EventConfig.getEvents())
+		// Events list (current page only)
+		for (int i = start; i < end; i++)
 		{
-			if (!data.isEnabled())
-				continue;
-			
+			final EventConfig.EventData data = events.get(i);
 			final AbstractEvent event = net.sf.l2j.gameserver.event.EventEngine.getInstance().getEvent(data.getId());
 			if (event == null)
 				continue;
@@ -230,6 +266,21 @@ public class EventManagerNpc extends Folk
 			
 			sb.append("</table>");
 			sb.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\">");
+		}
+		
+		// Pagination controls
+		if (totalPages > 1)
+		{
+			sb.append("<br>");
+			if (currentPage > 0)
+			{
+				sb.append("<button value=\"< Anterior\" action=\"bypass -h npc_" + npcObjId + "_event_page " + (currentPage - 1) + "\" width=\"80\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+			}
+			sb.append("<font color=\"808080\" size=\"10\"> Pagina " + (currentPage + 1) + "/" + totalPages + " </font>");
+			if (currentPage < totalPages - 1)
+			{
+				sb.append("<button value=\"Siguiente >\" action=\"bypass -h npc_" + npcObjId + "_event_page " + (currentPage + 1) + "\" width=\"80\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+			}
 		}
 		
 		// Footer with buffer button
@@ -286,6 +337,6 @@ public class EventManagerNpc extends Folk
 	@Override
 	public void showChatWindow(Player player, int val)
 	{
-		showEventList(player);
+		showEventList(player, 0);
 	}
 }
