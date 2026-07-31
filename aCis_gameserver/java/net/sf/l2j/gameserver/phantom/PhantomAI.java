@@ -184,10 +184,11 @@ public final class PhantomAI
 			
 			// === EVENT MODE: while a registered event is RUNNING, the phantom fights the event ===
 			// (no farming, no patrol, no level-zone teleports — they would pull the phantom away from the arena)
-			if (EventEngine.getInstance().isPlayerInAnyEvent(phantom.getObjectId()))
+			// Single lookup: getEventForPlayer() returns the event or null (avoids iterating events twice per tick).
+			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+			if (event != null)
 			{
-				final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
-				if (event != null && event.getState() == AbstractEvent.State.RUNNING)
+				if (event.getState() == AbstractEvent.State.RUNNING)
 				{
 					handleEventMode(phantom, event);
 					return;
