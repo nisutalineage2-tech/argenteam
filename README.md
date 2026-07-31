@@ -233,3 +233,23 @@ C:\server\
 
 Basado en **aCis** (fork de L2J Server).
 Modificado por la comunidad para funcionar como servidor de Faction War con phantoms.
+
+---
+
+## Higiene del Repositorio
+
+Las siguientes rutas son **locales y NO se suben a GitHub** (definidas en `.gitignore`):
+
+| Ruta | Motivo |
+|---|---|
+| `.freebuff/` | Estado local de la app Freebuff (bases de datos de sesión) |
+| `.agents/` | Skills de agentes (locales a la máquina de desarrollo) |
+| `.idea`, `.metadata` | Archivos del IDE (Eclipse/IntelliJ) |
+| `*.log`, `hs_err_pid*.log` | Logs del server y crash dumps de la JVM |
+| `*.class` | Clases compiladas (defensa extra; `build/` ya ignorado por subproyecto) |
+| `*.db`, `*.db-shm`, `*.db-wal` | Bases SQLite locales |
+
+**Reglas al commitear:**
+- Nunca usar `git add -A` ni `git add .` — agregar solo los archivos del cambio.
+- No commitear `.freebuff/` ni `.agents/`.
+- Si se clona el repo en otra PC, copiar `.agents/skills/` manualmente (no viene con el clone).
