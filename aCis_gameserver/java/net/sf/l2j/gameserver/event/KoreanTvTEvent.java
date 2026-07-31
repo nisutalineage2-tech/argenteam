@@ -100,7 +100,7 @@ public class KoreanTvTEvent extends AbstractEvent
 		}
 		
 		// Teleport fighters to arena, spectate others
-		broadcastToPlayers("[KTvT] --- NUEVA RONDA! " + perTeam + "v" + perTeam + " ---");
+		broadcastToPlayers("[KTvT] --- NUEVA RONDA. " + perTeam + "v" + perTeam + " ---");
 		
 		for (EventPlayer ep : getAllPlayers())
 		{
@@ -112,7 +112,7 @@ public class KoreanTvTEvent extends AbstractEvent
 			{
 				p.setIsImmobilized(false);
 				p.setIsParalyzed(false);
-				ep.getPlayer().setTitle("[KTvT] Peleando!");
+				ep.getPlayer().setTitle("[KTvT] Peleando.");
 				final EventTeam team = getTeam(ep.getTeamId());
 				if (team != null && team.getSpawnLocation() != null)
 					p.teleportTo(team.getSpawnLocation().getX(), team.getSpawnLocation().getY(), team.getSpawnLocation().getZ(), 0);
@@ -158,7 +158,7 @@ public class KoreanTvTEvent extends AbstractEvent
 			victim.getPlayer().broadcastTitleInfo();
 		}
 		
-		broadcastToPlayers("[KTvT] " + killer.getName() + " derroto a " + victim.getName() + "!");
+		broadcastToPlayers("[KTvT] " + killer.getName() + " derroto a " + victim.getName() + ".");
 		
 		// Check if round is over
 		checkRoundWinner();
@@ -185,7 +185,7 @@ public class KoreanTvTEvent extends AbstractEvent
 		{
 			_roundActive = false;
 			cancelTask(_roundStartTask);
-			broadcastToPlayers("[KTvT] El equipo Rojo gana la ronda!");
+			broadcastToPlayers("[KTvT] El equipo Rojo gana la ronda.");
 			
 			// Eliminate all blue fighters
 			eliminateTeam(0);
@@ -195,7 +195,7 @@ public class KoreanTvTEvent extends AbstractEvent
 		{
 			_roundActive = false;
 			cancelTask(_roundStartTask);
-			broadcastToPlayers("[KTvT] El equipo Azul gana la ronda!");
+			broadcastToPlayers("[KTvT] El equipo Azul gana la ronda.");
 			
 			eliminateTeam(1);
 			checkMatchEnd();
@@ -214,7 +214,7 @@ public class KoreanTvTEvent extends AbstractEvent
 				final Player p = ep.getPlayer();
 				p.setIsImmobilized(true);
 				p.setIsParalyzed(true);
-				p.setTitle("[KTvT] Fuera!");
+				p.setTitle("[KTvT] Fuera.");
 				p.broadcastTitleInfo();
 			}
 		}
@@ -233,12 +233,12 @@ public class KoreanTvTEvent extends AbstractEvent
 		
 		if (blueAlive == 0 && redAlive > 0)
 		{
-			broadcastToPlayers("[KTvT] El equipo Rojo gana la partida!");
+			broadcastToPlayers("[KTvT] El equipo Rojo gana la partida.");
 			endMatch();
 		}
 		else if (redAlive == 0 && blueAlive > 0)
 		{
-			broadcastToPlayers("[KTvT] El equipo Azul gana la partida!");
+			broadcastToPlayers("[KTvT] El equipo Azul gana la partida.");
 			endMatch();
 		}
 		else if (blueAlive > 0 && redAlive > 0)

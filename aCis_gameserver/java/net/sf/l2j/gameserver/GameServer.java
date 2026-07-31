@@ -263,7 +263,7 @@ public class GameServer
 		if (Config.ENABLE_FACTION_SYSTEM && net.sf.l2j.gameserver.factionwar.FactionWarConfig.isEnabled())
 		{
 			final int duration = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getWarDurationMinutes();
-			net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().start(net.sf.l2j.gameserver.factionwar.FactionWarConfig.getScoreToWin(), duration);
+			net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().start(duration);
 			LOGGER.info("Faction War auto-started with {}min duration (alternance: FW <-> Events).", duration);
 		}
 		else

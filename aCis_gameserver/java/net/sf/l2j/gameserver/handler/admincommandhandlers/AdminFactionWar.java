@@ -40,20 +40,18 @@ public class AdminFactionWar implements IAdminCommandHandler
 				showPanel(player, "Faction War already running!");
 				return;
 			}
-			final int score;
 			final int duration;
 			try
 			{
-				score = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : FactionWarConfig.getScoreToWin();
 				duration = st.hasMoreTokens() ? Integer.parseInt(st.nextToken()) : 0;
 			}
 			catch (NumberFormatException e)
 			{
-				showPanel(player, "Invalid number format. Usage: //factionwar start [score] [duration]");
+				showPanel(player, "Invalid number format. Usage: //factionwar start [duration]");
 				return;
 			}
-			FactionWarManager.getInstance().start(score, duration);
-			showPanel(player, "Faction War started! Score: " + score + (duration > 0 ? " Duration: " + duration + "min" : ""));
+			FactionWarManager.getInstance().start(duration);
+			showPanel(player, "Faction War started!" + (duration > 0 ? " Duration: " + duration + "min" : ""));
 		}
 			case "stop" ->
 			{
@@ -132,7 +130,6 @@ public class AdminFactionWar implements IAdminCommandHandler
 		sb.append("Status: <font color=").append(running ? "00FF00" : "FF0000").append(">").append(running ? "RUNNING" : "STOPPED").append("</font><br>");
 		sb.append("Good Score: <font color=0000FF>").append(FactionWarManager.getInstance().getScore(FactionWarConfig.getGoodFactionId())).append("</font> | ");
 		sb.append("Evil Score: <font color=FF0000>").append(FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId())).append("</font><br>");
-		sb.append("Score to Win: ").append(FactionWarConfig.getScoreToWin()).append("<br>");
 		sb.append("Maps: ").append(FactionWarConfig.getMaps().size()).append("<br>");
 		
 		if (running)

@@ -63,7 +63,7 @@ public class FactionWarNpc extends Folk
 		
 		// Teleport to faction's base on the war map
 		FactionWarManager.getInstance().teleportToWarMap(player);
-		player.sendMessage("Teletransportado a la base de tu faccion! Lucha por la gloria!");
+		player.sendMessage("Teletransportado a la base de tu faccion. Lucha por la gloria.");
 	}
 	
 	/**
@@ -83,7 +83,7 @@ public class FactionWarNpc extends Folk
 		
 		final StringBuilder sb = new StringBuilder(2048);
 		sb.append("<html><body><center><font color=LEVEL>Checkpoints Capturables</font></center><br>");
-		sb.append("Los checkpoints son puntos de batalla. Ataca y capturalos para tu faccion!<br><br>");
+		sb.append("Los checkpoints son puntos de batalla. Ataca y capturalos para tu faccion.<br><br>");
 		sb.append("<table width=280>");
 		sb.append("<tr><td width=30><font color=808080>#</font></td><td width=150><font color=808080>Dueno</font></td><td width=100><font color=808080>Estado</font></td></tr>");
 		
@@ -178,7 +178,7 @@ public class FactionWarNpc extends Folk
 			}
 			
 			if (buffId >= 1 && buffId <= 3)
-				showBufferPanel(player, "<font color=\"00FF00\">Paquete de buffs aplicado con exito!</font>");
+				showBufferPanel(player, "<font color=\"00FF00\">Paquete de buffs aplicado con exito.</font>");
 		}
 		catch (NumberFormatException e)
 		{
@@ -518,7 +518,7 @@ public class FactionWarNpc extends Folk
 		else if (votingPhase)
 		{
 			sb.append("</table><br>");
-			sb.append("<center><font color=\"FFCC00\">Fase de Votacion Activa!</font><br1>");
+			sb.append("<center><font color=\"FFCC00\">Fase de Votacion Activa.</font><br1>");
 			sb.append("<font color=\"C0C0C0\" size=\"11\">Vota por el mapa de batalla usando el boton de abajo.</font><br><br>");
 		}
 		else

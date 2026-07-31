@@ -44,7 +44,7 @@ public class TreasureHuntEvent extends AbstractEvent
 			{
 				ep.getPlayer().setTitle("[Find] 0 hallados");
 				ep.getPlayer().broadcastTitleInfo();
-				ep.getPlayer().sendMessage("[Treasure] Encuentra cofres del tesoro escondidos en las ruinas! El primero en hallarlos gana en grande!");
+				ep.getPlayer().sendMessage("[Treasure] Encuentra cofres del tesoro escondidos en las ruinas. El primero en hallarlos gana en grande.");
 			}
 		}
 		
@@ -77,7 +77,7 @@ public class TreasureHuntEvent extends AbstractEvent
 		
 		_chests.add(new TreasureChest(x, y, center.getZ()));
 		_chestsSpawned++;
-		broadcastToPlayers("[Treasure] Aparecio un cofre del tesoro! (" + _chestsSpawned + "/" + _totalChests + ")");
+		broadcastToPlayers("[Treasure] Aparecio un cofre del tesoro. (" + _chestsSpawned + "/" + _totalChests + ")");
 	}
 	
 	public void findTreasure(int chestIndex, Player player)
@@ -103,13 +103,13 @@ public class TreasureHuntEvent extends AbstractEvent
 		if (_firstFinder == null)
 		{
 			_firstFinder = ep;
-			player.sendMessage("[Treasure] TU encontraste el primer tesoro! Recompensa extra al final!");
-			broadcastToPlayers("[Treasure] " + ep.getName() + " encontro el primer tesoro!");
+			player.sendMessage("[Treasure] TU encontraste el primer tesoro. Recompensa extra al final.");
+			broadcastToPlayers("[Treasure] " + ep.getName() + " encontro el primer tesoro.");
 		}
 		else
 		{
-			player.sendMessage("[Treasure] Encontraste un tesoro! +" + _chestRewardCount + " de recompensa!");
-			broadcastToPlayers("[Treasure] " + ep.getName() + " encontro un tesoro! (" + ep.getKills() + " en total)");
+			player.sendMessage("[Treasure] Encontraste un tesoro. +" + _chestRewardCount + " de recompensa.");
+			broadcastToPlayers("[Treasure] " + ep.getName() + " encontro un tesoro. (" + ep.getKills() + " en total)");
 		}
 		
 		_chestsFound++;
@@ -134,7 +134,7 @@ public class TreasureHuntEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Treasure] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[Treasure] Moriste. Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -167,7 +167,7 @@ public class TreasureHuntEvent extends AbstractEvent
 		if (_firstFinder != null && _firstFinder.isOnline())
 		{
 			_firstFinder.getPlayer().getInventory().addItem(_chestRewardId, _chestRewardCount * 2);
-			_firstFinder.getPlayer().sendMessage("[Treasure] Recompensa extra por ser el primer buscador!");
+			_firstFinder.getPlayer().sendMessage("[Treasure] Recompensa extra por ser el primer buscador.");
 		}
 		
 		_chests.clear();

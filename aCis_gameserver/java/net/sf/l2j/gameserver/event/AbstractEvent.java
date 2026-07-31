@@ -106,7 +106,7 @@ public abstract class AbstractEvent
 		
 		onStartRegistering();
 		
-		broadcastEvent("[Event] " + _data.getEventName() + " inscripcion abierta! Visita al Event Manager o usa .eventjoin " + _data.getId() + " para unirte.");
+		broadcastEvent("[Event] " + _data.getEventName() + " inscripcion abierta. Visita al Event Manager o usa .eventjoin " + _data.getId() + " para unirte.");
 		sendEventPopup();
 		autoRegisterPhantoms();
 		
@@ -128,7 +128,7 @@ public abstract class AbstractEvent
 		}
 		
 		_state = State.STARTING;
-		broadcastEvent("[Event] " + _data.getEventName() + " comienza en 10 segundos!");
+		broadcastEvent("[Event] " + _data.getEventName() + " comienza en 10 segundos.");
 		
 		_startTask = ThreadPool.schedule(this::startMatch, 10000);
 	}
@@ -162,7 +162,7 @@ public abstract class AbstractEvent
 			}
 		}
 		
-		broadcastEvent("[Event] " + _data.getEventName() + " ha comenzado! Buena suerte!");
+		broadcastEvent("[Event] " + _data.getEventName() + " ha comenzado. Buena suerte.");
 		
 		// Send SetupGauge bar to each player + start scorebar updates every 10 seconds
 		if (_matchDurationMs > 0)
@@ -235,7 +235,7 @@ public abstract class AbstractEvent
 		// Send ranking before clearing
 		final String ranking = buildRanking();
 		broadcastToPlayers(ranking);
-		broadcastEvent("[Event] " + _data.getEventName() + " termino! Ganador: " + (winner != null ? winner.getName() + "!" : "Empate!"));
+		broadcastEvent("[Event] " + _data.getEventName() + " termino. Ganador: " + (winner != null ? winner.getName() + "." : "Empate."));
 		
 		if (winner != null)
 			rewardPlayers(winner);
@@ -276,8 +276,8 @@ public abstract class AbstractEvent
 			player.broadcastUserInfo();
 		}
 		
-		player.sendMessage("[Event] Te uniste a " + _data.getEventName() + "! (" + _allPlayers.size() + " jugadores)");
-		broadcastEvent("[Event] " + player.getName() + " se unio a " + _data.getEventName() + "! (" + _allPlayers.size() + " jugadores)");
+		player.sendMessage("[Event] Te uniste a " + _data.getEventName() + ". (" + _allPlayers.size() + " jugadores)");
+		broadcastEvent("[Event] " + player.getName() + " se unio a " + _data.getEventName() + ". (" + _allPlayers.size() + " jugadores)");
 		
 		return true;
 	}
@@ -649,7 +649,7 @@ public abstract class AbstractEvent
 			{
 				if (_state != State.RUNNING)
 					return;
-				broadcastEvent("[Event] " + _data.getEventName() + ": " + timeStr + " restantes!");
+				broadcastEvent("[Event] " + _data.getEventName() + ": " + timeStr + " restantes.");
 			}, delayMs));
 		}
 	}
@@ -711,7 +711,7 @@ public abstract class AbstractEvent
 			return;
 		}
 		
-		broadcastEvent("[Event] Ronda " + _currentRound + "/" + _totalRounds + " comienza!");
+		broadcastEvent("[Event] Ronda " + _currentRound + "/" + _totalRounds + " comienza.");
 		
 		// Teleport players back to team spawns for new round
 		for (EventTeam team : _teams)

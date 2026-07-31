@@ -3,6 +3,8 @@ package net.sf.l2j.gameserver.communitybbs.manager;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import net.sf.l2j.commons.util.SysUtil;
+
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
@@ -57,7 +59,6 @@ public class FactionWarBBSManager extends BaseBBSManager
 		// Faction scores
 		final int goodScore = fwm.getScore(goodId);
 		final int evilScore = fwm.getScore(evilId);
-		final int winScore = FactionWarConfig.getScoreToWin();
 		
 		final Faction goodFaction = FactionData.getInstance().getFaction(goodId);
 		final Faction evilFaction = FactionData.getInstance().getFaction(evilId);
@@ -69,8 +70,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 		sb.append("<td width=300 align=center bgcolor=330000><font color=FF4444 size=14>").append(evilName).append("</font></td></tr>");
 		sb.append("<tr><td width=300 align=center><font color=00FF00 size=20>").append(goodScore).append("</font></td>");
 		sb.append("<td width=300 align=center><font color=FF0000 size=20>").append(evilScore).append("</font></td></tr>");
-		sb.append("<tr><td width=300 align=center><font color=808080>Para ganar: ").append(winScore).append("</font></td>");
-		sb.append("<td width=300 align=center><font color=808080>Para ganar: ").append(winScore).append("</font></td></tr>");
+		sb.append("<tr><td colspan=2 align=center><font color=808080>Gana la faccion que mantiene la bandera al final del tiempo.</font></td></tr>");
 		sb.append("</table><br>");
 		
 		// Winning faction (if war ended)
@@ -78,7 +78,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 		if (!running && winningFaction > 0)
 		{
 			final Faction winF = FactionData.getInstance().getFaction(winningFaction);
-			sb.append("<center><font color=FFD700 size=16>GANADOR: ").append(winF != null ? winF.getName() : "Faction " + winningFaction).append("!</font></center><br>");
+			sb.append("<center><font color=FFD700 size=16>GANADOR: ").append(winF != null ? SysUtil.escapeHtml(winF.getName()) : "Faction " + winningFaction).append(".</font></center><br>");
 		}
 		else if (!running)
 		{
@@ -111,7 +111,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 				
 				sb.append("<tr bgcolor=").append(bgColor).append(">");
 				sb.append("<td width=40><font color=").append(rankColor).append(">").append(i + 1).append("</font></td>");
-				sb.append("<td width=240>").append(s.playerName).append("</td>");
+				sb.append("<td width=240>").append(SysUtil.escapeHtml(s.playerName)).append("</td>");
 				sb.append("<td width=120><font color=").append(factionColor).append(">").append(factionDisplay).append("</font></td>");
 				sb.append("<td width=60 align=center>").append(s.kills).append("</td>");
 				sb.append("<td width=60 align=center>").append(s.deaths).append("</td>");
@@ -121,7 +121,7 @@ public class FactionWarBBSManager extends BaseBBSManager
 		}
 		else if (running)
 		{
-			sb.append("<br><center><font color=808080>Aun no hay estadisticas. Participa en la guerra!</font></center>");
+			sb.append("<br><center><font color=808080>Aun no hay estadisticas. Participa en la guerra.</font></center>");
 		}
 		
 		// Reward info

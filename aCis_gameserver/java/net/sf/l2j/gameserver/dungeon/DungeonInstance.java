@@ -49,7 +49,7 @@ public class DungeonInstance
 		for (Player p : _players)
 			DungeonEngine.getInstance().setPlayerDungeon(p, this);
 		
-		broadcastScreenMessage("You will be teleported in 10 seconds!", 3);
+		broadcastScreenMessage("Seras teletransportado en 10 segundos.", 3);
 		_nextTask = ThreadPool.schedule(this::beginFirstStage, 10000);
 	}
 	
@@ -74,12 +74,12 @@ public class DungeonInstance
 		getNextStage();
 		if (_currentStage == null)
 		{
-			cancelDungeon("No stages defined.");
+			cancelDungeon("No hay etapas definidas.");
 			return;
 		}
 		
 		teleportToStage();
-		broadcastScreenMessage("Stage " + _currentStage.getOrder() + " begins in 10 seconds!", 5);
+		broadcastScreenMessage("Etapa " + _currentStage.getOrder() + " comienza en 10 segundos.", 5);
 		_nextTask = ThreadPool.schedule(this::beginStage, 10000);
 	}
 	
@@ -99,9 +99,9 @@ public class DungeonInstance
 		_timerBroadcastTask = ThreadPool.scheduleAtFixedRate(this::broadcastTimer, 5000, 1000);
 		
 		final long timeout = _currentStage.getMinutes() * 60000L;
-		_stageTimer = ThreadPool.schedule(() -> cancelDungeon("Time ran out on stage " + _currentStage.getOrder() + "!"), timeout);
+		_stageTimer = ThreadPool.schedule(() -> cancelDungeon("Se acabo el tiempo en la etapa " + _currentStage.getOrder() + "."), timeout);
 		
-		broadcastScreenMessage("Stage " + _currentStage.getOrder() + " started! Time: " + _currentStage.getMinutes() + " minutes.", 5);
+		broadcastScreenMessage("Etapa " + _currentStage.getOrder() + " comenzo. Tiempo: " + _currentStage.getMinutes() + " minutos.", 5);
 		_nextTask = null;
 	}
 	
@@ -124,13 +124,13 @@ public class DungeonInstance
 			if (_currentStage == null)
 			{
 				rewardPlayers();
-				broadcastScreenMessage("Dungeon complete! Congratulations!", 5);
+				broadcastScreenMessage("Mazmorra completada. Felicitaciones.", 5);
 				teleportOut();
 				DungeonEngine.getInstance().removeDungeon(this);
 			}
 			else
 			{
-				broadcastScreenMessage("Stage " + (_currentStage.getOrder() - 1) + " cleared! Next stage in 10 seconds.", 5);
+				broadcastScreenMessage("Etapa " + (_currentStage.getOrder() - 1) + " superada. Siguiente etapa en 10 segundos.", 5);
 				teleportToStage();
 				_nextTask = ThreadPool.schedule(this::beginStage, 10000);
 			}
@@ -143,9 +143,9 @@ public class DungeonInstance
 			return;
 		
 		if (_players.size() == 1)
-			ThreadPool.schedule(() -> cancelDungeon("All party members have fallen!"), 5000);
+			ThreadPool.schedule(() -> cancelDungeon("Todos los miembros del grupo han caido."), 5000);
 		else
-			player.sendMessage("You will be resurrected if your team completes this stage.");
+			player.sendMessage("Sereis resucitados si tu equipo completa esta etapa.");
 	}
 	
 	// --- Reward ---------------------------------------------------
@@ -221,7 +221,7 @@ public class DungeonInstance
 				player.doRevive();
 		}
 		
-		broadcastScreenMessage(reason + " Teleporting back in 10 seconds.", 5);
+		broadcastScreenMessage(reason + " Regresando en 10 segundos.", 5);
 		
 		for (Npc mob : _mobs)
 		{

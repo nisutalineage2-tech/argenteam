@@ -50,7 +50,7 @@ public class DMEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				final CreatureSay cs = new CreatureSay(0, SayType.ALL, "DM", killer.getName() + " mato a " + (victim != null ? victim.getName() : "alguien") + "! (" + killer.getKills() + " bajas)");
+				final CreatureSay cs = new CreatureSay(0, SayType.ALL, "DM", killer.getName() + " mato a " + (victim != null ? victim.getName() : "alguien") + ". (" + killer.getKills() + " bajas)");
 				ep.getPlayer().sendPacket(cs);
 			}
 		}
@@ -64,7 +64,7 @@ public class DMEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[DM] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[DM] Moriste. Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		// Disable skills and immobilize during respawn delay
 		player.disableAllSkills();
@@ -92,7 +92,7 @@ public class DMEvent extends AbstractEvent
 			player.setIsImmobilized(false);
 			
 			player.teleportTo(respawnX, respawnY, respawnZ, 0);
-			player.sendMessage("[DM] Has sido revivido y curado!");
+			player.sendMessage("[DM] Has sido revivido y curado.");
 		}, getData().getRespawnDelay() * 1000L);
 	}
 	

@@ -6,10 +6,10 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap;	import net.sf.l2j.commons.logging.CLogger;
+	import net.sf.l2j.commons.pool.ConnectionPool;
+	import net.sf.l2j.commons.util.SysUtil;
 
-import net.sf.l2j.commons.logging.CLogger;
-import net.sf.l2j.commons.pool.ConnectionPool;
 
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -184,7 +184,7 @@ public final class EventBuffer
 			sb.append("<td width=\"140\">");
 			sb.append("<a action=\"bypass -h npc_" + npcObjId + "_event_buff ").append(skillId).append("\">");
 			sb.append(isSelected ? "<font color=\"00FF00\">[X]</font> " : "[ ] ");
-			sb.append(skill.getName());
+			sb.append(SysUtil.escapeHtml(skill.getName()));
 			sb.append("</a></td>");
 			
 			col++;

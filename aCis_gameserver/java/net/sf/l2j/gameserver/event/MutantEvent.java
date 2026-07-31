@@ -42,7 +42,7 @@ public class MutantEvent extends AbstractEvent
 				killer.getPlayer().setTitle("[Mut] " + killer.getKills() + " bajas");
 				killer.getPlayer().broadcastTitleInfo();
 			}
-			broadcastToPlayers("[Mutant] El Mutante " + killer.getName() + " mato a " + (victim != null ? victim.getName() : "alguien") + "!");
+			broadcastToPlayers("[Mutant] El Mutante " + killer.getName() + " mato a " + (victim != null ? victim.getName() : "alguien") + ".");
 		}
 	}
 	
@@ -57,12 +57,12 @@ public class MutantEvent extends AbstractEvent
 		if (victim == _currentMutant)
 		{
 			removeMutant(victim);
-			broadcastToPlayers("[Mutant] " + victim.getName() + " fue eliminado! Un nuevo Mutante surge!");
+			broadcastToPlayers("[Mutant] " + victim.getName() + " fue eliminado. Un nuevo Mutante surge.");
 			pickNewMutant();
 		}
 		else
 		{
-			player.sendMessage("[Mutant] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+			player.sendMessage("[Mutant] Moriste. Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 			
 			player.disableAllSkills();
 			player.setIsImmobilized(true);
@@ -139,7 +139,7 @@ public class MutantEvent extends AbstractEvent
 			
 			p.startAbnormalEffect(AbnormalEffect.FLAME);
 			
-			broadcastToPlayers("[Mutant] " + _currentMutant.getName() + " ahora es el MUTANTE!");
+			broadcastToPlayers("[Mutant] " + _currentMutant.getName() + " ahora es el MUTANTE.");
 		}
 	}
 	

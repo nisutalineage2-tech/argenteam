@@ -252,7 +252,7 @@ public class FactionWarCheckpoint
 			final String factionName = (capturingFactionId == FactionWarConfig.getGoodFactionId())
 				? FactionWarConfig.getGoodFactionName()
 				: FactionWarConfig.getEvilFactionName();
-			FactionWarManager.getInstance().broadcast("[Faction War] " + factionName + " capturo un checkpoint! +" + FactionWarConfig.getPointsPerFlagKill() + " pts");
+			FactionWarManager.getInstance().broadcast("[Faction War] " + factionName + " capturo un checkpoint. +" + FactionWarConfig.getPointsPerFlagKill() + " pts");
 		}
 	}
 	

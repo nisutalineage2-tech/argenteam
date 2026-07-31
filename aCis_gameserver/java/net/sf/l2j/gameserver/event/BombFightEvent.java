@@ -33,7 +33,7 @@ public class BombFightEvent extends AbstractEvent
 			final L2Skill bombSkill = SkillTable.getInstance().getInfo(BOMB_SKILL_ID, 1);
 			if (bombSkill != null)
 				p.addSkill(bombSkill, false);
-			p.sendMessage("[Bomb] Tienes la habilidad de Bomba! Usala para matar enemigos!");
+			p.sendMessage("[Bomb] Tienes la habilidad de Bomba. Usala para matar enemigos.");
 			p.setTitle("[Bomb] " + p.getName());
 			p.broadcastTitleInfo();
 		}
@@ -61,7 +61,7 @@ public class BombFightEvent extends AbstractEvent
 		final Player player = victim.getPlayer();
 		player.setTitle("[Bomb] Muerto");
 		player.broadcastTitleInfo();
-		player.sendMessage("[Bomb] Has sido eliminado! Espera a la proxima ronda.");
+		player.sendMessage("[Bomb] Has sido eliminado. Espera a la proxima ronda.");
 	}
 	
 	@Override
@@ -107,17 +107,17 @@ public class BombFightEvent extends AbstractEvent
 		
 		if (aliveBlue == 0 && aliveRed > 0)
 		{
-			broadcastToPlayers("[Bomb] El equipo Rojo gana! Todos los jugadores Azules eliminados!");
+			broadcastToPlayers("[Bomb] El equipo Rojo gana. Todos los jugadores Azules eliminados.");
 			endMatch();
 		}
 		else if (aliveRed == 0 && aliveBlue > 0)
 		{
-			broadcastToPlayers("[Bomb] El equipo Azul gana! Todos los jugadores Rojos eliminados!");
+			broadcastToPlayers("[Bomb] El equipo Azul gana. Todos los jugadores Rojos eliminados.");
 			endMatch();
 		}
 		else if (aliveBlue == 0 && aliveRed == 0)
 		{
-			broadcastToPlayers("[Bomb] Ambos equipos eliminados! Es un empate!");
+			broadcastToPlayers("[Bomb] Ambos equipos eliminados. Es un empate.");
 			endMatch();
 		}
 	}

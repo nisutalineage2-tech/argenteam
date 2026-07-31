@@ -66,20 +66,20 @@ public class TvTEvent extends AbstractEvent
 			if (!rewardStr.isEmpty())
 			{
 				grantReward(killer.getPlayer(), rewardStr);
-				killer.getPlayer().sendPacket(new ExShowScreenMessage("[TvT] Racha de bajas x" + killer.getKillStreak() + "! Recompensa recibida!", 5000, ExShowScreenMessage.SMPOS.MIDDLE_CENTER, true));
+				killer.getPlayer().sendPacket(new ExShowScreenMessage("[TvT] Racha de bajas x" + killer.getKillStreak() + ". Recompensa recibida.", 5000, ExShowScreenMessage.SMPOS.MIDDLE_CENTER, true));
 			}
-			broadcastEvent("[TvT] " + killer.getName() + " alcanzo " + killer.getKillStreak() + " bajas consecutivas!");
+			broadcastEvent("[TvT] " + killer.getName() + " alcanzo " + killer.getKillStreak() + " bajas consecutivas.");
 		}
 		
 		for (EventTeam team : getTeams())
 		{
-			team.broadcast("[TvT] " + killer.getName() + " mato a " + victim.getName() + "!");
+			team.broadcast("[TvT] " + killer.getName() + " mato a " + victim.getName() + ".");
 		}
 		
 		// Check score limit
 		if (killerTeam != null && killerTeam.getScore() >= SCORE_LIMIT)
 		{
-			broadcastEvent("[TvT] " + killerTeam.getName() + " alcanzo " + SCORE_LIMIT + " bajas! Victoria!");
+			broadcastEvent("[TvT] " + killerTeam.getName() + " alcanzo " + SCORE_LIMIT + " bajas. Victoria.");
 			endMatch();
 		}
 	}
@@ -92,7 +92,7 @@ public class TvTEvent extends AbstractEvent
 		
 		final Player player = victim.getPlayer();
 		
-		player.sendMessage("[TvT] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[TvT] Moriste. Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		// Disable skills and immobilize during respawn delay
 		player.disableAllSkills();
@@ -120,7 +120,7 @@ public class TvTEvent extends AbstractEvent
 			player.setIsImmobilized(false);
 			
 			player.teleportTo(respawnX, respawnY, respawnZ, 0);
-			player.sendMessage("[TvT] Has sido revivido y curado!");
+			player.sendMessage("[TvT] Has sido revivido y curado.");
 		}, getData().getRespawnDelay() * 1000L);
 	}
 	

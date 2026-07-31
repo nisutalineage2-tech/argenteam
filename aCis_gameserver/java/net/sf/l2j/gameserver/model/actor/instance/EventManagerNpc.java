@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import net.sf.l2j.commons.util.SysUtil;
+
 import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.event.EventBuffer;
 import net.sf.l2j.gameserver.event.EventConfig;
@@ -80,7 +82,7 @@ public class EventManagerNpc extends Folk
 				}
 				
 				if (event.registerPlayer(player))
-					player.sendMessage("[Event] You joined " + event.getData().getEventName() + "!");
+					player.sendMessage("[Event] You joined " + event.getData().getEventName() + ".");
 				else
 					player.sendMessage("[Event] Cannot join. Check your level or try again later.");
 			}
@@ -147,7 +149,7 @@ public class EventManagerNpc extends Folk
 					
 					final StringBuilder sb = new StringBuilder();
 					sb.append("<html><title>Event Info</title><body>");
-					sb.append("<center><font color=LEVEL>").append(event.getData().getEventName()).append("</font></center><br>");
+					sb.append("<center><font color=LEVEL>").append(SysUtil.escapeHtml(event.getData().getEventName())).append("</font></center><br>");
 					sb.append("Estado: ").append(event.getState().name()).append("<br>");
 					sb.append("Jugadores: ").append(event.getAllPlayers().size()).append(" / ").append(event.getData().getMinPlayers()).append("+<br>");
 					sb.append("Nivel: ").append(event.getData().getMinLvl()).append("-").append(event.getData().getMaxLvl()).append("<br>");
@@ -206,7 +208,7 @@ public class EventManagerNpc extends Folk
 			if (currentEvent != null)
 			{
 				sb.append("<table width=\"270\" bgcolor=\"1A1A2E\"><tr><td align=\"center\">");
-				sb.append("<font color=\"00FF00\">Estas inscrito en: <b>").append(currentEvent.getData().getEventName()).append("</b></font><br1>");
+				sb.append("<font color=\"00FF00\">Estas inscrito en: <b>").append(SysUtil.escapeHtml(currentEvent.getData().getEventName())).append("</b></font><br1>");
 				sb.append("<font color=\"808080\" size=\"10\">Estado: ").append(getStateColor(currentEvent.getState())).append("</font><br>");
 				if (currentEvent.getState() == AbstractEvent.State.REGISTER || currentEvent.getState() == AbstractEvent.State.IDLE)
 				{
@@ -232,7 +234,7 @@ public class EventManagerNpc extends Folk
 			
 			// Event name row (use fallback if name is empty)
 			final String displayName = data.getEventName().isEmpty() ? ("Evento #" + data.getId()) : data.getEventName();
-			sb.append("<tr><td width=\"270\" colspan=\"2\"><font color=\"" + getStateHtmlColor(state) + "\">").append(displayName).append("</font></td></tr>");
+			sb.append("<tr><td width=\"270\" colspan=\"2\"><font color=\"" + getStateHtmlColor(state) + "\">").append(SysUtil.escapeHtml(displayName)).append("</font></td></tr>");
 			
 			// Info row
 			sb.append("<tr><td width=\"140\"><font color=\"808080\" size=\"10\">");
@@ -274,12 +276,12 @@ public class EventManagerNpc extends Folk
 			sb.append("<br>");
 			if (currentPage > 0)
 			{
-				sb.append("<button value=\"< Anterior\" action=\"bypass -h npc_" + npcObjId + "_event_page " + (currentPage - 1) + "\" width=\"80\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+				sb.append("<button value=\"&lt; Anterior\" action=\"bypass -h npc_" + npcObjId + "_event_page " + (currentPage - 1) + "\" width=\"80\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
 			}
 			sb.append("<font color=\"808080\" size=\"10\"> Pagina " + (currentPage + 1) + "/" + totalPages + " </font>");
 			if (currentPage < totalPages - 1)
 			{
-				sb.append("<button value=\"Siguiente >\" action=\"bypass -h npc_" + npcObjId + "_event_page " + (currentPage + 1) + "\" width=\"80\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+				sb.append("<button value=\"Siguiente &gt;\" action=\"bypass -h npc_" + npcObjId + "_event_page " + (currentPage + 1) + "\" width=\"80\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
 			}
 		}
 		

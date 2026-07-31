@@ -41,7 +41,7 @@ public class DoubleDominationEvent extends AbstractEvent
 		{
 			if (ep.isOnline())
 			{
-				ep.getPlayer().setTitle("[2Dom] Pelea!");
+				ep.getPlayer().setTitle("[2Dom] Pelea.");
 				ep.getPlayer().broadcastTitleInfo();
 			}
 		}
@@ -61,7 +61,7 @@ public class DoubleDominationEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[2Dom] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[2Dom] Moriste. Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -128,7 +128,7 @@ public class DoubleDominationEvent extends AbstractEvent
 			if (blue != null)
 			{
 				blue.addScore(_pointsPerTick);
-				broadcastToPlayers("[2Dom] Azul domina ambas zonas! +" + _pointsPerTick);
+				broadcastToPlayers("[2Dom] Azul domina ambas zonas. +" + _pointsPerTick);
 			}
 		}
 		else if (redDominates)
@@ -137,7 +137,7 @@ public class DoubleDominationEvent extends AbstractEvent
 			if (red != null)
 			{
 				red.addScore(_pointsPerTick);
-				broadcastToPlayers("[2Dom] Rojo domina ambas zonas! +" + _pointsPerTick);
+				broadcastToPlayers("[2Dom] Rojo domina ambas zonas. +" + _pointsPerTick);
 			}
 		}
 	}

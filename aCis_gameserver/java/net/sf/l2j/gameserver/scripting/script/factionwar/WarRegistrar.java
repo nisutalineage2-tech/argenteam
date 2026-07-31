@@ -42,11 +42,11 @@ public class WarRegistrar extends Quest
 		if (manager.isRunning())
 		{
 			manager.teleportToWarMap(player);
-			player.sendMessage("Te has registrado en la Faction War! Buena suerte.");
+			player.sendMessage("Te has registrado en la Faction War. Buena suerte.");
 		}
 		else
 		{
-			player.sendMessage("Te has registrado en la Faction War! Seras teletransportado cuando comience la guerra.");
+			player.sendMessage("Te has registrado en la Faction War. Seras teletransportado cuando comience la guerra.");
 		}
 		
 		return null;

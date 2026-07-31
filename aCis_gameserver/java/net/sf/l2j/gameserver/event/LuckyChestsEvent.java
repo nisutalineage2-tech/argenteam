@@ -43,7 +43,7 @@ public class LuckyChestsEvent extends AbstractEvent
 			{
 				ep.getPlayer().setTitle("[Chest] " + ep.getKills() + " abiertos");
 				ep.getPlayer().broadcastTitleInfo();
-				ep.getPlayer().sendMessage("[Chests] Encuentra y abre cofres para obtener recompensas! Pero cuidado con los que explotan!");
+				ep.getPlayer().sendMessage("[Chests] Encuentra y abre cofres para obtener recompensas. Pero cuidado con los que explotan.");
 			}
 		}
 		
@@ -62,7 +62,7 @@ public class LuckyChestsEvent extends AbstractEvent
 			return;
 		
 		final Player player = victim.getPlayer();
-		player.sendMessage("[Chests] Moriste! Reviviendo en " + getData().getRespawnDelay() + " segundos...");
+		player.sendMessage("[Chests] Moriste. Reviviendo en " + getData().getRespawnDelay() + " segundos...");
 		
 		player.disableAllSkills();
 		player.setIsImmobilized(true);
@@ -110,7 +110,7 @@ public class LuckyChestsEvent extends AbstractEvent
 		final int y = center.getY() + Rnd.get(-500, 500);
 		
 		_chests.add(new Chest(x, y, center.getZ()));
-		broadcastToPlayers("[Chests] Aparecio un cofre! Ve a buscarlo!");
+		broadcastToPlayers("[Chests] Aparecio un cofre. Ve a buscarlo.");
 	}
 	
 	public void openChest(int chestIndex, Player player)
@@ -134,7 +134,7 @@ public class LuckyChestsEvent extends AbstractEvent
 		if (Rnd.get(100) < _explodeChance)
 		{
 			player.doDie(player);
-			broadcastToPlayers("[Chests] " + ep.getName() + " abrio un cofre bomba y murio!");
+			broadcastToPlayers("[Chests] " + ep.getName() + " abrio un cofre bomba y murio.");
 		}
 		else
 		{
@@ -145,8 +145,8 @@ public class LuckyChestsEvent extends AbstractEvent
 				ep.getPlayer().setTitle("[Chest] " + ep.getKills() + " abiertos");
 				ep.getPlayer().broadcastTitleInfo();
 			}
-			player.sendMessage("[Chests] Obtuviste " + _chestRewardCount + " recompensas del cofre!");
-			broadcastToPlayers("[Chests] " + ep.getName() + " abrio un cofre! (" + ep.getKills() + " en total)");
+			player.sendMessage("[Chests] Obtuviste " + _chestRewardCount + " recompensas del cofre.");
+			broadcastToPlayers("[Chests] " + ep.getName() + " abrio un cofre. (" + ep.getKills() + " en total)");
 		}
 		
 		_chests.remove(chestIndex);

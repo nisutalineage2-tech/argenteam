@@ -28,7 +28,6 @@ public class FactionWarConfig
 	private static String _evilFactionName;
 	private static int _goodFactionColor;
 	private static int _evilFactionColor;
-	private static int _scoreToWin;
 	private static int _pointsPerFlagKill;
 	private static int _pointsPerPvpKill;
 	private static int _flagNpcId;
@@ -198,7 +197,6 @@ public class FactionWarConfig
 		_evilFactionName = props.getProperty("EvilFactionName", "Evil");
 		_goodFactionColor = Integer.parseUnsignedInt(props.getProperty("GoodFactionColor", "0000E0"), 16);
 		_evilFactionColor = Integer.parseUnsignedInt(props.getProperty("EvilFactionColor", "F4FA58"), 16);
-		_scoreToWin = props.getProperty("ScoreToWin", 100);
 		_pointsPerFlagKill = props.getProperty("PointsPerFlagKill", 1);
 		_pointsPerPvpKill = props.getProperty("PointsPerPvpKill", 1);
 		_flagNpcId = props.getProperty("FlagNpcId", 90000);
@@ -328,10 +326,10 @@ public class FactionWarConfig
 		
 		// Say texts
 		_enableSayTexts = props.getProperty("EnableSayTexts", true);
-		_goodNpcText = props.getProperty("GoodNpcText", "Thanks for Register in %faction% %n!");
-		_goodPlayerText = props.getProperty("GoodPlayerText", "I feel the power !!!");
-		_evilNpcText = props.getProperty("EvilNpcText", "Thanks for Register in %faction% %n!");
-		_evilPlayerText = props.getProperty("EvilPlayerText", "I feel the dark power !!");
+		_goodNpcText = props.getProperty("GoodNpcText", "Gracias por registrarte en %faction% %n.");
+		_goodPlayerText = props.getProperty("GoodPlayerText", "Siento el poder.");
+		_evilNpcText = props.getProperty("EvilNpcText", "Gracias por registrarte en %faction% %n.");
+		_evilPlayerText = props.getProperty("EvilPlayerText", "Siento el poder oscuro.");
 		
 		// Chaos event
 		_enableChaosEvent = props.getProperty("EnableChaosEvent", false);
@@ -533,7 +531,6 @@ public class FactionWarConfig
 	public static String getEvilFactionName() { return _evilFactionName; }
 	public static int getGoodFactionColor() { return _goodFactionColor; }
 	public static int getEvilFactionColor() { return _evilFactionColor; }
-	public static int getScoreToWin() { return _scoreToWin; }
 	public static int getPointsPerFlagKill() { return _pointsPerFlagKill; }
 	public static int getPointsPerPvpKill() { return _pointsPerPvpKill; }
 	public static int getFlagNpcId() { return _flagNpcId; }

@@ -869,10 +869,10 @@ public final class Config
 		
 		DEFAULT_ACCESS_LEVEL = players.getProperty("DefaultAccessLevel", 0);
 		GM_HERO_AURA = players.getProperty("GMHeroAura", false);
-		GM_STARTUP_INVULNERABLE = players.getProperty("GMStartupInvulnerable", false);
-		GM_STARTUP_INVISIBLE = players.getProperty("GMStartupInvisible", false);
-		GM_STARTUP_BLOCK_ALL = players.getProperty("GMStartupBlockAll", false);
-		GM_STARTUP_AUTO_LIST = players.getProperty("GMStartupAutoList", true);
+		GM_STARTUP_INVULNERABLE = players.getProperty("GMStartupInvulnerable", true);
+		GM_STARTUP_INVISIBLE = players.getProperty("GMStartupInvisible", true);
+		GM_STARTUP_BLOCK_ALL = players.getProperty("GMStartupBlockAll", true);
+		GM_STARTUP_AUTO_LIST = players.getProperty("GMStartupAutoList", false);
 		
 		PETITIONING_ALLOWED = players.getProperty("PetitioningAllowed", true);
 		MAX_PETITIONS_PER_PLAYER = players.getProperty("MaxPetitionsPerPlayer", 5);

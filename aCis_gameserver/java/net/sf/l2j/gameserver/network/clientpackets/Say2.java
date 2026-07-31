@@ -222,7 +222,7 @@ public final class Say2 extends L2GameClientPacket
 				}
 				
 				if (event.registerPlayer(player))
-					player.sendMessage("[Event] Registrado en " + event.getData().getEventName() + "!");
+					player.sendMessage("[Event] Registrado en " + event.getData().getEventName() + ".");
 				break;
 			}
 			case ".eventleave":
@@ -277,7 +277,7 @@ public final class Say2 extends L2GameClientPacket
 				if (points > 0)
 				{
 					player.getInventory().addItem(57, points);
-					player.sendMessage("[Faction] " + points + " faction points converted to adena!");
+					player.sendMessage("[Faction] " + points + " faction points converted to adena.");
 					player.setFactionPoints(0);
 				}
 				else
