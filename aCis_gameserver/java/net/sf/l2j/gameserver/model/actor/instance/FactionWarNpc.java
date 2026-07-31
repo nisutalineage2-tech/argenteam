@@ -392,6 +392,7 @@ public class FactionWarNpc extends Folk
 			html.replace("%NEXT%", "1");
 		}
 		
+		html.replace("%objectId%", String.valueOf(getObjectId()));
 		player.sendPacket(html);
 	}
 	
@@ -406,6 +407,7 @@ public class FactionWarNpc extends Folk
 			html.replace("%MESSAGE%", message);
 		else
 			html.replace("%MESSAGE%", "");
+		html.replace("%objectId%", String.valueOf(getObjectId()));
 		player.sendPacket(html);
 	}
 	
@@ -519,13 +521,13 @@ public class FactionWarNpc extends Folk
 		{
 			sb.append("</table><br>");
 			sb.append("<center><font color=\"FFCC00\">Fase de Votacion Activa.</font><br1>");
-			sb.append("<font color=\"C0C0C0\" size=\"11\">Vota por el mapa de batalla usando el boton de abajo.</font><br><br>");
+			sb.append("<font color=\"C0C0C0\" size=\"11\">Vota por el mapa de batalla usando el boton de abajo.</font><br><br></center>");
 		}
 		else
 		{
 			sb.append("</table><br>");
 			sb.append("<center><font color=\"FF4444\">La guerra de facciones no esta activa.</font><br1>");
-			sb.append("<font color=\"808080\" size=\"11\">Espera a que comience la proxima batalla.</font><br><br>");
+			sb.append("<font color=\"808080\" size=\"11\">Espera a que comience la proxima batalla.</font><br><br></center>");
 		}
 		
 		// Faction info & actions
