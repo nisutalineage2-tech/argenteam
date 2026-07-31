@@ -325,18 +325,6 @@ public class EventManagerNpc extends Folk
 	}
 	
 	@Override
-	public String getHtmlPath(int npcId, int val)
-	{
-		String filename;
-		if (val == 0)
-			filename = "" + npcId;
-		else
-			filename = npcId + "-" + val;
-		
-		return "data/html/mods/event/" + filename + ".htm";
-	}
-	
-	@Override
 	public void showChatWindow(Player player, int val)
 	{
 		showEventList(player, 0);
