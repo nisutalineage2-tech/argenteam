@@ -20,9 +20,9 @@ import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.ConfirmDlg;
 import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
-import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;
-import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
-import net.sf.l2j.gameserver.phantom.PhantomEngine;
+import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;	import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
+	import net.sf.l2j.gameserver.phantom.PhantomEngine;
+	import net.sf.l2j.gameserver.phantom.PhantomLog;
 
 public abstract class AbstractEvent
 {
@@ -346,6 +346,14 @@ public abstract class AbstractEvent
 			killer.addKill();
 		
 		onEventKill(killer, victim);
+		
+		// Phantom diagnostic: makes event kills by phantoms verifiable in log/phantoms.log.
+		// Logged AFTER onEventKill so the team score already includes this kill (matches the scorebar).
+		if (killer != null && killer.isOnline() && PhantomEngine.isPhantom(killerId))
+		{
+			final EventTeam team = killer.getTeamId() >= 0 ? getTeam(killer.getTeamId()) : null;
+			PhantomLog.info("Event " + _data.getEventName() + " | phantom " + killer.getName() + " killed " + (victim != null ? victim.getName() : "?") + " | kills=" + killer.getKills() + (team != null ? " teamScore=" + team.getScore() : ""));
+		}
 	}
 	
 	public final void onDie(int victimId, int killerId)
@@ -354,6 +362,12 @@ public abstract class AbstractEvent
 		
 		if (victim != null)
 			victim.addDeath();
+		
+		// Phantom diagnostic: makes event deaths by phantoms verifiable in log/phantoms.log.
+		// Note: reviving events (TvT/DM/CTF) respawn the phantom at its team spawn;
+		// elimination events (LMS/SimonSays/BombFight...) keep it dead until the match ends.
+		if (victim != null && victim.isOnline() && PhantomEngine.isPhantom(victimId))
+			PhantomLog.info("Event " + _data.getEventName() + " | phantom " + victim.getName() + " died | deaths=" + victim.getDeaths() + " (event controls respawn)");
 		
 		onEventDie(victim, getEventPlayer(killerId));
 	}
