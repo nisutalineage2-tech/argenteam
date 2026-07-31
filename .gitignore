@@ -1,4 +1,19 @@
+# IDE
 .idea
 .metadata
+
+# Freebuff (estado local de la app, no subir a GitHub)
 .freebuff/
 .agents/
+
+# Logs y crash dumps de la JVM
+*.log
+hs_err_pid*.log
+
+# Clases compiladas (defensa extra; build/ ya ignorado en cada subproyecto)
+*.class
+
+# Bases SQLite locales
+*.db
+*.db-shm
+*.db-wal
