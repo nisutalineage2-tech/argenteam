@@ -83,7 +83,7 @@ public class FactionWarNpc extends Folk
 		
 		final StringBuilder sb = new StringBuilder(2048);
 		sb.append("<html><body><center><font color=LEVEL>Checkpoints Capturables</font></center><br>");
-		sb.append("Los checkpoints son puntos de batalla. ¡Ataca y captúralos para tu facción!<br><br>");
+		sb.append("Los checkpoints son puntos de batalla. Ataca y capturalos para tu faccion!<br><br>");
 		sb.append("<table width=280>");
 		sb.append("<tr><td width=30><font color=808080>#</font></td><td width=150><font color=808080>Dueño</font></td><td width=100><font color=808080>Estado</font></td></tr>");
 		
@@ -434,7 +434,7 @@ public class FactionWarNpc extends Folk
 		
 		// Header
 		sb.append("<center><table width=\"270\" bgcolor=\"000000\"><tr>");
-		sb.append("<td width=\"270\" height=\"32\" align=\"center\"><font color=\"F0D060\" size=\"16\">⚔ Registrador de Guerra ⚔</font></td>");
+		sb.append("<td width=\"270\" height=\"32\" align=\"center\"><font color=\"F0D060\" size=\"16\">Registrador de Guerra</font></td>");
 		sb.append("</tr></table></center>");
 		sb.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\"><br>");
 		
@@ -442,7 +442,7 @@ public class FactionWarNpc extends Folk
 		if (message != null && !message.isEmpty())
 		{
 			sb.append("<center><table width=\"260\" bgcolor=\"1A1A2E\"><tr>");
-			sb.append("<td align=\"center\"><font color=\"99FF99\">☛ ").append(message).append("</font></td>");
+			sb.append("<td align=\"center\"><font color=\"99FF99\">").append(message).append("</font></td>");
 			sb.append("</tr></table></center><br>");
 		}
 		
@@ -452,17 +452,17 @@ public class FactionWarNpc extends Folk
 		if (running)
 		{
 			statusColor = "00FF00";
-			statusText = "⚔ EN GUERRA";
+			statusText = "EN GUERRA";
 		}
 		else if (votingPhase)
 		{
 			statusColor = "FFCC00";
-			statusText = "🗳 VOTACIÓN ACTIVA";
+			statusText = "VOTACION ACTIVA";
 		}
 		else
 		{
 			statusColor = "FF4444";
-			statusText = "✖ DETENIDO";
+			statusText = "DETENIDO";
 		}
 		
 		sb.append("<table width=\"270\" cellpadding=\"2\" cellspacing=\"2\">");
@@ -475,8 +475,8 @@ public class FactionWarNpc extends Folk
 			final int evilScore = FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId());
 			final String timeStr = FactionWarManager.getInstance().getRemainingTimeStr();
 			
-			sb.append("<tr><td>⏱ Tiempo restante:</td><td align=\"center\"><font color=\"FFD700\">" + timeStr + "</font></td></tr>");
-			sb.append("<tr><td>🏴 Bandera actual:</td><td align=\"center\"><font color=\"" + (FactionWarManager.getInstance().getWinningFaction() == FactionWarConfig.getGoodFactionId() ? "00BFFF" : "FF4444") + "\">" + (FactionWarManager.getInstance().getWinningFaction() > 0 ? getFactionNameShort(FactionWarManager.getInstance().getWinningFaction()) : "⚪ Neutral") + "</font></td></tr>");
+			sb.append("<tr><td>Tiempo restante:</td><td align=\"center\"><font color=\"FFD700\">" + timeStr + "</font></td></tr>");
+			sb.append("<tr><td>Bandera actual:</td><td align=\"center\"><font color=\"" + (FactionWarManager.getInstance().getWinningFaction() == FactionWarConfig.getGoodFactionId() ? "00BFFF" : "FF4444") + "\">" + (FactionWarManager.getInstance().getWinningFaction() > 0 ? getFactionNameShort(FactionWarManager.getInstance().getWinningFaction()) : "Neutral") + "</font></td></tr>");
 			sb.append("</table><br>");
 			
 			// Score table
@@ -500,7 +500,7 @@ public class FactionWarNpc extends Folk
 				}
 				
 				sb.append("<table width=\"270\" cellpadding=\"2\" cellspacing=\"0\">");
-				sb.append("<tr><td colspan=\"3\" align=\"center\"><font color=\"B0C4DE\">▣ Puestos de Control ▣</font></td></tr>");
+				sb.append("<tr><td colspan=\"3\" align=\"center\"><font color=\"B0C4DE\">Puestos de Control</font></td></tr>");
 				sb.append("<tr align=\"center\">");
 				sb.append("<td width=\"90\" bgcolor=\"001133\"><font color=\"00BFFF\">" + goodCp + "</font></td>");
 				sb.append("<td width=\"90\" bgcolor=\"222222\"><font color=\"C0C0C0\">" + neutralCp + "</font></td>");
@@ -512,19 +512,19 @@ public class FactionWarNpc extends Folk
 				sb.append("<td><font color=\"808080\" size=\"10\">" + FactionWarConfig.getEvilFactionName() + "</font></td>");
 				sb.append("</tr></table><br>");
 				
-				sb.append("<center><button value=\"📋 Detalle de CPs\" action=\"bypass -h npc_%objectId%_warCheckpoints\" width=\"220\" height=\"22\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"></center><br>");
+				sb.append("<center><button value=\"Detalle de CPs\" action=\"bypass -h npc_%objectId%_warCheckpoints\" width=\"220\" height=\"22\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"></center><br>");
 			}
 		}
 		else if (votingPhase)
 		{
 			sb.append("</table><br>");
-			sb.append("<center><font color=\"FFCC00\">¡Fase de Votación Activa!</font><br1>");
+			sb.append("<center><font color=\"FFCC00\">Fase de Votacion Activa!</font><br1>");
 			sb.append("<font color=\"C0C0C0\" size=\"11\">Vota por el mapa de batalla usando el botón de abajo.</font><br><br>");
 		}
 		else
 		{
 			sb.append("</table><br>");
-			sb.append("<center><font color=\"FF4444\">La guerra de facciones no está activa.</font><br1>");
+			sb.append("<center><font color=\"FF4444\">La guerra de facciones no esta activa.</font><br1>");
 			sb.append("<font color=\"808080\" size=\"11\">Espera a que comience la próxima batalla.</font><br><br>");
 		}
 		
@@ -536,33 +536,33 @@ public class FactionWarNpc extends Folk
 			final String factionName = faction != null ? faction.getName() : "Desconocida";
 			
 			sb.append("<table width=\"270\" cellpadding=\"2\">");
-			sb.append("<tr><td width=\"270\" align=\"center\" bgcolor=\"111111\"><font color=\"#" + factionColor + "\"><b>✦ " + factionName.toUpperCase() + " ✦</b></font></td></tr>");
+			sb.append("<tr><td width=\"270\" align=\"center\" bgcolor=\"111111\"><font color=\"#" + factionColor + "\"><b>" + factionName.toUpperCase() + "</b></font></td></tr>");
 			sb.append("</table><br>");
 			
 			if (running)
 			{
 				sb.append("<center>");
-				sb.append("<button value=\"🚀 Ir a mi Base\" action=\"bypass -h npc_%objectId%_warGoToBase\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
+				sb.append("<button value=\"Ir a mi Base\" action=\"bypass -h npc_%objectId%_warGoToBase\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
 				
 				if (votingPhase)
 				{
-					sb.append("<button value=\"🗳 Ver Mapas y Votar\" action=\"bypass -h npc_%objectId%_warVoteMenu\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
+					sb.append("<button value=\"Ver Mapas y Votar\" action=\"bypass -h npc_%objectId%_warVoteMenu\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
 				}
 				
-				sb.append("<br><font color=\"808080\" size=\"10\">Al morir: \"Volver a la Aldea\" → Zona Neutral.<br>Luego regresa a tu base desde aquí.</font>");
+				sb.append("<br><font color=\"808080\" size=\"10\">Al morir: \"Volver a la Aldea\" a Zona Neutral.<br>Luego regresa a tu base desde aqui.</font>");
 				sb.append("</center>");
 			}
 			else if (votingPhase)
 			{
 				sb.append("<center>");
-				sb.append("<button value=\"🗳 Ver Mapas y Votar\" action=\"bypass -h npc_%objectId%_warVoteMenu\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+				sb.append("<button value=\"Ver Mapas y Votar\" action=\"bypass -h npc_%objectId%_warVoteMenu\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
 				sb.append("</center>");
 			}
 		}
 		else
 		{
 			sb.append("<br><center><table width=\"260\" bgcolor=\"330000\"><tr><td align=\"center\">");
-			sb.append("<font color=\"FF6666\">⚠ No tienes facción.</font><br1>");
+			sb.append("<font color=\"FF6666\">No tienes faccion.</font><br1>");
 			sb.append("<font color=\"C0C0C0\" size=\"11\">Habla con el Faction Manager en la zona neutral para elegir una.</font>");
 			sb.append("</td></tr></table></center>");
 		}

@@ -111,40 +111,38 @@ public class EventManagerNpc extends Folk
 			else if (action.equals("info"))
 			{
 				if (!st.hasMoreTokens())
-					return;
-				
-				final int eventId;
-				try
-				{
-					eventId = Integer.parseInt(st.nextToken());
-				}
-				catch (NumberFormatException e)
-				{
-					return;
-				}
-				
-				final AbstractEvent event = EventEngine.getInstance().getEvent(eventId);
-				if (event == null)
-				{
-					player.sendMessage("[Event] Unknown event.");
-					return;
-				}
-				
-				final StringBuilder sb = new StringBuilder();
-				sb.append("<html><title>Event Info</title><body>");
-				sb.append("<center><font color=LEVEL>").append(event.getData().getEventName()).append("</font></center><br>");
-				sb.append("Status: ").append(event.getState().name()).append("<br>");
-				sb.append("Players: ").append(event.getAllPlayers().size()).append(" / ").append(event.getData().getMinPlayers()).append("+<br>");
-				sb.append("Level: ").append(event.getData().getMinLvl()).append("-").append(event.getData().getMaxLvl()).append("<br>");
-				sb.append("Duration: ").append(event.getData().getMatchTime()).append(" min<br>");
-				sb.append("Potions: ").append(event.getData().isAllowPotions() ? "Allowed" : "Disabled").append("<br>");
-				sb.append("Magic: ").append(event.getData().isAllowMagic() ? "Allowed" : "Disabled").append("<br>");
-				sb.append("<br><center><button value=\"Join\" action=\"bypass -h npc_%objectId%_event_join ").append(eventId).append("\" width=70 height=25 back=\"L2UI_CH3.btn\" fore=\"L2UI_CH3.btn\"></center>");
-				sb.append("</body></html>");
-				
-				final NpcHtmlMessage msg = new NpcHtmlMessage(getObjectId());
-				msg.setHtml(sb.toString());
-				player.sendPacket(msg);
+					return;					final int eventId;
+					try
+					{
+						eventId = Integer.parseInt(st.nextToken());
+					}
+					catch (NumberFormatException e)
+					{
+						return;
+					}
+					
+					final AbstractEvent event = EventEngine.getInstance().getEvent(eventId);
+					if (event == null)
+					{
+						player.sendMessage("[Event] Unknown event.");
+						return;
+					}
+					
+					final StringBuilder sb = new StringBuilder();
+					sb.append("<html><title>Event Info</title><body>");
+					sb.append("<center><font color=LEVEL>").append(event.getData().getEventName()).append("</font></center><br>");
+					sb.append("Estado: ").append(event.getState().name()).append("<br>");
+					sb.append("Jugadores: ").append(event.getAllPlayers().size()).append(" / ").append(event.getData().getMinPlayers()).append("+<br>");
+					sb.append("Nivel: ").append(event.getData().getMinLvl()).append("-").append(event.getData().getMaxLvl()).append("<br>");
+					sb.append("Duracion: ").append(event.getData().getMatchTime()).append(" min<br>");
+					sb.append("Pociones: ").append(event.getData().isAllowPotions() ? "Permitidas" : "Desactivadas").append("<br>");
+					sb.append("Magia: ").append(event.getData().isAllowMagic() ? "Permitida" : "Desactivada").append("<br>");
+					sb.append("<br><center><button value=\"Unirse\" action=\"bypass -h npc_").append(getObjectId()).append("_event_join ").append(eventId).append("\" width=70 height=25 back=\"L2UI_CH3.btn\" fore=\"L2UI_CH3.btn\"></center>");
+					sb.append("</body></html>");
+					
+					final NpcHtmlMessage msg = new NpcHtmlMessage(getObjectId());
+					msg.setHtml(sb.toString());
+					player.sendPacket(msg);
 			}
 		}
 		else
@@ -154,13 +152,11 @@ public class EventManagerNpc extends Folk
 	private void showEventList(Player player)
 	{
 		final int npcObjId = getObjectId();
-		final StringBuilder sb = new StringBuilder(8192);
+		final StringBuilder sb = new StringBuilder(4096);
 		sb.append("<html><body>");
 		
 		// Header
-		sb.append("<center><table width=\"270\" bgcolor=\"000000\"><tr>");
-		sb.append("<td width=\"270\" height=\"32\" align=\"center\"><font color=\"FFD700\" size=\"16\">🏆 Administrador de Eventos 🏆</font></td>");
-		sb.append("</tr></table></center>");
+		sb.append("<center><font color=\"FFD700\">Administrador de Eventos</font></center>");
 		sb.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\"><br>");
 		
 		// Check if player is already in an event
@@ -172,11 +168,11 @@ public class EventManagerNpc extends Folk
 			if (currentEvent != null)
 			{
 				sb.append("<table width=\"270\" bgcolor=\"1A1A2E\"><tr><td align=\"center\">");
-				sb.append("<font color=\"00FF00\">✓ Estás inscrito en: <b>").append(currentEvent.getData().getEventName()).append("</b></font><br1>");
+				sb.append("<font color=\"00FF00\">Estas inscrito en: <b>").append(currentEvent.getData().getEventName()).append("</b></font><br1>");
 				sb.append("<font color=\"808080\" size=\"10\">Estado: ").append(getStateColor(currentEvent.getState())).append("</font><br>");
 				if (currentEvent.getState() == AbstractEvent.State.REGISTER || currentEvent.getState() == AbstractEvent.State.IDLE)
 				{
-					sb.append("<button value=\"❌ Abandonar\" action=\"bypass -h npc_" + npcObjId + "_event_leave\" width=\"100\" height=\"22\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+					sb.append("<button value=\"Abandonar\" action=\"bypass -h npc_" + npcObjId + "_event_leave\" width=\"100\" height=\"22\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
 				}
 				sb.append("</td></tr></table><br>");
 			}
@@ -200,19 +196,19 @@ public class EventManagerNpc extends Folk
 			
 			// Event name row (use fallback if name is empty)
 			final String displayName = data.getEventName().isEmpty() ? ("Evento #" + data.getId()) : data.getEventName();
-			sb.append("<tr><td width=\"270\" colspan=\"2\"><font color=\"" + getStateHtmlColor(state) + "\">" + getStateIcon(state) + " ").append(displayName).append("</font></td></tr>");
+			sb.append("<tr><td width=\"270\" colspan=\"2\"><font color=\"" + getStateHtmlColor(state) + "\">").append(displayName).append("</font></td></tr>");
 			
 			// Info row
 			sb.append("<tr><td width=\"140\"><font color=\"808080\" size=\"10\">");
-			sb.append("👥 ").append(registeredCount).append("/").append(minPlayers).append(" jugadores<br1>");
-			sb.append("📊 Nvl ").append(data.getMinLvl()).append("-").append(data.getMaxLvl());
+			sb.append(registeredCount).append("/").append(minPlayers).append(" jugadores<br1>");
+			sb.append("Nvl ").append(data.getMinLvl()).append("-").append(data.getMaxLvl());
 			sb.append("</font></td>");
 			
 			// Action buttons
 			sb.append("<td width=\"130\" align=\"right\">");
 			if (state == AbstractEvent.State.REGISTER && !alreadyInEvent)
 			{
-				sb.append("<button value=\"✅ Unirse\" action=\"bypass -h npc_" + npcObjId + "_event_join " + data.getId() + "\" width=\"60\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+				sb.append("<button value=\"Unirse\" action=\"bypass -h npc_" + npcObjId + "_event_join " + data.getId() + "\" width=\"60\" height=\"20\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
 			}
 			else if (state == AbstractEvent.State.REGISTER && alreadyInEvent)
 			{
@@ -220,24 +216,17 @@ public class EventManagerNpc extends Folk
 			}
 			else if (state == AbstractEvent.State.RUNNING)
 			{
-				sb.append("<font color=\"00FF00\">▶ En curso</font>");
+				sb.append("<font color=\"00FF00\">En curso</font>");
 			}
 			else if (state == AbstractEvent.State.STARTING)
 			{
-				sb.append("<font color=\"FFCC00\">⏳ Iniciando</font>");
+				sb.append("<font color=\"FFCC00\">Iniciando</font>");
 			}
 			else
 			{
 				sb.append("<font color=\"808080\">Esperando</font>");
 			}
 			sb.append("</td></tr>");
-			
-			// Time/status info row
-			final String timeInfo = getEventTimeInfo(event);
-			if (timeInfo != null)
-			{
-				sb.append("<tr><td colspan=\"2\"><font color=\"C0C0C0\" size=\"10\">").append(timeInfo).append("</font></td></tr>");
-			}
 			
 			sb.append("</table>");
 			sb.append("<img src=\"L2UI.SquareGray\" width=\"270\" height=\"1\">");
@@ -246,7 +235,7 @@ public class EventManagerNpc extends Folk
 		// Footer with buffer button
 		if (EventConfig.isEventBufferEnabled())
 		{
-			sb.append("<br><center><button value=\"📦 Buffs para Eventos\" action=\"bypass -h npc_" + npcObjId + "_event_buff\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"></center>");
+			sb.append("<br><center><button value=\"Buffs para Eventos\" action=\"bypass -h npc_" + npcObjId + "_event_buff\" width=\"220\" height=\"24\" back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"></center>");
 		}
 		
 		sb.append("</body></html>");
@@ -282,58 +271,6 @@ public class EventManagerNpc extends Folk
 		}
 	}
 	
-	private String getStateIcon(AbstractEvent.State state)
-	{
-		switch (state)
-		{
-			case RUNNING: return "▶";
-			case REGISTER: return "📋";
-			case STARTING: return "⏳";
-			default: return "💤";
-		}
-	}
-	
-	/**
-	 * Returns time/status info string for an event (when registration closes, time remaining, etc.)
-	 */
-	private String getEventTimeInfo(AbstractEvent event)
-	{
-		final AbstractEvent.State state = event.getState();
-		
-		if (state == AbstractEvent.State.RUNNING)
-		{
-			final int remainingSec = event.getRemainingMatchTime();
-			if (remainingSec > 0)
-			{
-				final int mins = remainingSec / 60;
-				final int secs = remainingSec % 60;
-				if (mins > 0)
-					return "⏱ Tiempo restante: " + mins + "m " + secs + "s";
-				return "⏱ Tiempo restante: " + secs + "s";
-			}
-			return "⏱ Finalizando...";
-		}
-		else if (state == AbstractEvent.State.REGISTER)
-		{
-			final int remainingSec = event.getRemainingRegisterTime();
-			if (remainingSec > 0)
-			{
-				final int mins = remainingSec / 60;
-				final int secs = remainingSec % 60;
-				if (mins > 0)
-					return "⏳ Inscripción cierra en: " + mins + "m " + secs + "s";
-				return "⏳ Inscripción cierra en: " + secs + "s";
-			}
-			return "⏳ Iniciando pronto...";
-		}
-		else if (state == AbstractEvent.State.STARTING)
-		{
-			return "⏳ El evento está por comenzar...";
-		}
-		
-		return null;
-	}
-	
 	@Override
 	public String getHtmlPath(int npcId, int val)
 	{
@@ -344,5 +281,11 @@ public class EventManagerNpc extends Folk
 			filename = npcId + "-" + val;
 		
 		return "data/html/mods/event/" + filename + ".htm";
+	}
+	
+	@Override
+	public void showChatWindow(Player player, int val)
+	{
+		showEventList(player);
 	}
 }
