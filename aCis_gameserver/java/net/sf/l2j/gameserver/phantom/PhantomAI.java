@@ -402,7 +402,7 @@ public final class PhantomAI
 		}
 		
 		// Priority 2: event objective NPCs (chests to open, boss to kill, enemy guards)
-		final Monster eventNpc = findEventNpcTarget(phantom);
+		final Monster eventNpc = findEventNpcTarget(phantom, event);
 		if (eventNpc != null)
 		{
 			attackNpc(phantom, eventNpc, "Event npc ");
@@ -451,11 +451,19 @@ public final class PhantomAI
 	}
 	
 	/**
-	 * Finds the nearest attackable event NPC (chests, boss, guards) within event range.
-	 * Does NOT check distance-to-home, since event arenas are far from the phantom's farm home.
+	 * Finds the nearest attackable event objective NPC (chests, boss, guards) within the
+	 * event arena. Only NPCs inside the arena radius (around the event center) are valid
+	 * targets, so normal farm mobs near the arena are never attacked.
 	 */
-	private static Monster findEventNpcTarget(Player phantom)
+	private static Monster findEventNpcTarget(Player phantom, AbstractEvent event)
 	{
+		final Location arenaCenter = event.getData().getPositionAll();
+		if (arenaCenter == null)
+			return null;
+		
+		// Only attack NPCs inside the event arena (center + radius), never normal mobs.
+		final int arenaRadius = Math.max(1500, event.getData().getPositionRadius() * 2);
+		
 		final Monster[] nearest = new Monster[1];
 		final double[] nearestDistance = { Double.MAX_VALUE };
 		final int range = Math.max(1200, PhantomConfig.aggroRange() * 2);
@@ -463,6 +471,10 @@ public final class PhantomAI
 		phantom.forEachKnownTypeInRadius(Monster.class, range, monster ->
 		{
 			if (monster == null || monster.isDead() || !monster.isVisible() || !monster.isAttackableBy(phantom))
+				return;
+			
+			// Skip NPCs outside the event arena (e.g. farm mobs nearby).
+			if (monster.distance3D(arenaCenter) > arenaRadius)
 				return;
 			
 			final double distance = phantom.distance3D(monster);
