@@ -2639,6 +2639,9 @@ public final class Player extends Playable
 				stopFakeDeath(true);
 		}
 		
+		// Event participants are protected from XP loss and item drops while fighting.
+		final boolean inEvent = net.sf.l2j.gameserver.event.EventEngine.getInstance().isPlayerInAnyEvent(getObjectId());
+		
 		if (killer != null)
 		{
 			final Player pk = killer.getActingPlayer();
@@ -2674,13 +2677,14 @@ public final class Player extends Playable
 			if (isCursedWeaponEquipped())
 				CursedWeaponManager.getInstance().drop(_cursedWeaponEquippedId, killer);
 			else
-			{
-				if (pk == null || !pk.isCursedWeaponEquipped())
-				{
-					onDieDropItem(killer); // Check if any item should be dropped
-					
-					// if the area isn't an arena
-					if (!isInArena())
+			{					if (pk == null || !pk.isCursedWeaponEquipped())
+					{
+						// Event participants never drop items or lose XP when dying in an event.
+						if (!inEvent)
+							onDieDropItem(killer); // Check if any item should be dropped
+						
+						// if the area isn't an arena (clan reputation is also skipped for event participants)
+						if (!isInArena() && !inEvent)
 					{
 						// if both victim and attacker got clans & aren't academicians
 						if (pk != null && pk.getClan() != null && getClan() != null && !isAcademyMember() && !pk.isAcademyMember())
@@ -2698,11 +2702,22 @@ public final class Player extends Playable
 						}
 					}
 					
-					// Reduce player's xp and karma.
-					if (Config.ALLOW_DELEVEL && (!hasSkill(L2Skill.SKILL_LUCKY) || getStatus().getLevel() > 9))
+					// Reduce player's xp and karma (skipped for event participants).
+					if (!inEvent && Config.ALLOW_DELEVEL && (!hasSkill(L2Skill.SKILL_LUCKY) || getStatus().getLevel() > 9))
 						applyDeathPenalty(pk != null && getClan() != null && pk.getClan() != null && (getClan().isAtWarWith(pk.getClanId()) || pk.getClan().isAtWarWith(getClanId())), pk != null);
 				}
 			}
+			
+			// Feed the kill/death to the active event (kill counters, scores, titles, respawns).
+			// Only counts when the victim participates in a RUNNING event.
+			if (pk != null)
+				net.sf.l2j.gameserver.event.EventEngine.getInstance().onPlayerKill(pk, this);
+			net.sf.l2j.gameserver.event.EventEngine.getInstance().onPlayerDie(this, pk);
+		}
+		else
+		{
+			// Environmental death (no killer) — still notify the event so respawns work.
+			net.sf.l2j.gameserver.event.EventEngine.getInstance().onPlayerDie(this, null);
 		}
 		
 		// Unsummon Cubics.

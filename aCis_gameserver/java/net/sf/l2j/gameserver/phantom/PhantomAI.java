@@ -14,20 +14,32 @@ import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.data.manager.SpawnManager;
 import net.sf.l2j.gameserver.data.xml.FactionData;
+import net.sf.l2j.gameserver.data.xml.ItemData;
 import net.sf.l2j.gameserver.data.xml.RestartPointData;
 import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
+import net.sf.l2j.gameserver.enums.actors.OperateType;
 import net.sf.l2j.gameserver.enums.skills.SkillType;
+import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.event.EventEngine;
+import net.sf.l2j.gameserver.event.EventPlayer;
+import net.sf.l2j.gameserver.event.EventTeam;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.model.Faction;
-import net.sf.l2j.gameserver.model.group.Party;
-import net.sf.l2j.gameserver.data.xml.ItemData;
-import net.sf.l2j.gameserver.enums.actors.OperateType;
-import net.sf.l2j.gameserver.model.item.kind.Item;
-import net.sf.l2j.gameserver.model.group.Party;
 import net.sf.l2j.gameserver.model.WorldObject;
+import net.sf.l2j.gameserver.model.actor.Creature;
+import net.sf.l2j.gameserver.model.actor.Npc;
+import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.actor.instance.Monster;
+import net.sf.l2j.gameserver.model.group.Party;
+import net.sf.l2j.gameserver.model.item.instance.ItemInstance;
+import net.sf.l2j.gameserver.model.item.kind.Item;
+import net.sf.l2j.gameserver.model.location.Location;
+import net.sf.l2j.gameserver.model.spawn.MultiSpawn;
+import net.sf.l2j.gameserver.model.spawn.NpcMaker;
+import net.sf.l2j.gameserver.skills.L2Skill;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -168,6 +180,21 @@ public final class PhantomAI
 			{
 				LAST_ACTIONS.put(phantom.getObjectId(), "Busy");
 				return;
+			}
+			
+			// === EVENT MODE: while a registered event is RUNNING, the phantom fights the event ===
+			// (no farming, no patrol, no level-zone teleports — they would pull the phantom away from the arena)
+			if (EventEngine.getInstance().isPlayerInAnyEvent(phantom.getObjectId()))
+			{
+				final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+				if (event != null && event.getState() == AbstractEvent.State.RUNNING)
+				{
+					handleEventMode(phantom, event);
+					return;
+				}
+				
+				// Registered but event not started yet — behave normally until teleport.
+				LAST_ACTIONS.put(phantom.getObjectId(), "Event waiting");
 			}
 			
 			if (tryLootAny(phantom))
@@ -359,8 +386,132 @@ public final class PhantomAI
 	}
 	
 	/**
+	 * Event mode: the phantom fights the running event like a real participant.
+	 * Priority 1: attack enemy event participants (opposite team).
+	 * Priority 2: attack event objective NPCs (chests, boss, guards — Monster subclass).
+	 * Priority 3: move toward the event arena center to converge on the fight.
+	 */
+	private static void handleEventMode(Player phantom, AbstractEvent event)
+	{
+		// Priority 1: enemy event participants (opposite team, or any participant for FFA)
+		final Player eventTarget = findEventEnemy(phantom, event);
+		if (eventTarget != null)
+		{
+			attackPlayer(phantom, eventTarget, "Event ");
+			return;
+		}
+		
+		// Priority 2: event objective NPCs (chests to open, boss to kill, enemy guards)
+		final Monster eventNpc = findEventNpcTarget(phantom);
+		if (eventNpc != null)
+		{
+			attackNpc(phantom, eventNpc, "Event npc ");
+			return;
+		}
+		
+		// Priority 3: no targets nearby — converge on the event center
+		if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+		{
+			moveToEventCenter(phantom, event);
+			return;
+		}
+		
+		LAST_ACTIONS.put(phantom.getObjectId(), "Event scanning");
+	}
+	
+	/**
+	 * Finds the nearest enemy event participant.
+	 * Uses event.canAttack() so teammates are never targeted and FFA events target anyone.
+	 */
+	private static Player findEventEnemy(Player phantom, AbstractEvent event)
+	{
+		final Player[] nearest = new Player[1];
+		final double[] nearestDistance = { Double.MAX_VALUE };
+		final int range = Math.max(1200, PhantomConfig.aggroRange() * 2);
+		
+		phantom.forEachKnownTypeInRadius(Player.class, range, player ->
+		{
+			if (player == null || player == phantom || player.isDead() || !player.isVisible())
+				return;
+			
+			if (!event.isParticipating(player.getObjectId()))
+				return;
+			
+			if (!event.canAttack(phantom.getObjectId(), player.getObjectId()))
+				return;
+			
+			final double distance = phantom.distance3D(player);
+			if (distance < nearestDistance[0])
+			{
+				nearest[0] = player;
+				nearestDistance[0] = distance;
+			}
+		});
+		return nearest[0];
+	}
+	
+	/**
+	 * Finds the nearest attackable event NPC (chests, boss, guards) within event range.
+	 * Does NOT check distance-to-home, since event arenas are far from the phantom's farm home.
+	 */
+	private static Monster findEventNpcTarget(Player phantom)
+	{
+		final Monster[] nearest = new Monster[1];
+		final double[] nearestDistance = { Double.MAX_VALUE };
+		final int range = Math.max(1200, PhantomConfig.aggroRange() * 2);
+		
+		phantom.forEachKnownTypeInRadius(Monster.class, range, monster ->
+		{
+			if (monster == null || monster.isDead() || !monster.isVisible() || !monster.isAttackableBy(phantom))
+				return;
+			
+			final double distance = phantom.distance3D(monster);
+			if (distance < nearestDistance[0])
+			{
+				nearest[0] = monster;
+				nearestDistance[0] = distance;
+			}
+		});
+		return nearest[0];
+	}
+	
+	/**
+	 * Moves the phantom toward the event arena: its own team spawn (or the event center).
+	 */
+	private static void moveToEventCenter(Player phantom, AbstractEvent event)
+	{
+		Location center = event.getData().getPositionAll();
+		
+		// Prefer the phantom's team spawn to regroup with its side.
+		final EventPlayer ep = event.getEventPlayer(phantom.getObjectId());
+		if (ep != null && ep.getTeamId() >= 0)
+		{
+			for (EventTeam team : event.getTeams())
+			{
+				if (team.getId() == ep.getTeamId() && team.getSpawnLocation() != null)
+				{
+					center = team.getSpawnLocation();
+					break;
+				}
+			}
+		}
+		
+		if (center == null)
+		{
+			LAST_ACTIONS.put(phantom.getObjectId(), "Event scan");
+			return;
+		}
+		
+		final int offsetX = Rnd.get(-250, 250);
+		final int offsetY = Rnd.get(-250, 250);
+		LAST_ACTIONS.put(phantom.getObjectId(), "Event advance");
+		moveTo(phantom, new Location(center.getX() + offsetX, center.getY() + offsetY, center.getZ()), "Event advance");
+	}
+	
+	/**
 	 * Handles phantom death — schedules respawn in town/faction base.
 	 * After respawn, if faction war is running, the phantom returns to the war map.
+	 * If an event is running, the phantom returns to its event team spawn instead of town.
 	 */
 	private static void handleDeath(Player phantom)
 	{
@@ -376,8 +527,87 @@ public final class PhantomAI
 			return;
 		}
 		
+		// During a RUNNING event, the phantom respawns back into the event arena (not town).
+		if (EventEngine.getInstance().isPlayerInAnyEvent(phantom.getObjectId()))
+		{
+			LAST_ACTIONS.put(phantom.getObjectId(), "Dead - to event");
+			ThreadPool.schedule(() -> respawnInEvent(phantom), PhantomConfig.respawnDelayMs());
+			return;
+		}
+		
 		LAST_ACTIONS.put(phantom.getObjectId(), "Dead - to nearest town");
 		ThreadPool.schedule(() -> respawnInTown(phantom), PhantomConfig.respawnDelayMs());
+	}
+	
+	/**
+	 * Respawns a phantom that died during a running event back into the event arena,
+	 * at its own team spawn (revived + fully healed), so it keeps participating.
+	 */
+	private static void respawnInEvent(Player phantom)
+	{
+		try
+		{
+			if (phantom == null || !phantom.isOnline())
+				return;
+			
+			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+			final boolean eventRunning = event != null && event.getState() == AbstractEvent.State.RUNNING;
+			
+			if (phantom.isDead())
+				phantom.doRevive();
+			
+			// Event ended during the respawn delay — fall back to a normal town respawn.
+			if (!eventRunning)
+			{
+				respawnInTown(phantom);
+				return;
+			}
+				// Teleport back to the phantom's event team spawn.
+				Location spawn = event.getData().getPositionAll();
+				final EventPlayer ep = event.getEventPlayer(phantom.getObjectId());
+				if (ep != null && ep.getTeamId() >= 0)
+				{
+					for (EventTeam team : event.getTeams())
+					{
+						if (team.getId() == ep.getTeamId() && team.getSpawnLocation() != null)
+						{
+							spawn = team.getSpawnLocation();
+							break;
+						}
+					}
+				}
+				
+				if (spawn != null)
+				{
+					final int rx = spawn.getX() + Rnd.get(-250, 250);
+					final int ry = spawn.getY() + Rnd.get(-250, 250);
+					phantom.teleportTo(rx, ry, spawn.getZ(), 20);
+					if (phantom.isTeleporting())
+						phantom.onTeleported();
+					
+					phantom.getStatus().setCpHpMp(phantom.getStatus().getMaxCp(), phantom.getStatus().getMaxHp(), phantom.getStatus().getMaxMp());
+					phantom.enableAllSkills();
+					phantom.setIsImmobilized(false);
+					phantom.stopAbnormalEffect(net.sf.l2j.gameserver.enums.skills.AbnormalEffect.HOLD_1);
+					
+					PhantomLog.info("Phantom " + phantom.getName() + " returned to event arena after death.");
+				}
+				
+				final Location home = new Location(phantom.getX(), phantom.getY(), phantom.getZ());
+			HOMES.put(phantom.getObjectId(), home);
+			PATROL_POINTS.put(phantom.getObjectId(), nextPatrolPoint(phantom));
+			LAST_ACTIONS.put(phantom.getObjectId(), "Event respawn");
+			phantom.store();
+		}
+		catch (Exception e)
+		{
+			LOGGER.warn("Phantom event respawn failed for {} (event ended mid-respawn?).", e, phantom == null ? "null" : phantom.getName());
+		}
+		finally
+		{
+			if (phantom != null)
+				DEATH_HANDLING.remove(phantom.getObjectId());
+		}
 	}
 	
 	private static void respawnInTown(Player phantom)
