@@ -533,93 +533,27 @@ public final class PhantomAI
 			return;
 		}
 		
+		// During a RUNNING event the event owns the respawn:
+		// - Reviving events (TvT/DM/CTF...) call onEventDie -> revive at team spawn.
+		// - Elimination events (LMS/BombFight/SimonSays...) keep the phantom dead
+		//   (eliminated) until the match ends, which is its role.
+		// Scheduling our own respawn here would cause a redundant double revive
+		// + teleport to the same spawn.
+		final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+		if (event != null && event.getState() == AbstractEvent.State.RUNNING)
+		{
+			LAST_ACTIONS.put(phantom.getObjectId(), "Dead - event controls respawn");
+			return;
+		}
+		
 		if (DEATH_HANDLING.putIfAbsent(phantom.getObjectId(), Boolean.TRUE) != null)
 		{
 			LAST_ACTIONS.put(phantom.getObjectId(), "Dead - waiting town");
 			return;
 		}
 		
-		// During a RUNNING event, the phantom respawns back into the event arena (not town).
-		if (EventEngine.getInstance().isPlayerInAnyEvent(phantom.getObjectId()))
-		{
-			LAST_ACTIONS.put(phantom.getObjectId(), "Dead - to event");
-			ThreadPool.schedule(() -> respawnInEvent(phantom), PhantomConfig.respawnDelayMs());
-			return;
-		}
-		
 		LAST_ACTIONS.put(phantom.getObjectId(), "Dead - to nearest town");
 		ThreadPool.schedule(() -> respawnInTown(phantom), PhantomConfig.respawnDelayMs());
-	}
-	
-	/**
-	 * Respawns a phantom that died during a running event back into the event arena,
-	 * at its own team spawn (revived + fully healed), so it keeps participating.
-	 */
-	private static void respawnInEvent(Player phantom)
-	{
-		try
-		{
-			if (phantom == null || !phantom.isOnline())
-				return;
-			
-			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
-			final boolean eventRunning = event != null && event.getState() == AbstractEvent.State.RUNNING;
-			
-			if (phantom.isDead())
-				phantom.doRevive();
-			
-			// Event ended during the respawn delay — fall back to a normal town respawn.
-			if (!eventRunning)
-			{
-				respawnInTown(phantom);
-				return;
-			}
-				// Teleport back to the phantom's event team spawn.
-				Location spawn = event.getData().getPositionAll();
-				final EventPlayer ep = event.getEventPlayer(phantom.getObjectId());
-				if (ep != null && ep.getTeamId() >= 0)
-				{
-					for (EventTeam team : event.getTeams())
-					{
-						if (team.getId() == ep.getTeamId() && team.getSpawnLocation() != null)
-						{
-							spawn = team.getSpawnLocation();
-							break;
-						}
-					}
-				}
-				
-				if (spawn != null)
-				{
-					final int rx = spawn.getX() + Rnd.get(-250, 250);
-					final int ry = spawn.getY() + Rnd.get(-250, 250);
-					phantom.teleportTo(rx, ry, spawn.getZ(), 20);
-					if (phantom.isTeleporting())
-						phantom.onTeleported();
-					
-					phantom.getStatus().setCpHpMp(phantom.getStatus().getMaxCp(), phantom.getStatus().getMaxHp(), phantom.getStatus().getMaxMp());
-					phantom.enableAllSkills();
-					phantom.setIsImmobilized(false);
-					phantom.stopAbnormalEffect(net.sf.l2j.gameserver.enums.skills.AbnormalEffect.HOLD_1);
-					
-					PhantomLog.info("Phantom " + phantom.getName() + " returned to event arena after death.");
-				}
-				
-				final Location home = new Location(phantom.getX(), phantom.getY(), phantom.getZ());
-			HOMES.put(phantom.getObjectId(), home);
-			PATROL_POINTS.put(phantom.getObjectId(), nextPatrolPoint(phantom));
-			LAST_ACTIONS.put(phantom.getObjectId(), "Event respawn");
-			phantom.store();
-		}
-		catch (Exception e)
-		{
-			LOGGER.warn("Phantom event respawn failed for {} (event ended mid-respawn?).", e, phantom == null ? "null" : phantom.getName());
-		}
-		finally
-		{
-			if (phantom != null)
-				DEATH_HANDLING.remove(phantom.getObjectId());
-		}
 	}
 	
 	private static void respawnInTown(Player phantom)
