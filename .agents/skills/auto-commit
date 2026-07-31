@@ -30,7 +30,8 @@ git push origin master
 
 ## Estilo de mensajes
 
-Se aceptan **español o inglés**, con prefijo de tipo:
+Se aceptan **español o inglés**, con prefijo de tipo. Ambas variantes son válidas:
+minúscula (`feat:`, `fix:`) o mayúscula inicial (`Feat:`, `Ajuste:`):
 
 ```
 feat: nueva funcionalidad
@@ -57,7 +58,7 @@ La descripción debe explicar el **porqué** (intención), no solo el qué.
    actual (ej. `.freebuff/*`), dejarlos sin stagear.
 4. **Verificar antes de pushear**: compilar/validar el cambio antes del commit (ver skill `compilation`).
 5. **Push al remoto**: `git push origin master` (remoto SSH ya configurado).
-6. Si el push falla porque el remoto avanzó, primero `git pull origin master` (rebase si hace falta) y reintentar.
+6. Si el push falla porque el remoto avanzó, primero `git pull --rebase origin master` y reintentar (evita commits de merge accidentales).
 
 ## Datos del repo
 
