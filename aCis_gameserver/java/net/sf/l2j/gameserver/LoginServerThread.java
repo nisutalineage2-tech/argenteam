@@ -289,6 +289,29 @@ public class LoginServerThread extends Thread
 		}
 	}
 	
+	/**
+	 * Register an already restored (detached) client, such as an offline trader, as in-game on the login server.
+	 * @param account : The account name to register.
+	 * @param client : The detached {@link GameClient} to store.
+	 */
+	public void addGameServerLogin(String account, GameClient client)
+	{
+		_clients.put(account, client);
+		
+		// Login socket may not be connected yet (offline traders are restored at startup).
+		if (_out == null)
+			return;
+		
+		try
+		{
+			sendPacket(new PlayerInGame(account));
+		}
+		catch (IOException e)
+		{
+			LOGGER.error("Error while sending player in game packet to login.");
+		}
+	}
+	
 	public void addClient(String loginName, int loginKey1, int loginKey2, int playKey1, int playKey2, GameClient client)
 	{
 		final GameClient existingClient = _clients.putIfAbsent(loginName, client);

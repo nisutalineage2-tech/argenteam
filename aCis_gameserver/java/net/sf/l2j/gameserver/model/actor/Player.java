@@ -270,6 +270,7 @@ public final class Player extends Playable
 	private long _onlineBeginTime;
 	private long _lastAccess;
 	private long _uptime;
+	private long _offlineShopStart;
 	
 	protected int _baseClass;
 	protected int _activeClass;
@@ -2197,6 +2198,23 @@ public final class Player extends Playable
 		return _accountName;
 	}
 	
+	/**
+	 * @return the timestamp at which this {@link Player} entered offline shop mode, or 0 if not set.
+	 */
+	public long getOfflineStartTime()
+	{
+		return _offlineShopStart;
+	}
+	
+	/**
+	 * Set the timestamp at which this {@link Player} entered offline shop mode.
+	 * @param time : The timestamp to set.
+	 */
+	public void setOfflineStartTime(long time)
+	{
+		_offlineShopStart = time;
+	}
+	
 	public Map<Integer, String> getAccountChars()
 	{
 		return _chars;
@@ -3286,6 +3304,10 @@ public final class Player extends Playable
 	public void setOperateType(OperateType type)
 	{
 		_operateType = type;
+		
+		// If the offline shop finished selling/buying, remove the detached trader from the world.
+		if (Config.OFFLINE_DISCONNECT_FINISHED && type == OperateType.NONE && (getClient() == null || getClient().isDetached()))
+			deleteMe();
 	}
 	
 	/**

@@ -502,6 +502,16 @@ public final class Config
 	public static int ZONE_TOWN;
 	public static String SERVER_NAME;
 	
+	/** Offline stores */
+	public static boolean OFFLINE_TRADE_ENABLE;
+	public static boolean OFFLINE_CRAFT_ENABLE;
+	public static boolean RESTORE_OFFLINERS;
+	public static int OFFLINE_MAX_DAYS;
+	public static boolean OFFLINE_DISCONNECT_FINISHED;
+	public static boolean OFFLINE_SET_NAME_COLOR;
+	public static int OFFLINE_NAME_COLOR;
+	public static boolean OFFLINE_FAME;
+	
 	// --------------------------------------------------
 	// Those "hidden" settings haven't configs to avoid admins to fuck their server
 	// You still can experiment changing values here. But don't say I didn't warn you.
@@ -1057,6 +1067,15 @@ public final class Config
 		ZONE_TOWN = server.getProperty("ZoneTown", 0);
 		SERVER_NEWS = server.getProperty("ShowServerNews", false);
 		SERVER_NAME = server.getProperty("ServerName", "aCis Server");
+		
+		OFFLINE_TRADE_ENABLE = server.getProperty("OfflineTradeEnable", false);
+		OFFLINE_CRAFT_ENABLE = server.getProperty("OfflineCraftEnable", false);
+		OFFLINE_SET_NAME_COLOR = server.getProperty("OfflineSetNameColor", false);
+		OFFLINE_NAME_COLOR = Integer.decode("0x" + server.getProperty("OfflineNameColor", "808080"));
+		OFFLINE_FAME = server.getProperty("OfflineFame", true);
+		RESTORE_OFFLINERS = server.getProperty("RestoreOffliners", false);
+		OFFLINE_MAX_DAYS = server.getProperty("OfflineMaxDays", 10);
+		OFFLINE_DISCONNECT_FINISHED = server.getProperty("OfflineDisconnectFinished", true);
 	}
 	
 	/**

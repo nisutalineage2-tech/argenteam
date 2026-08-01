@@ -41,6 +41,7 @@ import net.sf.l2j.gameserver.data.manager.SpawnManager;
 import net.sf.l2j.gameserver.data.manager.ZoneManager;
 import net.sf.l2j.gameserver.data.sql.BookmarkTable;
 import net.sf.l2j.gameserver.data.sql.ClanTable;
+import net.sf.l2j.gameserver.data.sql.OfflineTradersTable;
 import net.sf.l2j.gameserver.data.sql.PlayerInfoTable;
 import net.sf.l2j.gameserver.data.sql.ServerMemoTable;
 import net.sf.l2j.gameserver.data.xml.AdminData;
@@ -275,6 +276,10 @@ public class GameServer
 		}
 		
 		net.sf.l2j.gameserver.dungeon.DungeonEngine.getInstance().init();
+		
+		// Restore offline traders/crafters before spawning, so they are part of the world.
+		if ((Config.OFFLINE_TRADE_ENABLE || Config.OFFLINE_CRAFT_ENABLE) && Config.RESTORE_OFFLINERS)
+			OfflineTradersTable.restoreOfflineTraders();
 		
 		StringUtil.printSection("Spawns");
 		SpawnManager.getInstance().spawn();

@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
 import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.data.sql.OfflineTradersTable;
 import net.sf.l2j.gameserver.enums.actors.OperateType;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Npc;
@@ -80,10 +81,20 @@ public final class RequestPrivateStoreBuy extends L2GameClientPacket
 		if (storePlayer.getOperateType() == OperateType.PACKAGE_SELL && storeList.size() > _items.length)
 			return;
 		
-		if (storeList.privateStoreBuy(player, _items) && storeList.isEmpty())
+		if (storeList.privateStoreBuy(player, _items))
 		{
-			storePlayer.setOperateType(OperateType.NONE);
-			storePlayer.broadcastUserInfo();
+			// Update offline trade record in realtime.
+			if (Config.OFFLINE_TRADE_ENABLE && Config.RESTORE_OFFLINERS && !storeList.isEmpty() && (storePlayer.getClient() == null || storePlayer.getClient().isDetached()))
+				OfflineTradersTable.storeOffliners();
+			
+			if (storeList.isEmpty())
+			{
+				storePlayer.setOperateType(OperateType.NONE);
+				
+				// Avoid broadcasting to a detached (offline) trader which just got deleted.
+				if (storePlayer.getClient() != null && !storePlayer.getClient().isDetached())
+					storePlayer.broadcastUserInfo();
+			}
 		}
 	}
 }

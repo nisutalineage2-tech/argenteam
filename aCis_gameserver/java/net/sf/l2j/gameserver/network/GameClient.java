@@ -22,6 +22,8 @@ import net.sf.l2j.gameserver.LoginServerThread;
 import net.sf.l2j.gameserver.data.sql.ClanTable;
 import net.sf.l2j.gameserver.data.sql.PlayerInfoTable;
 import net.sf.l2j.gameserver.enums.FloodProtector;
+import net.sf.l2j.gameserver.enums.MessageType;
+import net.sf.l2j.gameserver.enums.actors.OperateType;
 import net.sf.l2j.gameserver.model.CharSelectSlot;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -208,7 +210,39 @@ public final class GameClient extends MMOClient<MMOConnection<GameClient>> imple
 				if (getPlayer() != null && !isDetached())
 				{
 					setDetached(true);
-					fast = !getPlayer().isInCombat() && !getPlayer().isLocked();
+					
+					final Player player = getPlayer();
+					final OperateType op = player.getOperateType();
+					
+					// Enter offline mode if the player was in a private store/workshop and the feature is enabled.
+					final boolean offlineTrade = (op == OperateType.BUY || op == OperateType.SELL || op == OperateType.PACKAGE_SELL) && Config.OFFLINE_TRADE_ENABLE;
+					final boolean offlineCraft = op == OperateType.MANUFACTURE && Config.OFFLINE_CRAFT_ENABLE;
+					if (offlineTrade || offlineCraft)
+					{
+						// Unsummon the pet.
+						if (player.getSummon() != null)
+							player.getSummon().unSummon(player);
+						
+						// Leave party.
+						if (player.getParty() != null)
+							player.getParty().removePartyMember(player, MessageType.LEFT);
+						
+						// Set offline name color.
+						if (Config.OFFLINE_SET_NAME_COLOR)
+						{
+							player.getAppearance().setNameColor(Config.OFFLINE_NAME_COLOR);
+							player.broadcastUserInfo();
+						}
+						
+						// Track offline start time.
+						if (player.getOfflineStartTime() == 0)
+							player.setOfflineStartTime(System.currentTimeMillis());
+						
+						LOGGER.info("{} entered offline mode.", player.getName());
+						return;
+					}
+					
+					fast = !player.isInCombat() && !player.isLocked();
 				}
 				cleanMe(fast);
 			});
@@ -573,7 +607,18 @@ public final class GameClient extends MMOClient<MMOConnection<GameClient>> imple
 	
 	public void close(L2GameServerPacket gsp)
 	{
+		if (getConnection() == null)
+			return;
+		
 		getConnection().close(gsp);
+	}
+	
+	public void close(L2GameServerPacket[] gspArray)
+	{
+		if (getConnection() == null)
+			return;
+		
+		getConnection().close(gspArray[0]);
 	}
 	
 	/**
