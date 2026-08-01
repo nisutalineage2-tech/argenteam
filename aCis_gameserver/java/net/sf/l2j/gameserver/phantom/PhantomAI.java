@@ -248,11 +248,14 @@ public final class PhantomAI
 				}
 				
 				// Priority 2: Attack war NPCs (enemy guards, capturable flags and checkpoints)
-				final Monster warNpcTarget = findWarNpcTarget(phantom);
-				if (warNpcTarget != null)
+				if (!PhantomConfig.attackOnlyEnemyFaction())
 				{
-					attackNpc(phantom, warNpcTarget, "War npc ");
-					return;
+					final Monster warNpcTarget = findWarNpcTarget(phantom);
+					if (warNpcTarget != null)
+					{
+						attackNpc(phantom, warNpcTarget, "War npc ");
+						return;
+					}
 				}
 				
 				// Priority 3: No enemies nearby - move toward the battle area
@@ -305,26 +308,29 @@ public final class PhantomAI
 				return;
 			}
 			
-			final Monster target = findTarget(phantom);
-			if (target != null)
+			if (!PhantomConfig.attackOnlyEnemyFaction())
 			{
-				phantom.setTarget(target);
-				LAST_TARGETS.put(phantom.getObjectId(), new Location(target.getX(), target.getY(), target.getZ()));
-				rememberLootArea(phantom, target);
-				claimTarget(phantom, target);
-				
-				if (tryUseOffensiveSkill(phantom, target, false))
-					return;
-				
-				if (shouldRestMageMp(phantom))
+				final Monster target = findTarget(phantom);
+				if (target != null)
 				{
-					restMp(phantom);
+					phantom.setTarget(target);
+					LAST_TARGETS.put(phantom.getObjectId(), new Location(target.getX(), target.getY(), target.getZ()));
+					rememberLootArea(phantom, target);
+					claimTarget(phantom, target);
+					
+					if (tryUseOffensiveSkill(phantom, target, false))
+						return;
+					
+					if (shouldRestMageMp(phantom))
+					{
+						restMp(phantom);
+						return;
+					}
+					
+					LAST_ACTIONS.put(phantom.getObjectId(), "Attack " + target.getName());
+					phantom.getAI().tryToAttack(target, false, false);
 					return;
 				}
-				
-				LAST_ACTIONS.put(phantom.getObjectId(), "Attack " + target.getName());
-				phantom.getAI().tryToAttack(target, false, false);
-				return;
 			}
 			
 			LAST_TARGETS.remove(phantom.getObjectId());

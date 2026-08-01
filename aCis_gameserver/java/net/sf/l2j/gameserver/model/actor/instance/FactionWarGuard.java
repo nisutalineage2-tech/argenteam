@@ -95,6 +95,14 @@ public class FactionWarGuard extends Monster
 		if (npcId != FactionWarConfig.getGuardNpcId())
 			return 0;
 		
+		// Prefer the explicit faction stored in the spawn memo at spawn time.
+		if (getSpawn() != null)
+		{
+			final int memoFaction = getSpawn().getMemo().getInteger("factionId", 0);
+			if (memoFaction > 0)
+				return memoFaction;
+		}
+		
 		final var goodLoc = FactionWarManager.getInstance().getFactionSpawn(FactionWarConfig.getGoodFactionId());
 		final var evilLoc = FactionWarManager.getInstance().getFactionSpawn(FactionWarConfig.getEvilFactionId());
 		

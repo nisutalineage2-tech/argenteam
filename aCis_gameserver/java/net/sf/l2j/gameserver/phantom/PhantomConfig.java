@@ -60,6 +60,7 @@ public final class PhantomConfig
 	private static boolean _autoEquipRefresh = false;
 	private static int _equipmentIncompleteChance = 22;
 	private static int _equipmentMixedChance = 28;
+	private static String _equipGrade = "AS";
 	private static boolean _respawnInTown = true;
 	private static int _respawnDelayMs = 7000;
 	private static boolean _returnToLevelZoneAfterDeath = true;
@@ -79,6 +80,7 @@ public final class PhantomConfig
 	private static int _pkKarma = 720;
 	private static boolean _pkAttackRealPlayers = true;
 	private static boolean _pkRageTransfersOnDeath = true;
+	private static boolean _attackOnlyEnemyFaction = true;
 	
 	private static boolean _useGeoPathing = true;
 	private static boolean _stuckCheckEnabled = true;
@@ -211,6 +213,7 @@ public final class PhantomConfig
 			_autoEquipRefresh = props.getProperty("AutoEquipRefresh", false);
 			_equipmentIncompleteChance = clampPercent(props.getProperty("EquipmentIncompleteChance", 22));
 			_equipmentMixedChance = clampPercent(props.getProperty("EquipmentMixedChance", 28));
+			_equipGrade = props.getProperty("EquipmentGrade", "AS").trim().toUpperCase();
 			_respawnInTown = props.getProperty("RespawnInTown", true);
 			_respawnDelayMs = Math.max(1000, props.getProperty("RespawnDelayMs", 7000));
 			_returnToLevelZoneAfterDeath = props.getProperty("ReturnToLevelZoneAfterDeath", true);
@@ -230,6 +233,7 @@ public final class PhantomConfig
 			_pkKarma = Math.max(0, props.getProperty("PkKarma", 720));
 			_pkAttackRealPlayers = props.getProperty("PkAttackRealPlayers", true);
 			_pkRageTransfersOnDeath = props.getProperty("PkRageTransfersOnDeath", true);
+			_attackOnlyEnemyFaction = props.getProperty("AttackOnlyEnemyFaction", true);
 			_useGeoPathing = props.getProperty("UseGeoPathing", true);
 			_stuckCheckEnabled = props.getProperty("StuckCheckEnabled", true);
 			_stuckCheckDistance = Math.max(5, props.getProperty("StuckCheckDistance", 40));
@@ -789,6 +793,11 @@ public final class PhantomConfig
 		return _equipmentMixedChance;
 	}
 	
+	public static String equipGrade()
+	{
+		return _equipGrade;
+	}
+	
 	public static boolean respawnInTown()
 	{
 		return _respawnInTown;
@@ -883,6 +892,12 @@ public final class PhantomConfig
 	{
 		return _pkRageTransfersOnDeath;
 	}
+	
+	public static boolean attackOnlyEnemyFaction()
+	{
+		return _attackOnlyEnemyFaction;
+	}
+	
 	public static boolean useGeoPathing()
 	{
 		return _useGeoPathing;

@@ -1108,11 +1108,11 @@ public class FactionWarManager
 		final int count = FactionWarConfig.getGuardsPerBase();
 		final int radius = FactionWarConfig.getGuardCircleRadius();
 		
-		spawnGuardGroup(map.getGoodSpawn(), count, radius, _goodGuardSpawns, _goodGuardNpcs);
-		spawnGuardGroup(map.getEvilSpawn(), count, radius, _evilGuardSpawns, _evilGuardNpcs);
+		spawnGuardGroup(map.getGoodSpawn(), count, radius, _goodGuardSpawns, _goodGuardNpcs, FactionWarConfig.getGoodFactionId());
+		spawnGuardGroup(map.getEvilSpawn(), count, radius, _evilGuardSpawns, _evilGuardNpcs, FactionWarConfig.getEvilFactionId());
 	}
 	
-	private void spawnGuardGroup(Location baseLoc, int count, int radius, List<Spawn> spawns, List<Npc> npcs)
+	private void spawnGuardGroup(Location baseLoc, int count, int radius, List<Spawn> spawns, List<Npc> npcs, int factionId)
 	{
 		for (int i = 0; i < count; i++)
 		{
@@ -1125,6 +1125,7 @@ public class FactionWarManager
 			{
 				final Spawn spawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
 				spawn.setLoc(x, y, z, 0);
+				spawn.getMemo().set("factionId", factionId);
 				final Npc npc = spawn.doSpawn(false);
 				if (npc != null)
 				{
@@ -1215,6 +1216,12 @@ public class FactionWarManager
 		_goodGuardSpawns.removeIf(s -> s != null && s.getNpc() != null && s.getNpc().getObjectId() == guard.getObjectId());
 		_evilGuardSpawns.removeIf(s -> s != null && s.getNpc() != null && s.getNpc().getObjectId() == guard.getObjectId());
 		
+		// Capture the guard faction from its spawn memo (falls back to proximity-based detection).
+		int factionId = 0;
+		if (guard.getSpawn() != null)
+			factionId = guard.getSpawn().getMemo().getInteger("factionId", 0);
+		final int guardFactionId = factionId;
+		
 		// Schedule a single guard respawn at the exact spawn position
 		final long delay = FactionWarConfig.getGuardRespawnDelay();
 		ThreadPool.schedule(() ->
@@ -1226,20 +1233,34 @@ public class FactionWarManager
 			{
 				final Spawn spawn = new Spawn(FactionWarConfig.getGuardNpcId(), true);
 				spawn.setLoc(spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ(), 0);
+				spawn.getMemo().set("factionId", guardFactionId);
 				final Npc newGuard = spawn.doSpawn(false);
 				if (newGuard != null)
 				{
-					// Determine if Good or Evil base by proximity to faction spawns
-					final Location goodLoc = getFactionSpawn(FactionWarConfig.getGoodFactionId());
-					if (goodLoc != null && spawnLoc.distance3D(goodLoc) < 500)
+					if (guardFactionId == FactionWarConfig.getGoodFactionId())
 					{
 						_goodGuardSpawns.add(spawn);
 						_goodGuardNpcs.add(newGuard);
 					}
-					else
+					else if (guardFactionId == FactionWarConfig.getEvilFactionId())
 					{
 						_evilGuardSpawns.add(spawn);
 						_evilGuardNpcs.add(newGuard);
+					}
+					else
+					{
+						// Fallback: determine Good or Evil base by proximity to faction spawns
+						final Location goodLoc = getFactionSpawn(FactionWarConfig.getGoodFactionId());
+						if (goodLoc != null && spawnLoc.distance3D(goodLoc) < 500)
+						{
+							_goodGuardSpawns.add(spawn);
+							_goodGuardNpcs.add(newGuard);
+						}
+						else
+						{
+							_evilGuardSpawns.add(spawn);
+							_evilGuardNpcs.add(newGuard);
+						}
 					}
 				}
 			}

@@ -79,6 +79,13 @@ public final class PhantomEquipment
 		{ 1467, 2514 },  // 5: S
 	};
 	
+	// Escudos por tier
+	private static final int[] SHIELDS =
+	{
+		641,  // 4: A (Dark Crystal Shield)
+		6377  // 5: S (Imperial Crusader Shield)
+	};
+	
 	private PhantomEquipment()
 	{
 	}
@@ -96,6 +103,9 @@ public final class PhantomEquipment
 		final int[] weaponPool = mage ? MAGE_WEAPONS[tier] : FIGHTER_WEAPONS[tier];
 		equipItem(phantom, pick(weaponPool));
 		
+		final boolean dagger = isDaggerClass(phantom);
+		final boolean archer = isArcherClass(phantom);
+		
 		if (mage)
 		{
 			final int[] robeSet = pickSet(ROBE_SETS, tier);
@@ -105,7 +115,7 @@ public final class PhantomEquipment
 					equipItem(phantom, maybeMixedPart(itemId));
 			}
 		}
-		else if (isDaggerClass(phantom) || isArcherClass(phantom))
+		else if (dagger || archer)
 		{
 			final int[] lightSet = pickSet(LIGHT_SETS, tier);
 			for (int itemId : lightSet)
@@ -125,6 +135,13 @@ public final class PhantomEquipment
 				if (Rnd.get(100) >= PhantomConfig.equipmentIncompleteChance())
 					equipItem(phantom, maybeMixedPart(itemId));
 			}
+		}
+		
+		// Shield for melee and mage classes (not daggers/archers)
+		if (!dagger && !archer)
+		{
+			final int shieldTier = Math.max(4, Math.min(5, tier));
+			equipItem(phantom, SHIELDS[shieldTier - 4]);
 		}
 		
 		giveShots(phantom, tier, mage);
@@ -166,6 +183,14 @@ public final class PhantomEquipment
 	
 	private static int getTier(int level)
 	{
+		final String grade = PhantomConfig.equipGrade();
+		if (grade.equals("S"))
+			return 5;
+		if (grade.equals("A"))
+			return 4;
+		if (grade.equals("AS"))
+			return Rnd.get(4, 5);
+		
 		if (level < 20)
 			return 0;
 		if (level < 40)
@@ -181,6 +206,10 @@ public final class PhantomEquipment
 	
 	private static int[] pickSet(int[][] sets, int tier)
 	{
+		final String grade = PhantomConfig.equipGrade();
+		if (grade.equals("A") || grade.equals("S") || grade.equals("AS"))
+			return sets[Rnd.get(4, 5)];
+		
 		final int max = Math.min(sets.length - 1, tier + 1);
 		final int min = Math.max(0, tier - 1);
 		return sets[Rnd.get(min, max)];
@@ -188,6 +217,10 @@ public final class PhantomEquipment
 	
 	private static int maybeMixedPart(int itemId)
 	{
+		final String grade = PhantomConfig.equipGrade();
+		if (grade.equals("A") || grade.equals("S") || grade.equals("AS"))
+			return itemId;
+		
 		return (Rnd.get(100) < PhantomConfig.equipmentMixedChance()) ? pick(MIX_PARTS) : itemId;
 	}
 	
