@@ -295,6 +295,7 @@ public final class Config
 	public static int ENCHANT_SAFE_MAX;
 	public static int ENCHANT_SAFE_MAX_FULL;
 	public static boolean ENABLED_ENCHANT_WEAPONS_HERO;
+	public static int ENCHANT_HERO_WEAPONS_MAX_LEVEL;
 	
 	/** Augmentations */
 	public static int AUGMENTATION_NG_SKILL_CHANCE;
@@ -883,6 +884,7 @@ public final class Config
 		ENCHANT_SAFE_MAX = players.getProperty("EnchantSafeMax", 3);
 		ENCHANT_SAFE_MAX_FULL = players.getProperty("EnchantSafeMaxFull", 4);
 		ENABLED_ENCHANT_WEAPONS_HERO = players.getProperty("EnchantHeroWeapons", true);
+		ENCHANT_HERO_WEAPONS_MAX_LEVEL = players.getProperty("EnchantHeroWeaponsMaxLevel", 0);
 		
 		AUGMENTATION_NG_SKILL_CHANCE = players.getProperty("AugmentationNGSkillChance", 15);
 		AUGMENTATION_NG_GLOW_CHANCE = players.getProperty("AugmentationNGGlowChance", 0);

@@ -202,6 +202,10 @@ public abstract class AbstractEnchantPacket extends L2GameClientPacket
 		if ((!Config.ENABLED_ENCHANT_WEAPONS_HERO && (item.isHeroItem() || item.getItem().getItemType() == WeaponType.FISHINGROD)) || item.isShadowItem() || item.isEtcItem())
 			return false;
 		
+		// Hero weapons have a separate max enchant level cap so they don't break the server balance.
+		if (item.isHeroItem() && Config.ENCHANT_HERO_WEAPONS_MAX_LEVEL > 0 && item.getEnchantLevel() >= Config.ENCHANT_HERO_WEAPONS_MAX_LEVEL)
+			return false;
+		
 		// Only equipped items or in inventory can be enchanted.
 		if (item.getLocation() != ItemLocation.INVENTORY && item.getLocation() != ItemLocation.PAPERDOLL)
 			return false;
