@@ -14,6 +14,7 @@ import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 public final class PhantomSocial
 {
 	private static final Map<Integer, Long> NEXT_TALK = new ConcurrentHashMap<>();
+	private static final Map<Integer, Long> NEXT_ACTION = new ConcurrentHashMap<>();
 	
 	private static final String[] CASUAL_LINES =
 	{
@@ -116,6 +117,31 @@ public final class PhantomSocial
 		"Todos estan yendo para alla. Vamos."
 	};
 	
+	/** Frases de accion dichas durante la guerra: describen lo que el phantom esta haciendo en el campo de batalla (movimiento, objetivo, apoyo). */
+	private static final String[] WAR_ACTION_LINES =
+	{
+		"Voy a la bandera, cubranme.",
+		"Avanzo por el flanco, no me vean.",
+		"Veo un checkpoint desprotegido, voy.",
+		"Estoy cortando el paso por el centro.",
+		"Necesito apoyo, vienen varios.",
+		"Retrocedo un toque a curarme.",
+		"Tomen la bandera, yo los cubro.",
+		"Me muevo al checkpoint del norte.",
+		"Estoy protegiendo a un aliado.",
+		"Voy a hostigar a los que estan en la flag.",
+		"Cambio de posicion, me flanquean.",
+		"Aguantemos en la zona, que llegue el resto.",
+		"Voy a intentar capturar el checkpoint.",
+		"Estoy de avanzada, aviso si viene alguien.",
+		"Me replego a la base un momento.",
+		"Vamos todos juntos a la bandera.",
+		"Salgo a buscar al enemigo al medio.",
+		"Estoy viendo quien se acerca por atras.",
+		"Defiendo este punto, no lo suelto.",
+		"Me aparto para curar y vuelvo."
+	};
+	
 	private static final String[] BOSS_LINES =
 	{
 		"Escuche que aparecio un boss. Voy para alla.",
@@ -193,6 +219,26 @@ public final class PhantomSocial
 	}
 	
 	/**
+	 * Says a war action phrase describing what the phantom is currently doing on the
+	 * battlefield (moving to a flag, covering an ally, retreating to heal, etc.).
+	 * Uses its own cooldown so it does not collide with the regular social chat timer.
+	 * @param phantom : The phantom to speak.
+	 */
+	public static void sayWarAction(Player phantom)
+	{
+		if (phantom == null || phantom.isDead() || !PhantomConfig.socialChatEnabled() || phantom.getCast().isCastingNow())
+			return;
+		
+		final long now = System.currentTimeMillis();
+		final long next = NEXT_ACTION.getOrDefault(phantom.getObjectId(), 0L);
+		if (now < next)
+			return;
+		
+		NEXT_ACTION.put(phantom.getObjectId(), now + Rnd.get(20000, 60000));
+		say(phantom, WAR_ACTION_LINES[Rnd.get(WAR_ACTION_LINES.length)]);
+	}
+	
+	/**
 	 * Says a random Grand Boss hunting phrase.
 	 * @param phantom : The phantom to speak.
 	 * @param bossNpcId : The hunted Grand Boss npcId (unused, kept for future per-boss lines).
@@ -208,6 +254,7 @@ public final class PhantomSocial
 	public static void forget(int objectId)
 	{
 		NEXT_TALK.remove(objectId);
+		NEXT_ACTION.remove(objectId);
 	}
 	
 	private static Player findNearbyRealPlayer(Player phantom, boolean warRunning)

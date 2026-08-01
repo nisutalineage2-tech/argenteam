@@ -73,6 +73,7 @@ public final class PhantomAI
 	private static final Map<Integer, Integer> IDLE_STUCK_TICKS = new ConcurrentHashMap<>();
 	private static final Map<Integer, Integer> FARM_ZONE_BUCKETS = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> FARM_ZONE_READY_TIMES = new ConcurrentHashMap<>();
+	private static final Map<Integer, Long> WAR_LOG_TIMES = new ConcurrentHashMap<>();
 	
 	/** Runtime AI pause flag (admin panel "AI On/Off"). When true, all phantom AI loops are suspended without cancelling tasks or wiping state. */
 	private static volatile boolean AI_PAUSED;
@@ -142,6 +143,7 @@ public final class PhantomAI
 		IDLE_STUCK_TICKS.remove(objectId);
 		FARM_ZONE_BUCKETS.remove(objectId);
 		FARM_ZONE_READY_TIMES.remove(objectId);
+		WAR_LOG_TIMES.remove(objectId);
 	}
 	
 	public static void setHome(Player phantom)
@@ -174,6 +176,7 @@ public final class PhantomAI
 		IDLE_STUCK_TICKS.clear();
 		FARM_ZONE_BUCKETS.clear();
 		FARM_ZONE_READY_TIMES.clear();
+		WAR_LOG_TIMES.clear();
 	}
 	
 	public static Location getLastTarget(Player phantom)
@@ -297,6 +300,8 @@ public final class PhantomAI
 				if (warTarget != null)
 				{
 					attackPlayer(phantom, warTarget, "Faction war ");
+					logWarMove(phantom, "attacking player " + warTarget.getName());
+					PhantomSocial.sayWarAction(phantom);
 					return;
 				}
 				
@@ -308,6 +313,8 @@ public final class PhantomAI
 				if (warNpcTarget != null)
 				{
 					attackNpc(phantom, warNpcTarget, "War npc ");
+					logWarMove(phantom, "attacking war npc " + warNpcTarget.getName());
+					PhantomSocial.sayWarAction(phantom);
 					return;
 				}
 				
@@ -315,10 +322,13 @@ public final class PhantomAI
 				if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
 				{
 					moveToWarCenter(phantom);
+					logWarMove(phantom, "advancing to war center");
+					PhantomSocial.sayWarAction(phantom);
 					return;
 				}
 				
 				LAST_ACTIONS.put(phantom.getObjectId(), "War scanning");
+				logWarMove(phantom, "scanning for targets");
 				return;
 			}
 			
@@ -1781,6 +1791,29 @@ public final class PhantomAI
 		{
 			PhantomLog.warn("moveToWarCenter failed for " + phantom.getName() + ": " + e.getMessage());
 		}
+	}
+	
+	/**
+	 * Logs what a phantom is currently doing during the faction war, throttled so the
+	 * log does not flood on every AI tick. Each entry carries the phantom name, faction,
+	 * action and current coordinates, so the behavior can be reviewed afterwards.
+	 * @param phantom : The phantom to log.
+	 * @param action : Human-readable description of the action (e.g. "attacking player X").
+	 */
+	private static void logWarMove(Player phantom, String action)
+	{
+		if (phantom == null)
+			return;
+		
+		final int objectId = phantom.getObjectId();
+		final long now = System.currentTimeMillis();
+		final long last = WAR_LOG_TIMES.getOrDefault(objectId, 0L);
+		if (now - last < 10000)
+			return;
+		
+		WAR_LOG_TIMES.put(objectId, now);
+		final String mapName = FactionWarManager.getInstance().isRunning() ? "map " + FactionWarManager.getInstance().getCurrentMapIndex() : "map ?";
+		PhantomLog.info("WarMove " + phantom.getName() + " fac=" + phantom.getFactionId() + " " + mapName + " " + action + " at " + phantom.getX() + "," + phantom.getY() + "," + phantom.getZ() + ".");
 	}
 	
 	private static void claimTarget(Player phantom, Monster monster)
