@@ -27,6 +27,7 @@ import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.ActionFailed;
 import net.sf.l2j.gameserver.network.serverpackets.AutoAttackStart;
 import net.sf.l2j.gameserver.network.serverpackets.ChairSit;
+import net.sf.l2j.gameserver.network.serverpackets.MoveToLocation;
 import net.sf.l2j.gameserver.network.serverpackets.MoveToPawn;
 import net.sf.l2j.gameserver.network.serverpackets.StopMove;
 import net.sf.l2j.gameserver.network.serverpackets.SystemMessage;
@@ -272,8 +273,9 @@ public class PlayerAI extends PlayableAI<Player>
 		
 		if (skill.isToggle())
 		{
-			_actor.getMove().stop();
 			_actor.getCast().doToggleCast(skill, target);
+			if (_actor.isMoving())
+				_actor.broadcastPacket(new MoveToLocation(_actor));
 		}
 		else
 		{
