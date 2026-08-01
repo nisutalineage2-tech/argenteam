@@ -27,12 +27,16 @@ import net.sf.l2j.gameserver.enums.skills.SkillType;	import net.sf.l2j.gameserve
 	import net.sf.l2j.gameserver.event.RaidInTheMiddleEvent;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
+import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.WorldObject;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.actor.instance.FactionWarCpFlag;
+import net.sf.l2j.gameserver.model.actor.instance.FactionWarFlag;
+import net.sf.l2j.gameserver.model.actor.instance.FactionWarGuard;
 import net.sf.l2j.gameserver.model.actor.instance.Monster;
 import net.sf.l2j.gameserver.model.group.Party;
 import net.sf.l2j.gameserver.model.item.instance.ItemInstance;
@@ -212,6 +216,26 @@ public final class PhantomAI
 				return;
 			}
 			
+			// Early store-mode guard: while a private store is open the phantom stays seated,
+			// so loot/farm/stuck-escape logic must not move or teleport it away.
+			// If the faction war starts, close the store so the phantom can fight.
+			if (phantom.getOperateType() != OperateType.NONE)
+			{
+				final boolean warStarting = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
+				if (warStarting)
+				{
+					phantom.getSellList().clear();
+					phantom.setOperateType(OperateType.NONE);
+					phantom.standUp();
+					phantom.broadcastUserInfo();
+				}
+				else
+				{
+					LAST_ACTIONS.put(phantom.getObjectId(), "Store");
+					return;
+				}
+			}
+			
 			if (detectAndEscapeStuck(phantom))
 				return;
 			
@@ -237,6 +261,67 @@ public final class PhantomAI
 				LAST_ACTIONS.put(phantom.getObjectId(), "Event waiting");
 			}
 			
+			// === FACTION WAR MODE: highest priority. Runs BEFORE loot/farm/level-zone teleports,
+			// otherwise maybeMoveToFarmZoneStep() would yank the phantom right back to its farm
+			// zone a few seconds after it arrives on the war map (phantom would never be seen). ===
+			final boolean warRunning = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
+			final boolean inNeutralZone = Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(phantom.getPosition());
+			
+			if (warRunning)
+			{
+				// Still in neutral zone (war just started or the phantom missed the auto-teleport):
+				// teleport it directly to this faction's spawn on the war map.
+				if (inNeutralZone)
+				{
+					final Location warSpawn = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
+					if (warSpawn != null)
+					{
+						// Randomize slightly to avoid all phantoms stacking on the exact spawn point.
+						final int rx = warSpawn.getX() + Rnd.get(-250, 250);
+						final int ry = warSpawn.getY() + Rnd.get(-250, 250);
+						phantom.teleportTo(rx, ry, warSpawn.getZ(), 20);
+						if (phantom.isTeleporting())
+							phantom.onTeleported();
+						phantom.revalidateZone(true);
+						phantom.broadcastUserInfo();
+						PhantomAI.setHome(phantom);
+						FactionWarRegistry.getInstance().register(phantom);
+						LAST_ACTIONS.put(phantom.getObjectId(), "War join");
+						PhantomLog.info("Phantom " + phantom.getName() + " joined the faction war from neutral zone.");
+					}
+					return;
+				}
+				
+				// Priority 1: Attack enemy faction players
+				final Player warTarget = findEnemyFactionPlayerInWar(phantom);
+				if (warTarget != null)
+				{
+					attackPlayer(phantom, warTarget, "Faction war ");
+					return;
+				}
+				
+				// Priority 2: Attack war NPCs (flags, checkpoints and guards). Flags and
+				// checkpoints are NEUTRAL objectives capturable by either faction, so they are
+				// always valid targets. Enemy guards are only attacked when the phantom is not
+				// restricted to faction players only (see findWarNpcTarget filter).
+				final Monster warNpcTarget = findWarNpcTarget(phantom);
+				if (warNpcTarget != null)
+				{
+					attackNpc(phantom, warNpcTarget, "War npc ");
+					return;
+				}
+				
+				// Priority 3: No enemies nearby - move toward the battle area
+				if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+				{
+					moveToWarCenter(phantom);
+					return;
+				}
+				
+				LAST_ACTIONS.put(phantom.getObjectId(), "War scanning");
+				return;
+			}
+			
 			// === GRAND BOSS HUNT MODE: phantom sent to a Grand Boss lair, focuses the boss ===
 			if (PhantomEngine.isBossHunting(phantom.getObjectId()))
 			{
@@ -250,23 +335,21 @@ public final class PhantomAI
 			if (maybeMoveToFarmZoneStep(phantom))
 				return;
 			
-			final boolean warRunning = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
-			final boolean inNeutralZone = Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(phantom.getPosition());
-			
-			// === NEUTRAL ZONE BEHAVIOR: Wander or open private store ===
-			if (inNeutralZone && !warRunning)
+			// === NEUTRAL ZONE BEHAVIOR: Wander or open private store (war is not running here) ===
+			if (inNeutralZone)
 			{
-				// Sit and open a sell store with some items, or just wander
-				if (phantom.getOperateType() == OperateType.NONE && !phantom.isSitting() && Rnd.get(100) < 30)
+				// Store sold out: the phantom was left seated with no store, stand up and resume.
+				if (phantom.isSitting() && phantom.getOperateType() == OperateType.NONE)
 				{
-					openPrivateStore(phantom);
+					phantom.standUp();
+					LAST_ACTIONS.put(phantom.getObjectId(), "Stand up");
 					return;
 				}
 				
-				if (phantom.getOperateType() != OperateType.NONE || phantom.isSitting())
+				// Sit and open a real sell store, or just wander.
+				if (PhantomConfig.storeEnabled() && phantom.getOperateType() == OperateType.NONE && !phantom.isSitting() && Rnd.get(100) < PhantomConfig.storeChance())
 				{
-					// Already in store mode or sitting - skip loot/monsters
-					LAST_ACTIONS.put(phantom.getObjectId(), "Neutral store");
+					openPrivateStore(phantom);
 					return;
 				}
 				
@@ -286,39 +369,6 @@ public final class PhantomAI
 				}
 				
 				LAST_ACTIONS.put(phantom.getObjectId(), "Neutral zone");
-				return;
-			}
-			
-			// === FACTION WAR MODE: PvP + attack war NPCs (flags, checkpoints, guards) ===
-			if (warRunning)
-			{
-				// Priority 1: Attack enemy faction players
-				final Player warTarget = findEnemyFactionPlayerInWar(phantom);
-				if (warTarget != null)
-				{
-					attackPlayer(phantom, warTarget, "Faction war ");
-					return;
-				}
-				
-				// Priority 2: Attack war NPCs (enemy guards, capturable flags and checkpoints)
-				if (!PhantomConfig.attackOnlyEnemyFaction())
-				{
-					final Monster warNpcTarget = findWarNpcTarget(phantom);
-					if (warNpcTarget != null)
-					{
-						attackNpc(phantom, warNpcTarget, "War npc ");
-						return;
-					}
-				}
-				
-				// Priority 3: No enemies nearby - move toward the battle area
-				if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
-				{
-					moveToWarCenter(phantom);
-					return;
-				}
-				
-				LAST_ACTIONS.put(phantom.getObjectId(), "War scanning");
 				return;
 			}
 			
@@ -1212,6 +1262,10 @@ public final class PhantomAI
 	
 	private static boolean maybeRelocateToLevelZone(Player phantom, boolean initial)
 	{
+		// Never pull a phantom out of an active faction war.
+		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+			return false;
+		
 		if (!PhantomConfig.useLevelZones())
 			return false;
 		
@@ -1238,6 +1292,10 @@ public final class PhantomAI
 	
 	private static boolean maybeMoveToFarmZoneStep(Player phantom)
 	{
+		// Never pull a phantom out of an active faction war.
+		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+			return false;
+		
 		if (!PhantomConfig.autoMoveToFarmZones() || !PhantomConfig.useLevelZones())
 			return false;
 		
@@ -1265,6 +1323,10 @@ public final class PhantomAI
 	
 	private static boolean forceMoveToFarmZone(Player phantom, String action)
 	{
+		// Never pull a phantom out of an active faction war.
+		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+			return false;
+		
 		if (!PhantomConfig.useLevelZones())
 			return false;
 		
@@ -1396,6 +1458,16 @@ public final class PhantomAI
 		phantom.forEachKnownTypeInRadius(Monster.class, warRange, monster ->
 		{
 			if (monster == null || monster.isDead() || !monster.isVisible() || !monster.isAttackableBy(phantom))
+				return;
+			
+			// Only war-related NPCs: main flag, checkpoints and guards. Never random farm mobs.
+			if (!(monster instanceof FactionWarFlag) && !(monster instanceof FactionWarCpFlag) && !(monster instanceof FactionWarGuard))
+				return;
+			
+			// Flags and checkpoints are neutral objectives capturable by either faction, so they
+			// are always valid. Enemy guards are only attacked when the phantom is not restricted
+			// to faction players only (attackOnlyEnemyFaction).
+			if (monster instanceof FactionWarGuard && PhantomConfig.attackOnlyEnemyFaction())
 				return;
 			
 			final double distance = phantom.distance3D(monster);
@@ -1534,38 +1606,73 @@ public final class PhantomAI
 	
 	/**
 	 * Opens a private sell store for the phantom in neutral zone.
-	 * The phantom sits down and broadcasts a sell store with random items from inventory.
+	 * The phantom receives real items, lists them in a sell store with a title,
+	 * sits down and stays in store mode until the store is closed (timer or sold out).
 	 */
 	private static void openPrivateStore(Player phantom)
 	{
 		if (phantom == null || phantom.isDead() || phantom.getOperateType() != OperateType.NONE)
 			return;
 		
+		if (!PhantomConfig.storeEnabled())
+			return;
+		
+		final int[] itemIds = PhantomConfig.storeItemIds();
+		if (itemIds.length == 0)
+			return;
+		
 		try
 		{
+			// Fresh sell list.
+			phantom.getSellList().clear();
+			
+			// Give the phantom real items and list a random subset of the configured ids.
+			final int listSize = Rnd.get(PhantomConfig.storeItemListMin(), PhantomConfig.storeItemListMax());
+			for (int i = 0; i < listSize; i++)
+			{
+				final int itemId = itemIds[Rnd.get(itemIds.length)];
+				
+				final Item template = ItemData.getInstance().getTemplate(itemId);
+				if (template == null || !template.isTradable() || template.isQuestItem())
+					continue;
+				
+				final int count = Rnd.get(PhantomConfig.storeItemCountMin(), PhantomConfig.storeItemCountMax());
+				final ItemInstance item = phantom.getInventory().addItem(itemId, count);
+				if (item == null)
+					continue;
+				
+				final int price = Math.max(1, (int) (item.getReferencePrice() * PhantomConfig.storePriceMultiplier()));
+				phantom.getSellList().addItem(item.getObjectId(), item.getCount(), price);
+			}
+			
+			if (phantom.getSellList().isEmpty())
+				return;
+			
+			phantom.getSellList().setTitle(PhantomConfig.storeTitle());
 			phantom.sitDown();
 			phantom.setOperateType(OperateType.SELL);
 			phantom.broadcastUserInfo();
 			LAST_ACTIONS.put(phantom.getObjectId(), "Store");
-			PhantomLog.info("Phantom " + phantom.getName() + " opened a private store in neutral zone.");
+			PhantomLog.info("Phantom " + phantom.getName() + " abrio tienda en zona neutral con " + phantom.getSellList().size() + " items.");
 			
-			// Schedule closing the store after a random time (30-120 seconds)
+			// Schedule closing the store after a random time.
 			final int objectId = phantom.getObjectId();
 			ThreadPool.schedule(() ->
 			{
 				final Player p = PhantomEngine.getActivePhantom(objectId);
 				if (p != null && p.getOperateType() == OperateType.SELL)
 				{
+					p.getSellList().clear();
 					p.setOperateType(OperateType.NONE);
 					p.standUp();
 					p.broadcastUserInfo();
-					PhantomLog.info("Phantom " + p.getName() + " closed private store.");
+					PhantomLog.info("Phantom " + p.getName() + " cerro la tienda.");
 				}
-			}, Rnd.get(30000, 120000));
+			}, Rnd.get(PhantomConfig.storeDurationMinMs(), PhantomConfig.storeDurationMaxMs()));
 		}
 		catch (Exception e)
 		{
-			PhantomLog.warn("openPrivateStore failed for " + phantom.getName() + ": " + e.getMessage());
+			PhantomLog.warn("openPrivateStore fallo para " + phantom.getName() + ": " + e.getMessage());
 		}
 	}
 	
@@ -1798,6 +1905,11 @@ public final class PhantomAI
 	
 	private static boolean teleportToSafeSpawn(Player phantom, String reason)
 	{
+		// During an active faction war the racial safe spawn is off the war map;
+		// do NOT yank the phantom out of the battle.
+		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+			return false;
+		
 		final Location safe = phantom.getBaseTemplate().getRandomSpawn();
 		if (safe == null)
 			return false;

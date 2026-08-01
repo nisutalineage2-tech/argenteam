@@ -466,6 +466,16 @@ public final class PhantomEngine
 					if (!FactionWarManager.getInstance().isRunning())
 						return;
 					
+					// If the AI fallback already teleported this phantom onto the war map
+					// (e.g. it was in the neutral zone when the war started), skip the
+					// re-teleport to avoid a visible double-teleport flicker.
+					if (p.distance3D(warSpawn) < 600)
+					{
+						FactionWarRegistry.getInstance().register(p);
+						PhantomAI.setHome(p);
+						return;
+					}
+					
 					// Stop any movement and teleport
 					p.getMove().stop();
 					

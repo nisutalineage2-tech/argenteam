@@ -3,6 +3,7 @@ package net.sf.l2j.gameserver.phantom;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.sf.l2j.gameserver.enums.actors.OperateType;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.item.instance.ItemInstance;
 
@@ -17,6 +18,10 @@ public final class PhantomInventory
 	public static void cleanup(Player phantom)
 	{
 		if (phantom == null || !PhantomConfig.autoCleanupInventory())
+			return;
+		
+		// Skip cleanup while the phantom is running a private store (items are listed for sale).
+		if (phantom.getOperateType() != OperateType.NONE)
 			return;
 		
 		final int tick = TICKS.merge(phantom.getObjectId(), 1, Integer::sum);

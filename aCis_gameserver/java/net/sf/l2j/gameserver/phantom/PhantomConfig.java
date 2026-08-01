@@ -137,6 +137,22 @@ public final class PhantomConfig
 	private static int _autoThirdClassLevel = 76;
 	private static boolean _attackVisiblePk = true;
 	private static int _visiblePkRange = 1200;
+	
+	// Offline store (neutral zone vendor simulation)
+	private static boolean _storeEnabled = true;
+	private static int _storeChance = 30;
+	private static int[] _storeItemIds = new int[]
+	{
+		1835, 1836, 1837, 2509, 2510, 2511, 1061, 1062, 1064, 1073, 736
+	};
+	private static int _storeItemListMin = 2;
+	private static int _storeItemListMax = 5;
+	private static int _storeItemCountMin = 10;
+	private static int _storeItemCountMax = 50;
+	private static double _storePriceMultiplier = 1.0;
+	private static String _storeTitle = "Vendo barato";
+	private static int _storeDurationMinMs = 60000;
+	private static int _storeDurationMaxMs = 180000;
 	private PhantomConfig()
 	{
 	}
@@ -271,6 +287,19 @@ public final class PhantomConfig
 			_autoLootHerbs = props.getProperty("AutoLootHerbs", true);
 			_autoLootHerbRange = Math.max(80, props.getProperty("AutoLootHerbRange", 650));
 			_herbItemIds = parseOptionalIds(props.getProperty("HerbItemIds", ""));
+			
+			// Offline store (neutral zone vendor simulation)
+			_storeEnabled = props.getProperty("StoreEnabled", true);
+			_storeChance = clampPercent(props.getProperty("StoreChance", 30));
+			_storeItemIds = parseOptionalIds(props.getProperty("StoreItemIds", "1835,1836,1837,2509,2510,2511,1061,1062,1064,1073,736"));
+			_storeItemListMin = Math.max(1, props.getProperty("StoreItemListMin", 2));
+			_storeItemListMax = Math.max(_storeItemListMin, props.getProperty("StoreItemListMax", 5));
+			_storeItemCountMin = Math.max(1, props.getProperty("StoreItemCountMin", 10));
+			_storeItemCountMax = Math.max(_storeItemCountMin, props.getProperty("StoreItemCountMax", 50));
+			_storePriceMultiplier = Math.max(0.1, parseDouble(props.getProperty("StorePriceMultiplier", "1.0"), 1.0));
+			_storeTitle = props.getProperty("StoreTitle", "Vendo barato");
+			_storeDurationMinMs = Math.max(5000, props.getProperty("StoreDurationMinMs", 60000));
+			_storeDurationMaxMs = Math.max(_storeDurationMinMs, props.getProperty("StoreDurationMaxMs", 180000));
 			LOGGER.info("Loaded {} configured phantom ids and {} level zones.", _phantomIds.size(), _levelZones.size());
 		}
 		catch (Exception e)
@@ -383,6 +412,20 @@ public final class PhantomConfig
 		_autoLootHerbs = true;
 		_autoLootHerbRange = 650;
 		_herbItemIds = new int[0];
+		_storeEnabled = true;
+		_storeChance = 30;
+		_storeItemIds = new int[]
+		{
+			1835, 1836, 1837, 2509, 2510, 2511, 1061, 1062, 1064, 1073, 736
+		};
+		_storeItemListMin = 2;
+		_storeItemListMax = 5;
+		_storeItemCountMin = 10;
+		_storeItemCountMax = 50;
+		_storePriceMultiplier = 1.0;
+		_storeTitle = "Vendo barato";
+		_storeDurationMinMs = 60000;
+		_storeDurationMaxMs = 180000;
 		_phantomLogEnabled = true;
 		_phantomLogFile = "./log/phantoms.log";
 		_phantomLogBackupOnStartup = false;
@@ -1139,6 +1182,61 @@ public final class PhantomConfig
 	public static int visiblePkRange()
 	{
 		return _visiblePkRange;
+	}
+	
+	public static boolean storeEnabled()
+	{
+		return _storeEnabled;
+	}
+	
+	public static int storeChance()
+	{
+		return _storeChance;
+	}
+	
+	public static int[] storeItemIds()
+	{
+		return _storeItemIds;
+	}
+	
+	public static int storeItemListMin()
+	{
+		return _storeItemListMin;
+	}
+	
+	public static int storeItemListMax()
+	{
+		return _storeItemListMax;
+	}
+	
+	public static int storeItemCountMin()
+	{
+		return _storeItemCountMin;
+	}
+	
+	public static int storeItemCountMax()
+	{
+		return _storeItemCountMax;
+	}
+	
+	public static double storePriceMultiplier()
+	{
+		return _storePriceMultiplier;
+	}
+	
+	public static String storeTitle()
+	{
+		return _storeTitle;
+	}
+	
+	public static int storeDurationMinMs()
+	{
+		return _storeDurationMinMs;
+	}
+	
+	public static int storeDurationMaxMs()
+	{
+		return _storeDurationMaxMs;
 	}
 		private record LevelZone(int minLevel, int maxLevel, Location location)
 	{
