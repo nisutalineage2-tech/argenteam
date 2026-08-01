@@ -117,6 +117,25 @@ public final class PhantomSocial
 		"Todos estan yendo para alla. Vamos."
 	};
 	
+	private static final String[] BOSS_LINES =
+	{
+		"Escuche que aparecio un boss. Voy para alla.",
+		"Dicen que hay un Grand Boss activo. No me lo pierdo.",
+		"Vamos a ver si entre todos tumbamos al boss.",
+		"Hay que armar party y ir a matar al boss.",
+		"El boss esta online. Todos al lair.",
+		"Voy a ver si sale algo bueno del boss.",
+		"Con un grupo se puede. Vamos por el boss.",
+		"Alguien se apunta a ir contra el Grand Boss?",
+		"El boss no se va a matar solo. Vamos.",
+		"Dicen que el drop del boss es buenazo. Alla voy.",
+		"Hay que aprovechar que el boss esta despierto.",
+		"Voy al lair, seguro hay pelea buena.",
+		"El boss no dura nada con todos atacandolo.",
+		"Me avisaron que el boss esta. Salgo para alla.",
+		"Otra vez el boss dando vueltas. Vamos a cobrarlo."
+	};
+	
 	private PhantomSocial()
 	{
 	}
@@ -171,6 +190,19 @@ public final class PhantomSocial
 			lines = WAR_LINES_NEUTRAL;
 		
 		say(phantom, lines[Rnd.get(lines.length)]);
+	}
+	
+	/**
+	 * Says a random Grand Boss hunting phrase.
+	 * @param phantom : The phantom to speak.
+	 * @param bossNpcId : The hunted Grand Boss npcId (unused, kept for future per-boss lines).
+	 */
+	public static void sayBossPhrase(Player phantom, int bossNpcId)
+	{
+		if (phantom == null || phantom.isDead())
+			return;
+		
+		say(phantom, BOSS_LINES[Rnd.get(BOSS_LINES.length)]);
 	}
 	
 	public static void forget(int objectId)

@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
+import net.sf.l2j.Config;
+
 import net.sf.l2j.gameserver.model.actor.Player;
 
 /**
@@ -265,8 +267,12 @@ public enum ClassId
 			if (classId._level != 2)
 				continue;
 			
-			// Overlord, Warsmith or self class may never be taken as subclass.
-			if (classId == OVERLORD || classId == WARSMITH || classId == this)
+			// Overlord and Warsmith may never be taken as subclass (unless enabled by config).
+			if (!Config.ENABLE_CLASS_OVERLORD_Y_WARSMITH && (classId == OVERLORD || classId == WARSMITH))
+				continue;
+			
+			// Self class may never be taken as subclass.
+			if (classId == this)
 				continue;
 			
 			// Elves may not sub Dark Elves and vice versa.

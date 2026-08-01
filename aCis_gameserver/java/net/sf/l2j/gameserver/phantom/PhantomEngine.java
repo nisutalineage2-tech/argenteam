@@ -2,6 +2,7 @@ package net.sf.l2j.gameserver.phantom;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.World;
+import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.model.records.NewbieBuff;
@@ -31,6 +33,31 @@ public final class PhantomEngine
 	private static final CLogger LOGGER = new CLogger(PhantomEngine.class.getName());
 	private static final Map<Integer, Player> ACTIVE_PHANTOMS = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> NEXT_BUFFS = new ConcurrentHashMap<>();
+	
+	// Grand Boss hunting: phantom objectId -> boss npcId currently hunted.
+	private static final Map<Integer, Integer> BOSS_HUNTS = new ConcurrentHashMap<>();
+	
+	// Grand Boss npcIds (the ones with spawn entries) and their lair teleport points.
+	private static final int[] GRAND_BOSS_IDS =
+	{
+		29066, // Antharas
+		29020, // Baium
+		29006, // Core
+		29014, // Orfen
+		29001, // Queen Ant
+		29028, // Valakas
+		29022 // Zaken
+	};
+	private static final int[][] GRAND_BOSS_LAIRS =
+	{
+		{ 179700, 113800, -7709 }, // Antharas
+		{ 115203, 16620, 10078 }, // Baium
+		{ 17726, 108915, -6480 }, // Core
+		{ 55024, 17368, -5412 }, // Orfen
+		{ -21610, 181594, -5734 }, // Queen Ant
+		{ 183813, -115157, -3303 }, // Valakas
+		{ 55312, 219168, -3223 } // Zaken
+	};
 	
 	private PhantomEngine()
 	{
@@ -531,6 +558,194 @@ public final class PhantomEngine
 			PhantomAI.clearStuckState(phantom.getObjectId());
 			
 			PhantomAI.setHome(phantom);
+			phantom.store();
+			moved++;
+		}
+		return moved;
+	}
+	
+	/**
+	 * Teleports up to {@code PhantomConfig.bossHuntMaxPerBoss()} phantoms to the lair of the
+	 * first alive Grand Boss. Only phantoms not inside an event/faction war and not already
+	 * hunting are considered. Uses the phantom-safe teleport pattern.
+	 * @return the amount of phantoms sent to the boss.
+	 */
+	public static int teleportPhantomsToBoss()
+	{
+		if (!PhantomConfig.bossHuntEnabled())
+			return 0;
+		
+		// Find the first alive Grand Boss.
+		int bossNpcId = -1;
+		int[] lair = null;
+		for (int i = 0; i < GRAND_BOSS_IDS.length; i++)
+		{
+			if (isGrandBossAlive(GRAND_BOSS_IDS[i]))
+			{
+				bossNpcId = GRAND_BOSS_IDS[i];
+				lair = GRAND_BOSS_LAIRS[i];
+				break;
+			}
+		}
+		
+		if (bossNpcId == -1 || lair == null)
+			return 0;
+		
+		// Already enough phantoms on this boss.
+		final int targetBossId = bossNpcId;
+		final int current = (int) BOSS_HUNTS.values().stream().filter(id -> id == targetBossId).count();
+		if (current >= PhantomConfig.bossHuntMaxPerBoss())
+			return 0;
+		
+		final List<Player> candidates = new ArrayList<>();
+		for (Player phantom : ACTIVE_PHANTOMS.values())
+		{
+			if (phantom == null || !phantom.isOnline() || phantom.isDead())
+				continue;
+			
+			if (BOSS_HUNTS.containsKey(phantom.getObjectId()))
+				continue;
+			
+			// Skip phantoms inside an active event.
+			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+			if (event != null && event.getState() != AbstractEvent.State.IDLE && event.getState() != AbstractEvent.State.ENDED)
+				continue;
+			
+			// Skip phantoms participating in the faction war.
+			if (phantom.getFactionId() > 0 && net.sf.l2j.gameserver.factionwar.FactionWarManager.getInstance().isRunning())
+				continue;
+			
+			candidates.add(phantom);
+		}
+		
+		Collections.shuffle(candidates);
+		
+		int sent = 0;
+		for (Player phantom : candidates)
+		{
+			if (sent >= PhantomConfig.bossHuntMaxPerBoss() - current)
+				break;
+			
+			final int bossId = bossNpcId;
+			final int tx = lair[0] + Rnd.get(-200, 200);
+			final int ty = lair[1] + Rnd.get(-200, 200);
+			final int tz = lair[2];
+			
+			BOSS_HUNTS.put(phantom.getObjectId(), bossId);
+			PhantomAI.setHome(phantom);
+			
+			ThreadPool.schedule(() ->
+			{
+				try
+				{
+					if (phantom == null || !phantom.isOnline())
+						return;
+					
+					phantom.getMove().stop();
+					phantom.teleportTo(tx, ty, tz, 20);
+					if (phantom.isTeleporting())
+						phantom.onTeleported();
+					
+					phantom.revalidateZone(true);
+					phantom.broadcastUserInfo();
+					PhantomAI.clearStuckState(phantom.getObjectId());
+					
+					PhantomSocial.sayBossPhrase(phantom, bossId);
+				}
+				catch (Exception e)
+				{
+					PhantomLog.warn("Boss teleport failed for " + phantom.getName() + ": " + e.getMessage());
+					BOSS_HUNTS.remove(phantom.getObjectId());
+				}
+			}, Rnd.get(2000, 6000));
+			
+			sent++;
+		}
+		
+		return sent;
+	}
+	
+	/**
+	 * @param bossNpcId : The Grand Boss {@link Npc} ID.
+	 * @return True if the Grand Boss is currently spawned and alive.
+	 */
+	public static boolean isGrandBossAlive(int bossNpcId)
+	{
+		final net.sf.l2j.gameserver.model.spawn.ASpawn spawn = net.sf.l2j.gameserver.data.manager.SpawnManager.getInstance().getSpawn(bossNpcId);
+		if (spawn == null)
+			return false;
+		
+		final Npc npc = spawn.getNpc();
+		if (npc == null)
+			return false;
+		
+		return !npc.isDead() && !npc.isDecayed();
+	}
+	
+	/**
+	 * @param objectId : The phantom object ID.
+	 * @return True if the phantom is currently hunting a Grand Boss.
+	 */
+	public static boolean isBossHunting(int objectId)
+	{
+		return BOSS_HUNTS.containsKey(objectId);
+	}
+	
+	/**
+	 * @param objectId : The phantom object ID.
+	 * @return The Grand Boss npcId the phantom is hunting, or -1.
+	 */
+	public static int getBossHuntTarget(int objectId)
+	{
+		return BOSS_HUNTS.getOrDefault(objectId, -1);
+	}
+	
+	/**
+	 * Clears the boss hunt flag of a phantom (used when the boss died or the phantom returned).
+	 * @param objectId : The phantom object ID.
+	 */
+	public static void clearBossHunt(int objectId)
+	{
+		BOSS_HUNTS.remove(objectId);
+	}
+	
+	/**
+	 * Returns all phantoms currently hunting a Grand Boss back to the neutral zone.
+	 * Called when a Grand Boss dies. Uses the phantom-safe teleport pattern.
+	 * @return the amount of phantoms returned.
+	 */
+	public static int returnPhantomsFromBoss()
+	{
+		int moved = 0;
+		for (Player phantom : ACTIVE_PHANTOMS.values())
+		{
+			if (phantom == null || !phantom.isOnline())
+				continue;
+			
+			if (!BOSS_HUNTS.containsKey(phantom.getObjectId()))
+				continue;
+			
+			final net.sf.l2j.gameserver.model.location.Location destination = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getNeutralSpawnLoc();
+			if (destination == null)
+				continue;
+			
+			if (phantom.isDead())
+			{
+				phantom.doRevive();
+				phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+				phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
+				PhantomAI.clearDeathFlag(phantom.getObjectId());
+			}
+			
+			phantom.teleportTo(destination, 20);
+			if (phantom.isTeleporting())
+				phantom.onTeleported();
+			
+			phantom.revalidateZone(true);
+			phantom.broadcastUserInfo();
+			PhantomAI.clearStuckState(phantom.getObjectId());
+			PhantomAI.setHome(phantom);
+			clearBossHunt(phantom.getObjectId());
 			phantom.store();
 			moved++;
 		}

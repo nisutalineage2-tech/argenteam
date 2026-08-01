@@ -16,6 +16,7 @@ import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.commons.util.SysUtil;
 
 import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.bingo.BingoManager;
 import net.sf.l2j.gameserver.communitybbs.CommunityBoard;
 import net.sf.l2j.gameserver.data.SkillTable;
 import net.sf.l2j.gameserver.data.cache.CrestCache;
@@ -255,6 +256,7 @@ public class GameServer
 		DerbyTrackManager.getInstance();
 		LotteryManager.getInstance();
 		CoupleManager.getInstance();
+		BingoManager.getInstance();
 		
 		if (Config.ALLOW_FISH_CHAMPIONSHIP)
 			FishingChampionshipManager.getInstance();

@@ -6860,11 +6860,25 @@ public final class Player extends Playable
 	}
 	
 	/**
+	 * Temporary fix for water and Pagan Temple zones: the geodata of those areas blocks
+	 * movement and triggers fall damage on the client. When inside such a zone, falling
+	 * is disabled and path validation is skipped so the player can move freely.
+	 * @return True if the temporary fix applies for this player.
+	 */
+	public boolean useTemporaryFix()
+	{
+		return isInsideZone(ZoneId.PAGAN) || isInsideZone(ZoneId.WATER) || isInWater();
+	}
+	
+	/**
 	 * @param z
 	 * @return true if character falling now On the start of fall return false for correct coord sync !
 	 */
 	public final boolean isFalling(int z)
 	{
+		if (useTemporaryFix())
+			return false;
+		
 		if (isDead() || getMove().getMoveType() != MoveType.GROUND)
 			return false;
 		

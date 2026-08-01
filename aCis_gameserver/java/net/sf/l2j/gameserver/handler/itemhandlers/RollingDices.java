@@ -2,6 +2,7 @@ package net.sf.l2j.gameserver.handler.itemhandlers;
 
 import net.sf.l2j.commons.random.Rnd;
 
+import net.sf.l2j.gameserver.bingo.BingoManager;
 import net.sf.l2j.gameserver.enums.FloodProtector;
 import net.sf.l2j.gameserver.handler.IItemHandler;
 import net.sf.l2j.gameserver.model.actor.Playable;
@@ -24,6 +25,9 @@ public class RollingDices implements IItemHandler
 			player.sendPacket(SystemMessageId.YOU_MAY_NOT_THROW_THE_DICE_AT_THIS_TIME_TRY_AGAIN_LATER);
 			return;
 		}
+		
+		if (BingoManager.getInstance().getGame() != null && BingoManager.LANZAR_DADOS)
+			return;
 		
 		final int number = Rnd.get(1, 6);
 		

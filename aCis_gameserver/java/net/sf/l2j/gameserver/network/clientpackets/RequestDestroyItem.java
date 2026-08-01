@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 
 import net.sf.l2j.commons.pool.ConnectionPool;
 
+import net.sf.l2j.gameserver.bingo.BingoManager;
 import net.sf.l2j.gameserver.data.manager.CursedWeaponManager;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.item.instance.ItemInstance;
@@ -59,6 +60,9 @@ public final class RequestDestroyItem extends L2GameClientPacket
 		
 		if (itemToRemove.isEquipped() && (!itemToRemove.isStackable() || (itemToRemove.isStackable() && _count >= itemToRemove.getCount())))
 			player.useEquippableItem(itemToRemove, false);
+		
+		if (itemToRemove.getItemId() == BingoManager.ID_ITEM_CARTELA)
+			BingoManager.getInstance().removeCard(player.getObjectId(), _objectId);
 		
 		// if it's a pet control item.
 		if (itemToRemove.isSummonItem())

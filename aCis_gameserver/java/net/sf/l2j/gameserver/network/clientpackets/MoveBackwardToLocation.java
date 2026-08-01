@@ -5,6 +5,7 @@ import java.nio.BufferUnderflowException;
 import net.sf.l2j.commons.math.MathUtil;
 
 import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.bingo.BingoManager;
 import net.sf.l2j.gameserver.enums.TeleportMode;
 import net.sf.l2j.gameserver.enums.boats.BoatDock;
 import net.sf.l2j.gameserver.model.actor.Boat;
@@ -108,6 +109,12 @@ public class MoveBackwardToLocation extends L2GameClientPacket
 		
 		// If we target past 9900 distance, forget it.
 		if (!targetLoc.isIn3DRadius(_originX, _originY, _originZ, 9900))
+		{
+			player.sendPacket(ActionFailed.STATIC_PACKET);
+			return;
+		}
+		
+		if (!BingoManager.getInstance().canMove(player.getObjectId(), targetLoc))
 		{
 			player.sendPacket(ActionFailed.STATIC_PACKET);
 			return;

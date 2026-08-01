@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.handler.chathandlers;
 
+import net.sf.l2j.gameserver.bingo.BingoManager;
 import net.sf.l2j.gameserver.enums.FloodProtector;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.handler.IChatHandler;
@@ -18,6 +19,9 @@ public class ChatTrade implements IChatHandler
 	public void handleChat(SayType type, Player player, String target, String text)
 	{
 		if (!player.getClient().performAction(FloodProtector.TRADE_CHAT))
+			return;
+		
+		if (BingoManager.getInstance().blockChatTrade())
 			return;
 		
 		World.broadcastToSameRegion(player, new CreatureSay(player, type, text));

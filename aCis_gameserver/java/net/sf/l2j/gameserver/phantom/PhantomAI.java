@@ -237,6 +237,13 @@ public final class PhantomAI
 				LAST_ACTIONS.put(phantom.getObjectId(), "Event waiting");
 			}
 			
+			// === GRAND BOSS HUNT MODE: phantom sent to a Grand Boss lair, focuses the boss ===
+			if (PhantomEngine.isBossHunting(phantom.getObjectId()))
+			{
+				handleBossHuntMode(phantom);
+				return;
+			}
+			
 			if (tryLootAny(phantom))
 				return;
 			
@@ -260,6 +267,14 @@ public final class PhantomAI
 				{
 					// Already in store mode or sitting - skip loot/monsters
 					LAST_ACTIONS.put(phantom.getObjectId(), "Neutral store");
+					return;
+				}
+				
+				// Occasionally send some phantoms to hunt an alive Grand Boss.
+				if (!phantom.isMoving() && PhantomConfig.bossHuntEnabled() && Rnd.get(100) < 8)
+				{
+					PhantomEngine.teleportPhantomsToBoss();
+					LAST_ACTIONS.put(phantom.getObjectId(), "Boss check");
 					return;
 				}
 				
@@ -429,6 +444,59 @@ public final class PhantomAI
 		
 		LAST_ACTIONS.put(phantom.getObjectId(), action + target.getName());
 		phantom.getAI().tryToAttack(target, true, false);
+	}
+	
+	/**
+	 * Grand Boss hunt mode: the phantom was sent to a Grand Boss lair. It focuses the boss
+	 * NPC (attack it when in range, move toward its spawn otherwise). When the boss is dead,
+	 * the phantom returns to the neutral zone and clears the hunt flag.
+	 */
+	private static void handleBossHuntMode(Player phantom)
+	{
+		final int bossNpcId = PhantomEngine.getBossHuntTarget(phantom.getObjectId());
+		if (bossNpcId <= 0)
+		{
+			PhantomEngine.clearBossHunt(phantom.getObjectId());
+			return;
+		}
+		
+		// Boss no longer alive -> return to neutral zone.
+		if (!PhantomEngine.isGrandBossAlive(bossNpcId))
+		{
+			LAST_ACTIONS.put(phantom.getObjectId(), "Boss dead, returning");
+			final Location neutral = FactionWarConfig.getNeutralSpawnLoc();
+			if (neutral != null)
+				phantom.teleportTo(neutral, 20);
+			if (phantom.isTeleporting())
+				phantom.onTeleported();
+			phantom.revalidateZone(true);
+			phantom.broadcastUserInfo();
+			PhantomAI.clearStuckState(phantom.getObjectId());
+			PhantomEngine.clearBossHunt(phantom.getObjectId());
+			return;
+		}
+		
+		// Boss alive: attack it (or move toward its spawn location).
+		final Monster boss = findEventNpcById(phantom, bossNpcId);
+		if (boss != null && !boss.isDead())
+		{
+			attackNpc(phantom, boss, "Grand boss ");
+			return;
+		}
+		
+		if (!phantom.isMoving() && !phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+		{
+			final net.sf.l2j.gameserver.model.spawn.ASpawn spawn = SpawnManager.getInstance().getSpawn(bossNpcId);
+			if (spawn != null && spawn.getNpc() != null)
+			{
+				final Location bossLoc = new Location(spawn.getNpc().getX(), spawn.getNpc().getY(), spawn.getNpc().getZ());
+				LAST_ACTIONS.put(phantom.getObjectId(), "Move to boss");
+				moveTo(phantom, bossLoc, "Move to boss");
+				return;
+			}
+		}
+		
+		LAST_ACTIONS.put(phantom.getObjectId(), "Boss hunting");
 	}
 	
 	/**

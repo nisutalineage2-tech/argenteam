@@ -2,6 +2,7 @@ package net.sf.l2j.gameserver.handler.itemhandlers;
 
 import net.sf.l2j.commons.random.Rnd;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.items.ShotType;
 import net.sf.l2j.gameserver.handler.IItemHandler;
 import net.sf.l2j.gameserver.model.actor.Playable;
@@ -49,7 +50,7 @@ public class SoulShots implements IItemHandler
 		if (weaponItem.getReducedSoulShot() > 0 && Rnd.get(100) < weaponItem.getReducedSoulShotChance())
 			ssCount = weaponItem.getReducedSoulShot();
 		
-		if (!player.destroyItem(item.getObjectId(), ssCount, false))
+		if (!Config.INFINITY_SS && !player.destroyItem(item.getObjectId(), ssCount, false))
 		{
 			if (!player.disableAutoShot(item.getItemId()))
 				player.sendPacket(SystemMessageId.NOT_ENOUGH_SOULSHOTS);

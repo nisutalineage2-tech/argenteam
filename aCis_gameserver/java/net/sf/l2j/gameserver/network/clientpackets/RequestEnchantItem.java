@@ -202,7 +202,16 @@ public final class RequestEnchantItem extends AbstractEnchantPacket
 					}
 				}
 				
-				if (scrollTemplate.isBlessed())
+				if (scrollTemplate.isCrystal())
+				{
+					// crystal enchant - decrease level by 1
+					player.sendPacket(SystemMessageId.BLESSED_ENCHANT_FAILED);
+					
+					final int currentLevel = item.getEnchantLevel();
+					item.setEnchantLevel(Math.max(0, currentLevel - 1), player);
+					player.sendPacket(EnchantResult.UNSUCCESS);
+				}
+				else if (scrollTemplate.isBlessed())
 				{
 					// blessed enchant - clear enchant value
 					player.sendPacket(SystemMessageId.BLESSED_ENCHANT_FAILED);

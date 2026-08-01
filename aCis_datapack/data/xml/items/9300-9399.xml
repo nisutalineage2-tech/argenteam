@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list>
+    <item id="9300" type="EtcItem" name="Bingo Card">
+        <set name="handler" val="L2BingoCard" />
+        <set name="weight" val="10" />
+        <set name="is_sellable" val="false" />
+        <set name="is_depositable" val="false" />
+        <set name="is_dropable" val="false" />
+        <set name="is_oly_restricted" val="true" />
+    </item>
+</list>

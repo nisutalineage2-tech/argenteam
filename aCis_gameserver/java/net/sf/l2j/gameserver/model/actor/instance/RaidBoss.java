@@ -10,8 +10,9 @@ import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
 import net.sf.l2j.gameserver.model.group.CommandChannel;
-import net.sf.l2j.gameserver.model.group.Party;
-import net.sf.l2j.gameserver.network.SystemMessageId;
+import net.sf.l2j.gameserver.model.group.Party;import net.sf.l2j.gameserver.network.SystemMessageId;
+import net.sf.l2j.gameserver.network.serverpackets.ItemList;
+import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.network.serverpackets.PlaySound;
 import net.sf.l2j.gameserver.network.serverpackets.SystemMessage;
 
@@ -72,6 +73,9 @@ public class RaidBoss extends Monster
 						RaidPointManager.getInstance().addPoints(member, getNpcId(), (getStatus().getLevel() / 2) + Rnd.get(-5, 5));
 						if (member.isNoble())
 							HeroManager.getInstance().setRBkilled(member.getObjectId(), getNpcId());
+						
+						// Custom: killing Barakiel grants Noblesse status to non-noble members.
+						tryGrantNoblesse(member);
 					}
 				}
 				else
@@ -79,12 +83,40 @@ public class RaidBoss extends Monster
 					RaidPointManager.getInstance().addPoints(player, getNpcId(), (getStatus().getLevel() / 2) + Rnd.get(-5, 5));
 					if (player.isNoble())
 						HeroManager.getInstance().setRBkilled(player.getObjectId(), getNpcId());
+					
+					// Custom: killing Barakiel grants Noblesse status to non-noble players.
+					tryGrantNoblesse(player);
 				}
 			}
 		}
 		
-		// TODO implement NpcSpawnManager or ASpawn notification
-		// RaidBossManager.getInstance().onDeath(this);
-		return true;
-	}
+	// TODO implement NpcSpawnManager or ASpawn notification
+	// RaidBossManager.getInstance().onDeath(this);
+	return true;
+}
+
+/**
+ * Custom: when the Barakiel raid boss (npcId 25325) is killed and the mod is enabled,
+ * non-noble players receive the Noblesse status, a tiara (item 7694) and a congratulation
+ * window.
+ * @param member : The player to check (party member or killer).
+ */
+private void tryGrantNoblesse(Player member)
+{
+	if (!net.sf.l2j.Config.ENABLE_RAIDBOSS_NOBLES)
+		return;
+	
+	if (getNpcId() != 25325 || member.isNoble())
+		return;
+	
+	member.setNoble(true, true);
+	
+	final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
+	html.setHtml("<html><body><title>Congratulations!</title><br><center><font color=\"LEVEL\">Congratulations!</font><br><br>You acquired all<br1>status from a Noblesse.<br><br><font color=\"808080\">You receive the Noblesse Tiara.</font></center></body></html>");
+	member.sendPacket(html);
+	
+	member.addItem(7694, 1, true);
+	member.sendPacket(new ItemList(member, true));
+	member.sendMessage("You receive the Noblesse Tiara.");
+}
 }

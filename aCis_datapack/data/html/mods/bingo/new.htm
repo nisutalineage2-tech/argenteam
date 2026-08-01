@@ -1,0 +1,74 @@
+<html>
+<body>
+<center>%msg%</center>
+<font color=LEVEL>Cartela</font>
+<table>
+    <tr>
+        <td>
+            Moneda de compra (ID del item)
+        </td>
+        <td>
+            <edit var="Coin" width=50 height=12>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Precio (cantidad del item anterior)
+        </td>
+        <td>
+            <edit var="CoinCount" width=100 height=12>
+        </td>
+    </tr>
+</table>
+<br>
+<font color=LEVEL>Premio</font>
+<table>
+    <tr>
+        <td>
+            ID del item utilizado como premio
+        </td>
+        <td>
+            <edit var="Reward" width=50 height=12>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Total (cantidad del item anterior)
+        </td>
+        <td>
+            <edit var="RewardCount" width=100 height=12>
+        </td>
+    </tr>
+</table>
+<br>
+<font color=LEVEL>Operador (opcional)</font><br1>
+Quien llamara los numeros. Dejalo vacio para que sea automatico.
+<table>
+    <tr>
+        <td width=80>
+            Nombre del player
+        </td>
+        <td>
+            <edit var="Manager" width=80 height=12>
+        </td>
+    </tr>
+</table>
+<br>
+<font color=LEVEL>Inicio programado (opcional)</font><br1>
+Si no se especifica, debera iniciarse manualmente.
+<table>
+    <tr>
+        <td width=150>
+            Horario (formato hora:minuto)
+        </td>
+        <td>
+            <edit var="Start" width=40 height=12>
+        </td>
+    </tr>
+</table>
+<br><br>
+<center>
+<a action="bypass npc_%objectId%_bingo newgame $Coin ; $CoinCount ; $Reward ; $RewardCount ; $Start ; $Manager">Crear</a>
+</center>
+</body>
+</html>

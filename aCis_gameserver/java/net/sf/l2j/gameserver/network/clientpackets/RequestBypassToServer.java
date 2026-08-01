@@ -4,6 +4,7 @@ import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 import net.sf.l2j.Config;
+import net.sf.l2j.gameserver.bingo.BingoManager;
 import net.sf.l2j.gameserver.communitybbs.CommunityBoard;
 import net.sf.l2j.gameserver.data.manager.HeroManager;
 import net.sf.l2j.gameserver.data.xml.AdminData;
@@ -168,6 +169,8 @@ public final class RequestBypassToServer extends L2GameClientPacket
 			if (heroid > 0)
 				HeroManager.getInstance().showHeroDiary(player, heroclass, heroid, heropage);
 		}
+		else if (_command.startsWith("bingo"))
+			BingoManager.getInstance().handleCardBypass(player, _command.substring(6));
 		else if (_command.startsWith("arenachange"))
 		{
 			final boolean isManager = player.getCurrentFolk() instanceof OlympiadManagerNpc;

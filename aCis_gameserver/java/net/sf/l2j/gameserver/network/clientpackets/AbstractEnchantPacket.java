@@ -47,8 +47,13 @@ public abstract class AbstractEnchantPacket extends L2GameClientPacket
 						return false;
 					break;
 				
-				case Item.TYPE2_SHIELD_ARMOR, Item.TYPE2_ACCESSORY:
+				case Item.TYPE2_SHIELD_ARMOR:
 					if (_isWeapon || (Config.ENCHANT_MAX_ARMOR > 0 && enchantItem.getEnchantLevel() >= Config.ENCHANT_MAX_ARMOR))
+						return false;
+					break;
+				
+				case Item.TYPE2_ACCESSORY:
+					if (_isWeapon || (Config.ENCHANT_MAX_JEWELRY > 0 && enchantItem.getEnchantLevel() >= Config.ENCHANT_MAX_JEWELRY))
 						return false;
 					break;
 				
@@ -100,6 +105,16 @@ public abstract class AbstractEnchantPacket extends L2GameClientPacket
 			boolean fullBody = enchantItem.getItem().getBodyPart() == Item.SLOT_FULL_ARMOR;
 			if (enchantItem.getEnchantLevel() < Config.ENCHANT_SAFE_MAX || (fullBody && enchantItem.getEnchantLevel() < Config.ENCHANT_SAFE_MAX_FULL))
 				return 1;
+			
+			// Fixed chances per scroll type (L2JSIGMO style).
+			if (isCrystal())
+				return Config.ENCHANT_CHANCE_CRYSTAL;
+			
+			if (isBlessed())
+				return Config.ENCHANT_CHANCE_BLESSED;
+			
+			if (Config.ENCHANT_CHANCE_NORMAL > 0)
+				return Config.ENCHANT_CHANCE_NORMAL;
 			
 			double chance = 0;
 			

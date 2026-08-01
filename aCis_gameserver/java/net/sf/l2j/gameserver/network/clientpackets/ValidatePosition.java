@@ -55,8 +55,11 @@ public class ValidatePosition extends L2GameClientPacket
 		if (player.isFalling(_z))
 			return;
 		
-		final float actualSpeed;
-		final double dist;
+		// Initialized here because the desync validation below may be skipped when
+		// the water/PAGAN temporary fix applies (useTemporaryFix), yet the debug
+		// block at the end of this method still reads both values.
+		float actualSpeed = 0;
+		double dist = 0;
 		
 		final BoatInfo info = player.getBoatInfo();
 		// Send back position if client<>server desync is too big. For boats, send back if the desync is bigger than 500.
@@ -70,7 +73,7 @@ public class ValidatePosition extends L2GameClientPacket
 				sendPacket(new GetOnVehicle(player.getObjectId(), _boatId, pos));
 		}
 		// For regular movement, send back if the desync is bigger than actual speed.
-		else
+		else if (!player.useTemporaryFix())
 		{
 			actualSpeed = player.getStatus().getMoveSpeed();
 			dist = (player.getMove().getMoveType() == MoveType.GROUND) ? player.getPosition().distance2D(_x, _y) : player.getPosition().distance3D(_x, _y, _z);

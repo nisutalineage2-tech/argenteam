@@ -1,0 +1,74 @@
+<html>
+<body>
+<center>
+<a action="bypass -h npc_%objectId%_bingo manager">Bingo %id%</a>
+<br1>
+%status%
+</center>
+<br>
+<table>
+    <tr>
+        <td width=140>
+            Horario: %scheduled%
+        </td>
+        <td>
+            <edit var="Time" width=40 height=12>
+        </td>
+        <td width=40>
+            <a action="bypass -h npc_%objectId%_bingo schedule $Time">Definir</a>
+        </td>
+    </tr>
+</table>
+<br>
+<table>
+    <tr>
+        <td width=140>
+            Operador: %manager%
+        </td>
+        <td>
+            <edit var="Player" width=80 height=12>
+        </td>
+        <td width=40>
+            <a action="bypass -h npc_%objectId%_bingo setmanager $Player">Definir</a>
+        </td>
+    </tr>
+</table>
+<br>
+<center>
+<table>
+    <tr>
+        <td width=40>
+            <a action="bypass npc_%objectId%_bingo startgame">Iniciar</a>
+        </td>
+        <td width=50>
+            <a action="bypass npc_%objectId%_bingo announce">Anunciar</a>
+        </td>
+        <td width=80>
+            <a action="bypass npc_%objectId%_bingo callnumber">Llamar numero</a>
+        </td>
+    </tr>
+</table>
+</center>
+<br>
+<font color=LEVEL>Informacion y estadisticas</font>
+<br1>
+Inicio: <font color=ff0000>%start%</font>
+<br1>
+Participantes: %players%, Cartelas: %cards%
+<br>
+Ultimo numero: %lastnumber% %lastnumbertime%
+<br1>
+Numeros marcados en las cartelas (cantidad):<br1>
+0 (%marked_0%), 1 (%marked_1%), 2 (%marked_2%), 3 (%marked_3%), 4 (%marked_4%), 5 (%marked_5%)
+<br1>
+Numeros llamados (%totalnumbers%):
+<br1>
+%callednumbers%
+<br>
+Premio: %reward_qnt% %reward_name%
+<br1>
+Cartela: %coin_qnt% %coin_name%
+<br>
+<a action="bypass -h npc_%objectId%_bingo cancelgame">Cancelar</a>
+</body>
+</html>

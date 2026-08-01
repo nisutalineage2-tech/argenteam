@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.network.serverpackets;
 
+import net.sf.l2j.gameserver.bingo.BingoManager;
 import net.sf.l2j.gameserver.data.cache.HtmCache;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.model.actor.Player;
@@ -34,6 +35,10 @@ public final class NpcHtmlMessage extends L2GameServerPacket
 		
 		if (SHOW_FILE && player.isGM() && _file != null)
 			player.sendPacket(new CreatureSay(SayType.ALL, "HTML", _file));
+		
+		// Si limpiamos los bypass arruinaria el NPC del bingo (cartelas).
+		if (_itemId == BingoManager.ID_ITEM_CARTELA)
+			return;
 		
 		player.clearBypass();
 		for (int i = 0; i < _html.length(); i++)

@@ -244,6 +244,8 @@ public final class Config
 	
 	/** Misc */
 	public static boolean EFFECT_CANCELING;
+	public static boolean INFINITY_SS;
+	public static boolean INFINITY_ARROWS;
 	public static double HP_REGEN_MULTIPLIER;
 	public static double MP_REGEN_MULTIPLIER;
 	public static double CP_REGEN_MULTIPLIER;
@@ -275,8 +277,12 @@ public final class Config
 	public static double ENCHANT_CHANCE_WEAPON_NONMAGIC;
 	public static double ENCHANT_CHANCE_WEAPON_NONMAGIC_15PLUS;
 	public static double ENCHANT_CHANCE_ARMOR;
+	public static double ENCHANT_CHANCE_NORMAL;
+	public static double ENCHANT_CHANCE_BLESSED;
+	public static double ENCHANT_CHANCE_CRYSTAL;
 	public static int ENCHANT_MAX_WEAPON;
 	public static int ENCHANT_MAX_ARMOR;
+	public static int ENCHANT_MAX_JEWELRY;
 	public static int ENCHANT_SAFE_MAX;
 	public static int ENCHANT_SAFE_MAX_FULL;
 	
@@ -342,10 +348,14 @@ public final class Config
 	public static boolean ES_SP_BOOK_NEEDED;
 	public static boolean DIVINE_SP_BOOK_NEEDED;
 	public static boolean SUBCLASS_WITHOUT_QUESTS;
+	public static boolean ENABLE_CLASS_OVERLORD_Y_WARSMITH;
 	
 	/** Buffs */
 	public static boolean STORE_SKILL_COOLTIME;
 	public static int MAX_BUFFS_AMOUNT;
+	
+	/** Custom: Noblesse granted by killing Barakiel (raid boss 25325) */
+	public static boolean ENABLE_RAIDBOSS_NOBLES;
 	
 	// --------------------------------------------------
 	// Sieges
@@ -780,6 +790,8 @@ public final class Config
 		final ExProperties players = initProperties(PLAYERS_FILE);
 		
 		EFFECT_CANCELING = players.getProperty("CancelLesserEffect", true);
+		INFINITY_SS = players.getProperty("InfinitySS", false);
+		INFINITY_ARROWS = players.getProperty("InfinityArrows", false);
 		HP_REGEN_MULTIPLIER = players.getProperty("HpRegenMultiplier", 1.);
 		MP_REGEN_MULTIPLIER = players.getProperty("MpRegenMultiplier", 1.);
 		CP_REGEN_MULTIPLIER = players.getProperty("CpRegenMultiplier", 1.);
@@ -809,8 +821,12 @@ public final class Config
 		ENCHANT_CHANCE_WEAPON_NONMAGIC = players.getProperty("EnchantChanceNonMagicWeapon", 0.7);
 		ENCHANT_CHANCE_WEAPON_NONMAGIC_15PLUS = players.getProperty("EnchantChanceNonMagicWeapon15Plus", 0.35);
 		ENCHANT_CHANCE_ARMOR = players.getProperty("EnchantChanceArmor", 0.66);
+		ENCHANT_CHANCE_NORMAL = players.getProperty("EnchantChanceNormal", 60) / 100.0;
+		ENCHANT_CHANCE_BLESSED = players.getProperty("EnchantChanceBlessed", 70) / 100.0;
+		ENCHANT_CHANCE_CRYSTAL = players.getProperty("EnchantChanceCrystal", 100) / 100.0;
 		ENCHANT_MAX_WEAPON = players.getProperty("EnchantMaxWeapon", 0);
 		ENCHANT_MAX_ARMOR = players.getProperty("EnchantMaxArmor", 0);
+		ENCHANT_MAX_JEWELRY = players.getProperty("EnchantMaxJewelry", 0);
 		ENCHANT_SAFE_MAX = players.getProperty("EnchantSafeMax", 3);
 		ENCHANT_SAFE_MAX_FULL = players.getProperty("EnchantSafeMaxFull", 4);
 		
@@ -892,9 +908,11 @@ public final class Config
 		ES_SP_BOOK_NEEDED = players.getProperty("EnchantSkillSpBookNeeded", true);
 		DIVINE_SP_BOOK_NEEDED = players.getProperty("DivineInspirationSpBookNeeded", true);
 		SUBCLASS_WITHOUT_QUESTS = players.getProperty("SubClassWithoutQuests", false);
+		ENABLE_CLASS_OVERLORD_Y_WARSMITH = players.getProperty("EnableSubClassOverlordYWarmith", false);
 		
 		MAX_BUFFS_AMOUNT = players.getProperty("MaxBuffsAmount", 20);
 		STORE_SKILL_COOLTIME = players.getProperty("StoreSkillCooltime", true);
+		ENABLE_RAIDBOSS_NOBLES = players.getProperty("RaidBossNobles", false);
 	}
 	
 	/**

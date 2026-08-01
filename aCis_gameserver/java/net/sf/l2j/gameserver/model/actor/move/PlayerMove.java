@@ -282,7 +282,7 @@ public class PlayerMove extends CreatureMove<Player>
 		}
 		
 		// Check if location can be reached (case of dynamic objects, such as opening doors/fences).
-		if (type == MoveType.GROUND && !GeoEngine.getInstance().canMoveToTarget(curX, curY, curZ, nextX, nextY, nextZ))
+		if (type == MoveType.GROUND && !GeoEngine.getInstance().canMoveToTarget(curX, curY, curZ, nextX, nextY, nextZ) && !_actor.useTemporaryFix())
 		{
 			_blocked = true;
 			return true;
@@ -422,18 +422,13 @@ public class PlayerMove extends CreatureMove<Player>
 		final MoveType moveType = getMoveType();
 		
 		// We can process to next point without extra help ; return directly.
-		if (moveType == MoveType.FLY)
-		{
-			if (GeoEngine.getInstance().canFlyToTarget(ox, oy, oz, 32, tx, ty, tz))
-				return null;
-		}
-		else if (GeoEngine.getInstance().canMoveToTarget(ox, oy, oz, tx, ty, tz))
+		if (GeoEngine.getInstance().canMoveToTarget(ox, oy, oz, tx, ty, tz))
 			return null;
 		
 		// Create dummy packet.
 		final ExServerPrimitive dummy = _isDebugPath ? new ExServerPrimitive() : null;
 		
-		if (moveType != MoveType.GROUND)
+		if ((moveType != MoveType.GROUND) || _actor.useTemporaryFix())
 			return GeoEngine.getInstance().getValidFlyLocation(ox, oy, oz, 32, tx, ty, tz, dummy);
 		
 		// Calculate the path. If no path or too short, calculate the first valid location.

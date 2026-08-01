@@ -81,6 +81,8 @@ public final class PhantomConfig
 	private static boolean _pkAttackRealPlayers = true;
 	private static boolean _pkRageTransfersOnDeath = true;
 	private static boolean _attackOnlyEnemyFaction = true;
+	private static boolean _bossHuntEnabled = true;
+	private static int _bossHuntMaxPerBoss = 4;
 	
 	private static boolean _useGeoPathing = true;
 	private static boolean _stuckCheckEnabled = true;
@@ -234,6 +236,8 @@ public final class PhantomConfig
 			_pkAttackRealPlayers = props.getProperty("PkAttackRealPlayers", true);
 			_pkRageTransfersOnDeath = props.getProperty("PkRageTransfersOnDeath", true);
 			_attackOnlyEnemyFaction = props.getProperty("AttackOnlyEnemyFaction", true);
+			_bossHuntEnabled = props.getProperty("BossHuntEnabled", true);
+			_bossHuntMaxPerBoss = Math.max(1, props.getProperty("BossHuntMaxPerBoss", 4));
 			_useGeoPathing = props.getProperty("UseGeoPathing", true);
 			_stuckCheckEnabled = props.getProperty("StuckCheckEnabled", true);
 			_stuckCheckDistance = Math.max(5, props.getProperty("StuckCheckDistance", 40));
@@ -340,6 +344,8 @@ public final class PhantomConfig
 		_pkKarma = 720;
 		_pkAttackRealPlayers = true;
 		_pkRageTransfersOnDeath = true;
+		_bossHuntEnabled = true;
+		_bossHuntMaxPerBoss = 4;
 		_useGeoPathing = true;
 		_stuckCheckEnabled = true;
 		_stuckCheckDistance = 40;
@@ -896,6 +902,16 @@ public final class PhantomConfig
 	public static boolean attackOnlyEnemyFaction()
 	{
 		return _attackOnlyEnemyFaction;
+	}
+	
+	public static boolean bossHuntEnabled()
+	{
+		return _bossHuntEnabled;
+	}
+	
+	public static int bossHuntMaxPerBoss()
+	{
+		return _bossHuntMaxPerBoss;
 	}
 	
 	public static boolean useGeoPathing()

@@ -23,6 +23,7 @@ public class WaterZone extends ZoneType
 	protected void onEnter(Creature creature)
 	{
 		creature.setInsideZone(ZoneId.WATER, true);
+		creature.setInsideZone(ZoneId.PAGAN, true);
 		creature.getMove().addMoveType(MoveType.SWIM);
 		
 		if (creature instanceof Player player)
@@ -43,6 +44,7 @@ public class WaterZone extends ZoneType
 	protected void onExit(Creature creature)
 	{
 		creature.setInsideZone(ZoneId.WATER, false);
+		creature.setInsideZone(ZoneId.PAGAN, false);
 		creature.getMove().removeMoveType(MoveType.SWIM);
 		
 		if (creature instanceof Player player)
