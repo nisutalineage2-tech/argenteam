@@ -208,6 +208,15 @@ public final class Config
 	/** Scheme Buffer */
 	public static int BUFFER_MAX_SCHEMES;
 	public static int BUFFER_STATIC_BUFF_COST;
+	public static int BUFFER_MIN_LEVEL;
+	public static boolean BUFFER_ENABLE_TIMEOUT;
+	public static int BUFFER_TIMEOUT_TIME;
+	public static boolean BUFFER_ENABLE_BUFF_SET;
+	public static int BUFFER_SET_PRICE;
+	public static int BUFFER_HEAL_PRICE;
+	public static int BUFFER_REMOVE_PRICE;
+	public static List<Integer> BUFFER_SET_FIGHTER;
+	public static List<Integer> BUFFER_SET_MAGE;
 	
 	/** Misc */
 	public static boolean FREE_TELEPORT;
@@ -285,6 +294,7 @@ public final class Config
 	public static int ENCHANT_MAX_JEWELRY;
 	public static int ENCHANT_SAFE_MAX;
 	public static int ENCHANT_SAFE_MAX_FULL;
+	public static boolean ENABLED_ENCHANT_WEAPONS_HERO;
 	
 	/** Augmentations */
 	public static int AUGMENTATION_NG_SKILL_CHANCE;
@@ -356,6 +366,8 @@ public final class Config
 	
 	/** Custom: Noblesse granted by killing Barakiel (raid boss 25325) */
 	public static boolean ENABLE_RAIDBOSS_NOBLES;
+	public static boolean ANNOUNCE_RAIDBOSS_KILL;
+	public static boolean ANNOUNCE_RAIDBOSS_SPAWN;
 	
 	// --------------------------------------------------
 	// Sieges
@@ -765,6 +777,15 @@ public final class Config
 		
 		BUFFER_MAX_SCHEMES = npcs.getProperty("BufferMaxSchemesPerChar", 4);
 		BUFFER_STATIC_BUFF_COST = npcs.getProperty("BufferStaticCostPerBuff", -1);
+		BUFFER_MIN_LEVEL = npcs.getProperty("BufferMinLevel", 1);
+		BUFFER_ENABLE_TIMEOUT = npcs.getProperty("BufferEnableTimeout", true);
+		BUFFER_TIMEOUT_TIME = npcs.getProperty("BufferTimeoutTime", 10);
+		BUFFER_ENABLE_BUFF_SET = npcs.getProperty("BufferEnableBuffSet", true);
+		BUFFER_SET_PRICE = npcs.getProperty("BufferSetPrice", 500000);
+		BUFFER_HEAL_PRICE = npcs.getProperty("BufferHealPrice", 0);
+		BUFFER_REMOVE_PRICE = npcs.getProperty("BufferRemovePrice", 0);
+		BUFFER_SET_FIGHTER = parseIntList(npcs.getProperty("BufferSetFighter", "1036,1040,1045,1048,1204,1062,1068,1077,1086,1242,1388,264,267,268,269,304,271,274,275"));
+		BUFFER_SET_MAGE = parseIntList(npcs.getProperty("BufferSetMage", "1036,1040,1045,1048,1204,1062,1059,1085,1303,1389,264,267,268,304,273,276"));
 		
 		FREE_TELEPORT = npcs.getProperty("FreeTeleport", false);
 		MOB_AGGRO_IN_PEACEZONE = npcs.getProperty("MobAggroInPeaceZone", true);
@@ -789,6 +810,28 @@ public final class Config
 		RANDOM_WALK_RATE = npcs.getProperty("RandomWalkRate", 30);
 		MAX_DRIFT_RANGE = npcs.getProperty("MaxDriftRange", 200);
 		DEFAULT_SEE_RANGE = npcs.getProperty("DefaultSeeRange", 450);
+	}
+	
+	/**
+	 * @param value : A comma separated {@link String} of integers.
+	 * @return A {@link List} of {@link Integer}s parsed from the given {@link String}. Non-numeric tokens are skipped to avoid crashing the server on a misconfigured property.
+	 */
+	private static List<Integer> parseIntList(String value)
+	{
+		final List<Integer> list = new ArrayList<>();
+		final StringTokenizer st = new StringTokenizer(value, ",");
+		while (st.hasMoreTokens())
+		{
+			try
+			{
+				list.add(Integer.parseInt(st.nextToken().trim()));
+			}
+			catch (NumberFormatException nfe)
+			{
+				// Skip invalid token.
+			}
+		}
+		return list;
 	}
 	
 	/**
@@ -839,6 +882,7 @@ public final class Config
 		ENCHANT_MAX_JEWELRY = players.getProperty("EnchantMaxJewelry", 0);
 		ENCHANT_SAFE_MAX = players.getProperty("EnchantSafeMax", 3);
 		ENCHANT_SAFE_MAX_FULL = players.getProperty("EnchantSafeMaxFull", 4);
+		ENABLED_ENCHANT_WEAPONS_HERO = players.getProperty("EnchantHeroWeapons", true);
 		
 		AUGMENTATION_NG_SKILL_CHANCE = players.getProperty("AugmentationNGSkillChance", 15);
 		AUGMENTATION_NG_GLOW_CHANCE = players.getProperty("AugmentationNGGlowChance", 0);
@@ -923,6 +967,8 @@ public final class Config
 		MAX_BUFFS_AMOUNT = players.getProperty("MaxBuffsAmount", 20);
 		STORE_SKILL_COOLTIME = players.getProperty("StoreSkillCooltime", true);
 		ENABLE_RAIDBOSS_NOBLES = players.getProperty("RaidBossNobles", false);
+		ANNOUNCE_RAIDBOSS_KILL = players.getProperty("AnnounceRaidBossKill", true);
+		ANNOUNCE_RAIDBOSS_SPAWN = players.getProperty("AnnounceRaidBossSpawn", false);
 	}
 	
 	/**

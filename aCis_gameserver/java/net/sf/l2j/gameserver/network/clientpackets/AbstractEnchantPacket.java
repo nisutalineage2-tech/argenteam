@@ -198,8 +198,8 @@ public abstract class AbstractEnchantPacket extends L2GameClientPacket
 	 */
 	protected static final boolean isEnchantable(ItemInstance item)
 	{
-		// Hero, shadow, EtcItem and fishing rods can't be enchanted.
-		if (item.isHeroItem() || item.isShadowItem() || item.isEtcItem() || item.getItem().getItemType() == WeaponType.FISHINGROD)
+		// Hero, shadow and EtcItem can't be enchanted. Fishing rods only if disabled by config.
+		if (item.isHeroItem() || item.isShadowItem() || item.isEtcItem() || (!Config.ENABLED_ENCHANT_WEAPONS_HERO && item.getItem().getItemType() == WeaponType.FISHINGROD))
 			return false;
 		
 		// Only equipped items or in inventory can be enchanted.
