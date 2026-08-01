@@ -1529,13 +1529,12 @@ public class FactionWarManager
 		final int evilScore = getScore(FactionWarConfig.getEvilFactionId());
 		final String timeStr = getRemainingTimeStr();
 		
-		// Compact one-line message at the very top of screen - the event TIME leads so it's always visible first
+		// Compact one-line message at the very top of screen, in the requested format:
+		// [Faction War] | Good: X vs Evil: Y | Tiempo: <time>
 		final StringBuilder sb = new StringBuilder();
+		sb.append("[Faction War] | Good: ").append(goodScore).append(" vs Evil: ").append(evilScore);
 		if (!timeStr.isEmpty())
-			sb.append(timeStr).append(" | ");
-		sb.append("Good: ").append(goodScore).append(" vs Evil: ").append(evilScore);
-		sb.append(" | Flag: ").append(_lastMainFlagKillerFaction > 0 ? getFactionName(_lastMainFlagKillerFaction) : "-");
-		sb.append(" [Faction War]");
+			sb.append(" | Tiempo: ").append(timeStr);
 		
 		final String msg = sb.toString();
 		
