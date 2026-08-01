@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.model.actor.attack;
 
 import net.sf.l2j.gameserver.enums.ZoneId;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Playable;
 import net.sf.l2j.gameserver.network.SystemMessageId;
@@ -25,6 +26,11 @@ public class PlayableAttack<T extends Playable> extends CreatureAttack<T>
 		
 		if (target instanceof Playable targetPlayable)
 		{
+			// Faction War: opposing factions can fight each other even inside PEACE-flagged
+			// battle maps, as long as neither side stands in the neutral zone.
+			if (FactionWarManager.isFactionWarPvp(_actor.getActingPlayer(), targetPlayable.getActingPlayer()))
+				return true;
+			
 			if (_actor.isInsideZone(ZoneId.PEACE))
 			{
 				_actor.sendPacket(SystemMessage.getSystemMessage(SystemMessageId.CANT_ATK_PEACEZONE));

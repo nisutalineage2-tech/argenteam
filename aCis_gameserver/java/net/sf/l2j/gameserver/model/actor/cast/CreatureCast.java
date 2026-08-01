@@ -14,6 +14,7 @@ import net.sf.l2j.gameserver.enums.items.ShotType;
 import net.sf.l2j.gameserver.enums.skills.EffectType;
 import net.sf.l2j.gameserver.enums.skills.SkillType;
 import net.sf.l2j.gameserver.enums.skills.Stats;
+import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.handler.ISkillHandler;
 import net.sf.l2j.gameserver.handler.SkillHandler;
@@ -208,23 +209,29 @@ public class CreatureCast<T extends Creature>
 				return;
 			}
 			
-			// If the target reached a PEACE zone, stop the cast.
+			// If the target reached a PEACE zone, stop the cast (except during Faction War between opposing factions).
 			if (_skill.isOffensive() && _actor instanceof Playable playable && _target instanceof Playable targetPlayable)
 			{
-				if (playable.isInsideZone(ZoneId.PEACE))
-				{
-					playable.sendPacket(SystemMessageId.CANT_ATK_PEACEZONE);
-					
-					stop();
-					return;
-				}
+				// Faction War: opposing factions can cast on each other inside PEACE-flagged battle maps.
+				final boolean factionWarPvp = FactionWarManager.isFactionWarPvp(playable.getActingPlayer(), targetPlayable.getActingPlayer());
 				
-				if (targetPlayable.isInsideZone(ZoneId.PEACE))
+				if (!factionWarPvp)
 				{
-					playable.sendPacket(SystemMessageId.TARGET_IN_PEACEZONE);
+					if (playable.isInsideZone(ZoneId.PEACE))
+					{
+						playable.sendPacket(SystemMessageId.CANT_ATK_PEACEZONE);
+						
+						stop();
+						return;
+					}
 					
-					stop();
-					return;
+					if (targetPlayable.isInsideZone(ZoneId.PEACE))
+					{
+						playable.sendPacket(SystemMessageId.TARGET_IN_PEACEZONE);
+						
+						stop();
+						return;
+					}
 				}
 			}
 		}

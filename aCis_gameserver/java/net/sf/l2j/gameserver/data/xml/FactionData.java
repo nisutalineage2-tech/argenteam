@@ -75,6 +75,54 @@ public class FactionData implements IXmlReader
 		
 		try
 		{
+			// restoreData() puebla el factionId desde la DB; debe correr ANTES del lookup para
+			// que el gate 'faction != null' funcione para jugadores reales (colores + teleport).
+			applyFactionVisuals(player);
+			
+			// Real players far from the neutral zone are teleported there after a short delay.
+			// (Phantoms use applyFactionVisuals() directly to skip this behavior.)
+			final Faction faction = _factions.get(player.getFactionId());
+			if (faction != null && FactionWarConfig.isEnabled())
+			{
+				final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
+				if (neutralLoc != null)
+				{
+					final int px = player.getX();
+					final int py = player.getY();
+					final int pz = player.getZ();
+					
+					if (Math.abs(px - neutralLoc.getX()) > 100 || Math.abs(py - neutralLoc.getY()) > 100 || Math.abs(pz - neutralLoc.getZ()) > 50)
+					{
+						ThreadPool.schedule(() ->
+						{
+							if (player.isOnline() && !player.isInJail())
+							{
+								player.teleportTo(neutralLoc, 50);
+								player.sendMessage("Bienvenido a la zona neutral de la Faction War.");
+							}
+						}, 3000);
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.error("Error during onPlayerEnter for {}.", e, player.getName());
+		}
+	}
+	
+	/**
+	 * Applies faction visuals (name color, title color, title) to the given player
+	 * WITHOUT scheduling the delayed neutral-zone teleport used for real players.
+	 * Used by the phantom system so a freshly spawned/bridged phantom doesn't "disappear" 3s later.
+	 */
+	public void applyFactionVisuals(Player player)
+	{
+		if (!Config.ENABLE_FACTION_SYSTEM)
+			return;
+		
+		try
+		{
 			restoreData(player);
 			
 			final Faction faction = _factions.get(player.getFactionId());
@@ -83,34 +131,11 @@ public class FactionData implements IXmlReader
 				player.getAppearance().setNameColor(faction.getNameColor());
 				player.getAppearance().setTitleColor(faction.getTitleColor());
 				player.setTitle(faction.getName());
-				
-				if (FactionWarConfig.isEnabled())
-				{
-					final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
-					if (neutralLoc != null)
-					{
-						final int px = player.getX();
-						final int py = player.getY();
-						final int pz = player.getZ();
-						
-						if (Math.abs(px - neutralLoc.getX()) > 100 || Math.abs(py - neutralLoc.getY()) > 100 || Math.abs(pz - neutralLoc.getZ()) > 50)
-						{
-							ThreadPool.schedule(() ->
-							{
-								if (player.isOnline() && !player.isInJail())
-								{
-									player.teleportTo(neutralLoc, 50);
-									player.sendMessage("Bienvenido a la zona neutral de la Faction War.");
-								}
-							}, 3000);
-						}
-					}
-				}
 			}
 		}
 		catch (Exception e)
 		{
-			LOGGER.error("Error during onPlayerEnter for {}.", e, player.getName());
+			LOGGER.error("Error during applyFactionVisuals for {}.", e, player.getName());
 		}
 	}
 	

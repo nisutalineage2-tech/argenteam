@@ -100,6 +100,30 @@ public class FactionWarManager
 		return _running;
 	}
 	
+	/**
+	 * @param attacker : The attacking {@link Player} (can be null).
+	 * @param target : The defending {@link Player} (can be null).
+	 * @return True if both players belong to different factions, the Faction War is running and
+	 *         neither of them stands inside the neutral zone. Used to allow PvP between opposing
+	 *         factions even inside PEACE-flagged battle maps.
+	 */
+	public static boolean isFactionWarPvp(Player attacker, Player target)
+	{
+		if (!Config.ENABLE_FACTION_SYSTEM || attacker == null || target == null)
+			return false;
+		
+		final int attackerFaction = attacker.getFactionId();
+		final int targetFaction = target.getFactionId();
+		if (attackerFaction <= 0 || targetFaction <= 0 || attackerFaction == targetFaction)
+			return false;
+		
+		final FactionWarManager manager = getInstance();
+		if (!manager.isRunning() || !FactionWarConfig.isEnabled())
+			return false;
+		
+		return !FactionWarConfig.isInNeutralZone(attacker.getPosition()) && !FactionWarConfig.isInNeutralZone(target.getPosition());
+	}
+	
 	public boolean isStartedOnce()
 	{
 		return _startedOnce;

@@ -41,6 +41,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		"admin_phantom_deleteall",
 		"admin_phantom_online",
 		"admin_phantom_status",
+		"admin_phantom_radar",
 		"admin_phantom_faction",
 		"admin_phantom_factions",
 		"admin_phantom_party",
@@ -149,7 +150,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			switch (mode)
 			{
 				case "on" -> showPanel(player, "AI started for: " + PhantomEngine.startAi());
-				case "off" -> showPanel(player, "AI stopped for: " + PhantomEngine.stopAi());
+				case "off" -> showPanel(player, "AI paused for: " + PhantomEngine.stopAi());
 				case "home" -> showPanel(player, "AI home updated for: " + PhantomEngine.setHomes());
 				default -> showPanel(player, "Usage: AI on/off/home");
 			}
@@ -462,7 +463,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			sb.append("<font color=99FF99>").append(message).append("</font><br1>");
 		
 		sb.append("Active: <font color=LEVEL>").append(allPhantoms.size()).append("</font> | Config IDs: <font color=LEVEL>").append(PhantomConfig.getPhantomIds().size()).append("</font><br>");
-		sb.append("AI: ").append(PhantomConfig.aiEnabled()).append(" | Tick: ").append(PhantomConfig.aiTickMs()).append("ms | Zone: ").append(PhantomConfig.levelZoneProfile()).append("<br>");
+		sb.append("AI: <font color=").append(PhantomAI.isAiPaused() ? "FF0000" : "00FF00").append(">").append(PhantomAI.isAiPaused() ? "OFF (paused)" : "ON").append("</font> | Tick: ").append(PhantomConfig.aiTickMs()).append("ms | Zone: ").append(PhantomConfig.levelZoneProfile()).append("<br>");
 		sb.append("Skills: ").append(PhantomConfig.advancedSkillUsage()).append(" | Mage: ").append(PhantomConfig.mageNeverMelee()).append(" | Herbs: ").append(PhantomConfig.autoLootHerbs()).append("<br>");
 		sb.append("PVP: ").append(PhantomConfig.pvpEnabled()).append(" | PK: ").append(PhantomConfig.pkEnabled()).append(" | Chat: ").append(PhantomConfig.phantomChatEnabled()).append("<br>");
 		sb.append("Factions: ").append(FactionWarConfig.isEnabled()).append("<br>");

@@ -70,13 +70,44 @@ public final class PhantomAI
 	private static final Map<Integer, Integer> FARM_ZONE_BUCKETS = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> FARM_ZONE_READY_TIMES = new ConcurrentHashMap<>();
 	
+	/** Runtime AI pause flag (admin panel "AI On/Off"). When true, all phantom AI loops are suspended without cancelling tasks or wiping state. */
+	private static volatile boolean AI_PAUSED;
+	
 	private PhantomAI()
 	{
 	}
 	
+	public static void setAiPaused(boolean paused)
+	{
+		AI_PAUSED = paused;
+	}
+	
+	public static boolean isAiPaused()
+	{
+		return AI_PAUSED;
+	}
+	
+	public static boolean hasTask(int objectId)
+	{
+		return TASKS.containsKey(objectId);
+	}
+	
 	public static void start(Player phantom)
 	{
-		if (phantom == null || !PhantomConfig.aiEnabled())
+		start(phantom, false);
+	}
+	
+	/**
+	 * Starts the AI loop for the given phantom.
+	 * @param phantom : The phantom to start.
+	 * @param force : If true, bypasses the {@link PhantomConfig#aiEnabled()} gate (used by the admin panel "AI On" button).
+	 */
+	public static void start(Player phantom, boolean force)
+	{
+		if (phantom == null)
+			return;
+		
+		if (!force && !PhantomConfig.aiEnabled())
 			return;
 		
 		stop(phantom.getObjectId());
@@ -155,14 +186,21 @@ public final class PhantomAI
 	{
 		try
 		{
-			if (phantom == null || !phantom.isOnline() || !phantom.isVisible())
-			{
-				if (phantom != null)
-					stop(phantom.getObjectId());
-				return;
-			}
-			
-			PhantomInventory.cleanup(phantom);
+		if (phantom == null || !phantom.isOnline() || !phantom.isVisible())
+		{
+			if (phantom != null)
+				stop(phantom.getObjectId());
+			return;
+		}
+		
+		// Runtime pause (admin "AI Off"): suspend the loop without cancelling the task or wiping state.
+		if (AI_PAUSED)
+		{
+			LAST_ACTIONS.put(phantom.getObjectId(), "AI paused");
+			return;
+		}
+		
+		PhantomInventory.cleanup(phantom);
 			PhantomProgression.think(phantom);
 			PhantomEngine.applyTimedBuffs(phantom);
 			PhantomCombat.ensureRagingPk();
@@ -1601,6 +1639,19 @@ public final class PhantomAI
 	public static void clearDeathFlag(int objectId)
 	{
 		DEATH_HANDLING.remove(objectId);
+	}
+	
+	/**
+	 * Resets all transient "stuck / idle" tracking for a phantom.
+	 * Used after a manual teleport (admin bridge) so the stuck detector
+	 * doesn't immediately relocate the phantom to a safe spawn.
+	 */
+	public static void clearStuckState(int objectId)
+	{
+		LAST_POSITIONS.remove(objectId);
+		STUCK_TICKS.remove(objectId);
+		IDLE_STUCK_TICKS.remove(objectId);
+		STUCK_ESCAPES.remove(objectId);
 	}
 	
 	private static void clearClaims(int phantomId)

@@ -90,9 +90,11 @@ public final class PhantomEngine
 			}
 		}
 		
-		// Apply faction visuals (name color, title color)
+		// Apply faction visuals (name color, title color) ONLY - skip the delayed neutral-zone
+		// teleport that onPlayerEnter() schedules for real players, otherwise a freshly
+		// spawned/bridged phantom would "disappear" 3s later.
 		if (Config.ENABLE_FACTION_SYSTEM)
-			FactionData.getInstance().onPlayerEnter(phantom);
+			FactionData.getInstance().applyFactionVisuals(phantom);
 		
 		phantom.setOnlineStatus(true, true);
 		phantom.setRunning(true);
@@ -309,8 +311,15 @@ public final class PhantomEngine
 			final int y = gm.getY() + Rnd.get(-180, 180);
 			phantom.teleportTo(x, y, gm.getZ(), 20);
 			
+			// Force the teleport to complete for phantom clients (no real client to send Appearing).
 			if (phantom.isTeleporting())
 				phantom.onTeleported();
+			
+			// Re-register the region + zones and reset transient stuck/idle tracking so the
+			// phantom stays visible and stable at the destination instead of vanishing after a second.
+			phantom.revalidateZone(true);
+			phantom.broadcastUserInfo();
+			PhantomAI.clearStuckState(phantom.getObjectId());
 			
 			PhantomAI.setHome(phantom);
 			phantom.store();
@@ -321,23 +330,33 @@ public final class PhantomEngine
 	
 	public static int startAi()
 	{
+		// Resume the runtime AI loop for every active phantom, bypassing the config gate
+		// so the admin can force the AI on at any time without a server restart.
+		PhantomAI.setAiPaused(false);
+		
 		int started = 0;
 		for (Player phantom : ACTIVE_PHANTOMS.values())
 		{
-			if (phantom != null)
-			{
-				PhantomAI.start(phantom);
-				started++;
-			}
+			if (phantom == null)
+				continue;
+			
+			// Only (re)create the task if it isn't already running - otherwise just resume
+			// the existing loop via the pause flag (avoids resetting homes/teleporting on
+			// every "AI On" click).
+			if (!PhantomAI.hasTask(phantom.getObjectId()))
+				PhantomAI.start(phantom, true);
+			
+			started++;
 		}
 		return started;
 	}
 	
 	public static int stopAi()
 	{
-		final int stopped = ACTIVE_PHANTOMS.size();
-		PhantomAI.stopAll();
-		return stopped;
+		// Pause the runtime AI loop WITHOUT cancelling tasks or wiping homes/targets state,
+		// so toggling AI back on resumes exactly where it left off (no desync).
+		PhantomAI.setAiPaused(true);
+		return ACTIVE_PHANTOMS.size();
 	}
 	
 	public static int setHomes()
