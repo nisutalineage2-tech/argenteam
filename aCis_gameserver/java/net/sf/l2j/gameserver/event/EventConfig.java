@@ -292,13 +292,13 @@ public final class EventConfig
 		/** Returns team 1 name. */
 		public String getTeam1Name()
 		{
-			return _custom.getOrDefault("Team1Name", "Blue");
+			return _custom.getOrDefault("Team1Name", "Argentina");
 		}
 		
 		/** Returns team 2 name. */
 		public String getTeam2Name()
 		{
-			return _custom.getOrDefault("Team2Name", "Red");
+			return _custom.getOrDefault("Team2Name", "Brasil");
 		}
 	}
 }

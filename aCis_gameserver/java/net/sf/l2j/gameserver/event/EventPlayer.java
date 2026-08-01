@@ -14,6 +14,7 @@ public class EventPlayer
 	private Location _originalLocation;
 	private final String _originalTitle;
 	private final int _originalFactionId;
+	private final int _originalNameColor;
 	
 	public EventPlayer(Player player)
 	{
@@ -26,6 +27,7 @@ public class EventPlayer
 		_originalLocation = new Location(player.getX(), player.getY(), player.getZ());
 		_originalTitle = player.getTitle();
 		_originalFactionId = player.getFactionId();
+		_originalNameColor = player.getAppearance().getNameColor();
 	}
 	
 	public Player getPlayer() { return _player; }
@@ -67,6 +69,10 @@ public class EventPlayer
 		
 		// Restore original title
 		_player.setTitle(_originalTitle);
+		
+		// Restore the original name color and clear the event crest (teams only exist during the match).
+		_player.getAppearance().setNameColor(_originalNameColor);
+		_player.setEventCrestId(0);
 		
 		// Restore original faction (removed during event registration for neutrality)
 		if (_originalFactionId > 0 && _player.getFactionId() != _originalFactionId)

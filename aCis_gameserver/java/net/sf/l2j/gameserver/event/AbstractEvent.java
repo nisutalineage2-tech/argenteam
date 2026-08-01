@@ -48,6 +48,11 @@ public abstract class AbstractEvent
 	private long _roundDurationMs;
 	private boolean _roundActive;
 	
+	/** Crest id for event team 1 (Argentina country flag), file data/crests/Crest_90001.dds. */
+	private static final int EVENT_CREST_TEAM1 = 90001;
+	/** Crest id for event team 2 (Brasil country flag), file data/crests/Crest_90002.dds. */
+	private static final int EVENT_CREST_TEAM2 = 90002;
+	
 	public AbstractEvent(EventConfig.EventData data)
 	{
 		_data = data;
@@ -383,8 +388,10 @@ public abstract class AbstractEvent
 			EventTeam team = getTeam(teamId);
 			if (team == null)
 			{
-				final boolean isBlue = teamId == 0;
-				team = new EventTeam(teamId, isBlue ? "Blue" : "Red", isBlue ? 0 : 255, isBlue ? 0 : 0, isBlue ? 255 : 0, isBlue ? _data.getPositionBlue() != null ? _data.getPositionBlue() : _data.getPositionAll() : _data.getPositionRed() != null ? _data.getPositionRed() : _data.getPositionAll());
+				// Team 0 = Argentina (celeste), team 1 = Brasil (verde), each with its country crest.
+				final boolean isTeam0 = teamId == 0;
+				team = new EventTeam(teamId, isTeam0 ? _data.getTeam1Name() : _data.getTeam2Name(), isTeam0 ? 102 : 0, isTeam0 ? 204 : 156, isTeam0 ? 255 : 59, isTeam0 ? _data.getPositionBlue() != null ? _data.getPositionBlue() : _data.getPositionAll() : _data.getPositionRed() != null ? _data.getPositionRed() : _data.getPositionAll());
+				team.setCrestId(isTeam0 ? EVENT_CREST_TEAM1 : EVENT_CREST_TEAM2);
 				_teams.add(team);
 			}
 			team.addPlayer(shuffled.get(i));

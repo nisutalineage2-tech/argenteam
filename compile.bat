@@ -143,7 +143,7 @@ mkdir "%DP_DIR%\build\tools" 2>nul
 
 REM Copiar data
 echo Copiando datos...
-robocopy "%DP_DIR%\data" "%DP_DIR%\build\gameserver\data" /E /XD .project log cachedir clans crests /NFL /NJH /NJS /NDL >nul 2>nul
+robocopy "%DP_DIR%\data" "%DP_DIR%\build\gameserver\data" /E /XD .project log cachedir clans /NFL /NJH /NJS /NDL >nul 2>nul
 
 REM Copiar sql
 copy "%DP_DIR%\sql\*.sql" "%DP_DIR%\build\sql\" >nul 2>nul

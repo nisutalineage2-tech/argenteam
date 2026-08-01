@@ -79,11 +79,12 @@ import net.sf.l2j.gameserver.enums.items.ActionType;
 import net.sf.l2j.gameserver.enums.items.EtcItemType;
 import net.sf.l2j.gameserver.enums.items.ItemLocation;
 import net.sf.l2j.gameserver.enums.items.ShotType;
-import net.sf.l2j.gameserver.enums.items.WeaponType;
-import net.sf.l2j.gameserver.enums.skills.EffectFlag;
-import net.sf.l2j.gameserver.enums.skills.EffectType;
-import net.sf.l2j.gameserver.enums.skills.SkillType;
-import net.sf.l2j.gameserver.enums.skills.Stats;
+import net.sf.l2j.gameserver.enums.items.WeaponType;	import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
+	import net.sf.l2j.gameserver.enums.skills.EffectFlag;
+	import net.sf.l2j.gameserver.enums.skills.EffectType;
+	import net.sf.l2j.gameserver.enums.skills.SkillType;
+	import net.sf.l2j.gameserver.enums.skills.Stats;
+
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.handler.IItemHandler;
 import net.sf.l2j.gameserver.handler.ItemHandler;
@@ -1473,12 +1474,25 @@ public final class Player extends Playable
 		return _clan != null && getObjectId() == _clan.getLeaderId();
 	}
 	
+	/** Temporary crest id displayed while the {@link Player} participates in an event (e.g. a country flag). */
+	private int _eventCrestId;
+	
 	/**
 	 * @return The {@link Clan} crest id of the {@link Player}, or 0 if not set.
 	 */
 	public int getClanCrestId()
 	{
-		return (_clan != null) ? _clan.getCrestId() : 0;
+		// During an event the event crest overrides the clan crest so it shows under the player name.
+		return (_eventCrestId > 0) ? _eventCrestId : ((_clan != null) ? _clan.getCrestId() : 0);
+	}
+	
+	/**
+	 * Sets a temporary crest id displayed while the {@link Player} participates in an event.
+	 * @param crestId : the crest id to display (0 clears it and restores the clan crest behavior).
+	 */
+	public void setEventCrestId(int crestId)
+	{
+		_eventCrestId = crestId;
 	}
 	
 	/**
@@ -2133,16 +2147,21 @@ public final class Player extends Playable
 		if (isActive)
 		{
 			if (_protectTask == null)
+			{
+				startAbnormalEffect(AbnormalEffect.IMPRISIONING_2);
 				_protectTask = ThreadPool.schedule(() ->
 				{
 					setSpawnProtection(false);
 					sendMessage("The spawn protection has ended.");
 				}, Config.PLAYER_SPAWN_PROTECTION * 1000L);
+			}
 		}
 		else
 		{
-			_protectTask.cancel(true);
+			if (_protectTask != null)
+				_protectTask.cancel(true);
 			_protectTask = null;
+			stopAbnormalEffect(AbnormalEffect.IMPRISIONING_2);
 		}
 		broadcastUserInfo();
 	}
@@ -3306,7 +3325,8 @@ public final class Player extends Playable
 		_operateType = type;
 		
 		// If the offline shop finished selling/buying, remove the detached trader from the world.
-		if (Config.OFFLINE_DISCONNECT_FINISHED && type == OperateType.NONE && (getClient() == null || getClient().isDetached()))
+		// Only real offline traders own a detached client; phantoms have a null client and must NOT be deleted.
+		if (Config.OFFLINE_DISCONNECT_FINISHED && type == OperateType.NONE && getClient() != null && getClient().isDetached())
 			deleteMe();
 	}
 	

@@ -18,6 +18,7 @@ public class EventTeam
 	private final Location _spawnLocation;
 	private final List<EventPlayer> _players;
 	private int _score;
+	private int _crestId;
 	
 	public EventTeam(int id, String name, int r, int g, int b, Location spawnLocation)
 	{
@@ -36,6 +37,7 @@ public class EventTeam
 	public int getR() { return _r; }
 	public int getG() { return _g; }
 	public int getB() { return _b; }
+	public void setCrestId(int crestId) { _crestId = crestId; }
 	public Location getSpawnLocation() { return _spawnLocation; }
 	public List<EventPlayer> getPlayers() { return _players; }
 	public int getScore() { return _score; }
@@ -82,12 +84,15 @@ public class EventTeam
 	public void setColors(Player player)
 	{
 		player.getAppearance().setNameColor((_r << 16) + (_g << 8) + _b);
+		if (_crestId > 0)
+			player.setEventCrestId(_crestId);
 		player.broadcastUserInfo();
 	}
 	
 	public void clearColors(Player player)
 	{
 		player.getAppearance().setNameColor(0xFFFFFF);
+		player.setEventCrestId(0);
 		player.broadcastUserInfo();
 	}
 	
