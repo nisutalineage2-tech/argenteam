@@ -7,6 +7,7 @@ import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.factionwar.FactionWarCheckpoint;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
+import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.model.Faction;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
@@ -28,12 +29,14 @@ public class FactionWarNpc extends Folk
 			return;
 		
 		final StringTokenizer st = new StringTokenizer(command, " ");
-		final String cmd = st.nextToken();			switch (cmd)
+		final String cmd = st.nextToken();
+		switch (cmd)
 		{
 			case "warGoToBase" -> handleGoToBase(player);
 			case "warCheckpoints" -> handleCheckpointStatus(player);
 			case "fwVote" -> handleVote(player, st);
 			case "warVoteMenu" -> handleVoteMenu(player);
+			case "warLeave" -> handleLeave(player);
 			case "bufferBuff" -> handleBufferBuff(player, st);
 			case "bufferPage" -> handleBufferPage(player, st);
 			default -> super.onBypassFeedback(player, command);
@@ -82,10 +85,6 @@ public class FactionWarNpc extends Folk
 		final int count = cp.size();
 		
 		final StringBuilder sb = new StringBuilder(2048);
-		sb.append("<html><body><center><font color=LEVEL>Checkpoints Capturables</font></center><br>");
-		sb.append("Los checkpoints son puntos de batalla. Ataca y capturalos para tu faccion.<br><br>");
-		sb.append("<table width=280>");
-		sb.append("<tr><td width=30><font color=808080>#</font></td><td width=150><font color=808080>Dueno</font></td><td width=100><font color=808080>Estado</font></td></tr>");
 		
 		for (int i = 0; i < count; i++)
 		{
@@ -116,13 +115,10 @@ public class FactionWarNpc extends Folk
 			sb.append("<td>").append(status).append("</td></tr>");
 		}
 		
-		sb.append("</table><br>");
-		sb.append("<button value=\"Volver\" action=\"bypass -h npc_%objectId%_Chat 0\" width=100 height=25 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\">");
-		sb.append("</body></html>");
-		
 		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
-		html.setHtml(sb.toString());
-		html.replace("%objectId%", String.valueOf(getObjectId()));
+		html.setFile("data/html/mods/factionwar/90002_checkpoints.htm");
+		html.replace("%ROWS%", sb.toString());
+		html.replace("%objectId%", getObjectId());
 		player.sendPacket(html);
 	}
 	
@@ -151,6 +147,22 @@ public class FactionWarNpc extends Folk
 		}
 		
 		FactionWarManager.getInstance().sendVoteHtml(player);
+	}
+	
+	private void handleLeave(Player player)
+	{
+		if (!FactionWarManager.getInstance().isRunning() && !FactionWarManager.getInstance().isVotingPhaseActive())
+		{
+			showPanel(player, "La guerra no esta activa.");
+			return;
+		}
+		
+		FactionWarRegistry.getInstance().unregister(player);
+		player.sendMessage("Has salido de la Faction War. Teletransportandote a la zona neutral.");
+		
+		final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
+		if (neutralLoc != null)
+			player.teleportTo(neutralLoc, 50);
 	}
 	
 	/**
@@ -422,31 +434,143 @@ public class FactionWarNpc extends Folk
 	@Override
 	public void showChatWindow(Player player, int val)
 	{
-		showPanel(player, null);
+		if (getNpcId() == 90005)
+			showBufferPanel(player, null);
+		else
+			showPanel(player, null);
 	}
 	
 	public void showPanel(Player player, String message)
 	{
-		// TEST DE CONTROL: envia el MISMO archivo estatico que el Faction Manager
-		// (90004.htm) que SI funciona, via setFile (mismo camino que FactionNpc).
-		// Si con esto el registrar NO crashea con evento activo -> el problema es
-		// el contenido dinamico del panel. Si crashea igual -> el problema es el
-		// NPC/paquete, no el contenido.
+		final boolean running = FactionWarManager.getInstance().isRunning();
+		final boolean votingPhase = FactionWarManager.getInstance().isVotingPhaseActive();
+		
+		final String statusColor;
+		final String statusText;
+		if (running)
+		{
+			statusColor = "00FF00";
+			statusText = "EN GUERRA";
+		}
+		else if (votingPhase)
+		{
+			statusColor = "FFCC00";
+			statusText = "VOTACION ACTIVA";
+		}
+		else
+		{
+			statusColor = "FF4444";
+			statusText = "DETENIDO";
+		}
+		
 		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
-		html.setFile("data/html/mods/faction/90004.htm");
+		html.setFile("data/html/mods/factionwar/90002.htm");
+		html.replace("%STATUS%", statusText);
+		html.replace("%STATUS_COLOR%", statusColor);
+		
+		if (message != null && !message.isEmpty())
+			html.replace("%MESSAGE_BLOCK%", "<table width=270 bgcolor=1A1A2E><tr><td align=center><font color=99FF99>" + message + "</font></td></tr></table><br>");
+		else
+			html.replace("%MESSAGE_BLOCK%", "");
+		
+		html.replace("%WAR_BLOCK%", buildWarBlock(running, votingPhase));
+		html.replace("%FACTION_BLOCK%", buildFactionBlock(player, running, votingPhase));
+		
 		html.replace("%objectId%", getObjectId());
 		player.sendPacket(html);
 	}
 	
-	/**
-	 * Returns a short display name for the given faction.
-	 */
-	private String getFactionNameShort(int factionId)
+	private String buildWarBlock(boolean running, boolean votingPhase)
 	{
-		if (factionId == FactionWarConfig.getGoodFactionId())
-			return FactionWarConfig.getGoodFactionName();
-		if (factionId == FactionWarConfig.getEvilFactionId())
-			return FactionWarConfig.getEvilFactionName();
-		return "Neutral";
+		final StringBuilder sb = new StringBuilder(2048);
+		
+		if (running)
+		{
+			final int goodScore = FactionWarManager.getInstance().getScore(FactionWarConfig.getGoodFactionId());
+			final int evilScore = FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId());
+			
+			sb.append("<table width=270 cellpadding=2 cellspacing=1>");
+			sb.append("<tr>");
+			sb.append("<td width=135 align=center bgcolor=001133><font color=00BFFF size=13><b>").append(FactionWarConfig.getGoodFactionName()).append("</b></font><br1><font color=00BFFF size=18>").append(goodScore).append("</font></td>");
+			sb.append("<td width=135 align=center bgcolor=330000><font color=FF5555 size=13><b>").append(FactionWarConfig.getEvilFactionName()).append("</b></font><br1><font color=FF5555 size=18>").append(evilScore).append("</font></td>");
+			sb.append("</tr></table><br>");
+			
+			final FactionWarCheckpoint cp = FactionWarManager.getInstance().getCheckpoints();
+			if (cp.size() > 0)
+			{
+				int goodCp = 0, evilCp = 0, neutralCp = 0;
+				for (int i = 0; i < cp.size(); i++)
+				{
+					final int owner = cp.getOwner(i);
+					if (owner == FactionWarConfig.getGoodFactionId())
+						goodCp++;
+					else if (owner == FactionWarConfig.getEvilFactionId())
+						evilCp++;
+					else
+						neutralCp++;
+				}
+				
+				sb.append("<table width=270 cellpadding=2 cellspacing=0>");
+				sb.append("<tr align=center>");
+				sb.append("<td width=90 bgcolor=001133><font color=00BFFF>").append(goodCp).append("</font></td>");
+				sb.append("<td width=90 bgcolor=222222><font color=C0C0C0>").append(neutralCp).append("</font></td>");
+				sb.append("<td width=90 bgcolor=330000><font color=FF5555>").append(evilCp).append("</font></td>");
+				sb.append("</tr></table><br>");
+			}
+			
+			sb.append("<center><button value=\"Detalle de CPs\" action=\"bypass -h npc_%objectId%_warCheckpoints\" width=220 height=22 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"></center><br>");
+		}
+		else if (votingPhase)
+		{
+			sb.append("<table width=270 bgcolor=332200>");
+			sb.append("<tr><td align=center><font color=FFCC00>Fase de votacion activa.</font><br1>");
+			sb.append("<font color=C0C0C0 size=11>Vota por el mapa de batalla.</font></td></tr>");
+			sb.append("</table><br>");
+		}
+		else
+		{
+			sb.append("<table width=270 bgcolor=330000>");
+			sb.append("<tr><td align=center><font color=FF4444>La guerra de facciones no esta activa.</font><br1>");
+			sb.append("<font color=C0C0C0 size=11>Espera a que comience la proxima batalla.</font></td></tr>");
+			sb.append("</table><br>");
+		}
+		
+		return sb.toString();
+	}
+	
+	private String buildFactionBlock(Player player, boolean running, boolean votingPhase)
+	{
+		final StringBuilder sb = new StringBuilder(1024);
+		
+		if (player.getFactionId() > 0)
+		{
+			final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
+			final String factionColor = Integer.toHexString(faction != null ? faction.getNameColor() : 0xFFFFFF);
+			final String factionName = faction != null ? faction.getName() : "Desconocida";
+			
+			sb.append("<table width=270 bgcolor=111111>");
+			sb.append("<tr><td align=center><font color=").append(factionColor).append("><b>").append(factionName.toUpperCase()).append("</b></font></td></tr>");
+			sb.append("</table><br>");
+			
+			if (running || votingPhase)
+			{
+				sb.append("<center>");
+				if (running)
+					sb.append("<button value=\"Ir a mi Base\" action=\"bypass -h npc_%objectId%_warGoToBase\" width=220 height=24 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
+				if (votingPhase)
+					sb.append("<button value=\"Ver Mapas y Votar\" action=\"bypass -h npc_%objectId%_warVoteMenu\" width=220 height=24 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
+				sb.append("<button value=\"Salir de la Guerra\" action=\"bypass -h npc_%objectId%_warLeave\" width=220 height=24 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
+				sb.append("</center>");
+			}
+		}
+		else
+		{
+			sb.append("<table width=270 bgcolor=330000>");
+			sb.append("<tr><td align=center><font color=FF6666>No tienes faccion.</font><br1>");
+			sb.append("<font color=C0C0C0 size=11>Habla con el Faction Manager para elegir una.</font></td></tr>");
+			sb.append("</table>");
+		}
+		
+		return sb.toString();
 	}
 }

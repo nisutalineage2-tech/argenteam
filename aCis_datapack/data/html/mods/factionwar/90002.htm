@@ -1,35 +1,21 @@
-<html><title>Faction War Registrar</title><body>
+<html><body>
 <center>
 <br>
 <img src="L2UI_CH3.herotower_deco" width=256 height=32>
 <br>
-<table width=290>
-	<tr>
-		<td width="290" height="28" align="center"><font color=LEVEL>Faction War Registrar</font></td>
-	</tr>
+<table width=270 bgcolor=000000>
+<tr><td height=32 align=center><font color=F0D060 size=16> Registrador de Guerra </font></td></tr>
 </table>
-<img src="L2UI.SquareGray" width="290" height="1">
-<br>
-<table width=290>
-	<tr>
-		<td align=center>Welcome, warrior!<br>If you wish to participate in the <font color=LEVEL>Faction War</font>, I can register you for battle.<br><br>
-		<font color=808080>Speak with the Faction Manager to choose your allegiance before registering.</font></td>
-	</tr>
+<img src="L2UI.SquareGray" width=270 height=1><br>
+%MESSAGE_BLOCK%
+<table width=270 bgcolor=111122>
+<tr><td align=center><font color=%STATUS_COLOR%>%STATUS%</font></td></tr>
 </table>
-<br>
-<img src="L2UI.SquareGray" width="290" height="1">
-<br>
-<table width=290>
-	<tr>
-		<td align=center><button value="Register for War" action="bypass -h npc_%objectId%_warRegister" width=180 height=22 back="L2UI_ch3.Btn1_normalOn" fore="L2UI_ch3.Btn1_normal"></td>
-	</tr>
-	<tr>
-		<td align=center><button value="Leave War" action="bypass -h npc_%objectId%_warLeave" width=180 height=22 back="L2UI_ch3.Btn1_normalOn" fore="L2UI_ch3.Btn1_normal"></td>
-	</tr>
+<img src="L2UI.SquareGray" width=270 height=1><br>
+%WAR_BLOCK%
+%FACTION_BLOCK%
+<table width=270 bgcolor=222222>
+<tr><td align=center><font color=808080 size=10>El Registrador te transporta a la batalla.<br>Elige tu bando con el Faction Manager.</font></td></tr>
 </table>
-<br>
-<img src="L2UI.SquareGray" width="290" height="1">
-<br>
-	<font color=808080><font color=LEVEL>Note:</font> The war takes place on rotating battlefields. Fight for your faction and earn glory!<br>Use <font color=LEVEL>.votemap</font> to vote for the next map during rotation!</font>
 </center>
 </body></html>
