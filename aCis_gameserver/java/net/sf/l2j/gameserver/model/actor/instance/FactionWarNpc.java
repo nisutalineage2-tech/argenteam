@@ -463,114 +463,32 @@ public class FactionWarNpc extends Folk
 			statusText = "DETENIDO";
 		}
 		
+		final String factionColor;
+		final String factionName;
+		if (player.getFactionId() > 0)
+		{
+			final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
+			factionColor = Integer.toHexString(faction != null ? faction.getNameColor() : 0xFFFFFF);
+			factionName = faction != null ? faction.getName().toUpperCase() : "DESCONOCIDA";
+		}
+		else
+		{
+			factionColor = "FF6666";
+			factionName = "SIN FACCION";
+		}
+		
 		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
 		html.setFile("data/html/mods/factionwar/90002.htm");
 		html.replace("%STATUS%", statusText);
 		html.replace("%STATUS_COLOR%", statusColor);
-		
-		if (message != null && !message.isEmpty())
-			html.replace("%MESSAGE_BLOCK%", "<table width=270 bgcolor=1A1A2E><tr><td align=center><font color=99FF99>" + message + "</font></td></tr></table><br>");
-		else
-			html.replace("%MESSAGE_BLOCK%", "");
-		
-		html.replace("%WAR_BLOCK%", buildWarBlock(running, votingPhase));
-		html.replace("%FACTION_BLOCK%", buildFactionBlock(player, running, votingPhase));
-		
+		html.replace("%GOOD_NAME%", FactionWarConfig.getGoodFactionName());
+		html.replace("%EVIL_NAME%", FactionWarConfig.getEvilFactionName());
+		html.replace("%GOOD_SCORE%", running ? String.valueOf(FactionWarManager.getInstance().getScore(FactionWarConfig.getGoodFactionId())) : "-");
+		html.replace("%EVIL_SCORE%", running ? String.valueOf(FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId())) : "-");
+		html.replace("%FACTION_COLOR%", factionColor);
+		html.replace("%FACTION_NAME%", factionName);
+		html.replace("%MESSAGE%", (message == null || message.isEmpty()) ? "&nbsp;" : message);
 		html.replace("%objectId%", getObjectId());
 		player.sendPacket(html);
-	}
-	
-	private String buildWarBlock(boolean running, boolean votingPhase)
-	{
-		final StringBuilder sb = new StringBuilder(2048);
-		
-		if (running)
-		{
-			final int goodScore = FactionWarManager.getInstance().getScore(FactionWarConfig.getGoodFactionId());
-			final int evilScore = FactionWarManager.getInstance().getScore(FactionWarConfig.getEvilFactionId());
-			
-			sb.append("<table width=270 cellpadding=2 cellspacing=1>");
-			sb.append("<tr>");
-			sb.append("<td width=135 align=center bgcolor=001133><font color=00BFFF size=13><b>").append(FactionWarConfig.getGoodFactionName()).append("</b></font><br1><font color=00BFFF size=18>").append(goodScore).append("</font></td>");
-			sb.append("<td width=135 align=center bgcolor=330000><font color=FF5555 size=13><b>").append(FactionWarConfig.getEvilFactionName()).append("</b></font><br1><font color=FF5555 size=18>").append(evilScore).append("</font></td>");
-			sb.append("</tr></table><br>");
-			
-			final FactionWarCheckpoint cp = FactionWarManager.getInstance().getCheckpoints();
-			if (cp.size() > 0)
-			{
-				int goodCp = 0, evilCp = 0, neutralCp = 0;
-				for (int i = 0; i < cp.size(); i++)
-				{
-					final int owner = cp.getOwner(i);
-					if (owner == FactionWarConfig.getGoodFactionId())
-						goodCp++;
-					else if (owner == FactionWarConfig.getEvilFactionId())
-						evilCp++;
-					else
-						neutralCp++;
-				}
-				
-				sb.append("<table width=270 cellpadding=2 cellspacing=0>");
-				sb.append("<tr align=center>");
-				sb.append("<td width=90 bgcolor=001133><font color=00BFFF>").append(goodCp).append("</font></td>");
-				sb.append("<td width=90 bgcolor=222222><font color=C0C0C0>").append(neutralCp).append("</font></td>");
-				sb.append("<td width=90 bgcolor=330000><font color=FF5555>").append(evilCp).append("</font></td>");
-				sb.append("</tr></table><br>");
-			}
-			
-			sb.append("<center><button value=\"Detalle de CPs\" action=\"bypass -h npc_%objectId%_warCheckpoints\" width=220 height=22 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"></center><br>");
-		}
-		else if (votingPhase)
-		{
-			sb.append("<table width=270 bgcolor=332200>");
-			sb.append("<tr><td align=center><font color=FFCC00>Fase de votacion activa.</font><br1>");
-			sb.append("<font color=C0C0C0 size=11>Vota por el mapa de batalla.</font></td></tr>");
-			sb.append("</table><br>");
-		}
-		else
-		{
-			sb.append("<table width=270 bgcolor=330000>");
-			sb.append("<tr><td align=center><font color=FF4444>La guerra de facciones no esta activa.</font><br1>");
-			sb.append("<font color=C0C0C0 size=11>Espera a que comience la proxima batalla.</font></td></tr>");
-			sb.append("</table><br>");
-		}
-		
-		return sb.toString();
-	}
-	
-	private String buildFactionBlock(Player player, boolean running, boolean votingPhase)
-	{
-		final StringBuilder sb = new StringBuilder(1024);
-		
-		if (player.getFactionId() > 0)
-		{
-			final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
-			final String factionColor = Integer.toHexString(faction != null ? faction.getNameColor() : 0xFFFFFF);
-			final String factionName = faction != null ? faction.getName() : "Desconocida";
-			
-			sb.append("<table width=270 bgcolor=111111>");
-			sb.append("<tr><td align=center><font color=").append(factionColor).append("><b>").append(factionName.toUpperCase()).append("</b></font></td></tr>");
-			sb.append("</table><br>");
-			
-			if (running || votingPhase)
-			{
-				sb.append("<center>");
-				if (running)
-					sb.append("<button value=\"Ir a mi Base\" action=\"bypass -h npc_%objectId%_warGoToBase\" width=220 height=24 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
-				if (votingPhase)
-					sb.append("<button value=\"Ver Mapas y Votar\" action=\"bypass -h npc_%objectId%_warVoteMenu\" width=220 height=24 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\"><br>");
-				sb.append("<button value=\"Salir de la Guerra\" action=\"bypass -h npc_%objectId%_warLeave\" width=220 height=24 back=\"L2UI_ch3.smallbutton2_over\" fore=\"L2UI_ch3.smallbutton2\">");
-				sb.append("</center>");
-			}
-		}
-		else
-		{
-			sb.append("<table width=270 bgcolor=330000>");
-			sb.append("<tr><td align=center><font color=FF6666>No tienes faccion.</font><br1>");
-			sb.append("<font color=C0C0C0 size=11>Habla con el Faction Manager para elegir una.</font></td></tr>");
-			sb.append("</table>");
-		}
-		
-		return sb.toString();
 	}
 }

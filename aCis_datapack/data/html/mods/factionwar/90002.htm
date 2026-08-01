@@ -3,18 +3,53 @@
 <br>
 <img src="L2UI_CH3.herotower_deco" width=256 height=32>
 <br>
+
 <table width=270 bgcolor=000000>
 <tr><td height=32 align=center><font color=F0D060 size=16> Registrador de Guerra </font></td></tr>
 </table>
 <img src="L2UI.SquareGray" width=270 height=1><br>
-%MESSAGE_BLOCK%
+
 <table width=270 bgcolor=111122>
 <tr><td align=center><font color=%STATUS_COLOR%>%STATUS%</font></td></tr>
 </table>
 <img src="L2UI.SquareGray" width=270 height=1><br>
-%WAR_BLOCK%
-%FACTION_BLOCK%
+
+<table width=270 bgcolor=001133>
+<tr>
+<td width=135 align=center><font color=00BFFF size=13><b>%GOOD_NAME%</b></font><br1><font color=00BFFF size=18>%GOOD_SCORE%</font></td>
+<td width=135 align=center><font color=FF5555 size=13><b>%EVIL_NAME%</b></font><br1><font color=FF5555 size=18>%EVIL_SCORE%</font></td>
+</tr>
+</table>
+<img src="L2UI.SquareGray" width=270 height=1><br>
+
+<table width=270 bgcolor=111111>
+<tr><td align=center><font color=%FACTION_COLOR%><b>%FACTION_NAME%</b></font></td></tr>
+</table>
+<br>
+
+<table width=270>
+<tr>
+<td align=center><button value="Ir a mi Base" action="bypass -h npc_%objectId%_warGoToBase" width=160 height=22 back="L2UI_ch3.Btn1_normalOn" fore="L2UI_ch3.Btn1_normal"></td>
+</tr>
+<tr>
+<td align=center><button value="Ver Mapas y Votar" action="bypass -h npc_%objectId%_warVoteMenu" width=160 height=22 back="L2UI_ch3.Btn1_normalOn" fore="L2UI_ch3.Btn1_normal"></td>
+</tr>
+<tr>
+<td align=center><button value="Detalle de CPs" action="bypass -h npc_%objectId%_warCheckpoints" width=160 height=22 back="L2UI_ch3.Btn1_normalOn" fore="L2UI_ch3.Btn1_normal"></td>
+</tr>
+<tr>
+<td align=center><button value="Salir de la Guerra" action="bypass -h npc_%objectId%_warLeave" width=160 height=22 back="L2UI_ch3.Btn1_normalOn" fore="L2UI_ch3.Btn1_normal"></td>
+</tr>
+</table>
+<br>
+<img src="L2UI.SquareGray" width=270 height=1><br>
+
 <table width=270 bgcolor=222222>
+<tr><td align=center><font color=99FF99>%MESSAGE%</font></td></tr>
+</table>
+<br>
+
+<table width=270 bgcolor=111111>
 <tr><td align=center><font color=808080 size=10>El Registrador te transporta a la batalla.<br>Elige tu bando con el Faction Manager.</font></td></tr>
 </table>
 </center>
