@@ -75,6 +75,9 @@ public class FactionWarManager
 	private volatile long _durationMs;
 	private volatile int _lastMainFlagKillerFaction;
 	
+	/** Per-faction last captured flag location: factionId -> Location (main flag or last captured checkpoint). */
+	private final Map<Integer, Location> _lastCapturedFlagByFaction = new ConcurrentHashMap<>();
+	
 	private volatile boolean _votingActive;
 	private final Map<Integer, Integer> _mapVotes = new HashMap<>();
 	private final java.util.Set<Integer> _votedPlayers = new java.util.HashSet<>();
@@ -334,6 +337,7 @@ public class FactionWarManager
 		_startTime = System.currentTimeMillis();
 		_durationMs = durationMinutes * 60000L;
 		_lastMainFlagKillerFaction = 0;
+		_lastCapturedFlagByFaction.clear();
 		
 		spawnFlag();
 		spawnXmlFlags();
@@ -552,6 +556,10 @@ public class FactionWarManager
 			return;
 		
 		_checkpoints.onCapture(capturingFactionId, cpFlag);
+		
+		// Remember the last captured checkpoint location for the capturing faction.
+		if (cpFlag != null)
+			_lastCapturedFlagByFaction.put(capturingFactionId, new Location(cpFlag.getX(), cpFlag.getY(), cpFlag.getZ()));
 		
 		// Also give immediate score for the capture
 		final int points = FactionWarConfig.getPointsPerFlagKill();
@@ -862,6 +870,11 @@ public class FactionWarManager
 		
 		// Track which faction last killed the main flag (determines winner at timer end)
 		_lastMainFlagKillerFaction = killerFactionId;
+		
+		// Remember the main flag location as the last captured flag for the capturing faction.
+		final FactionWarConfig.WarMap currentMap = FactionWarConfig.getMaps().isEmpty() ? null : FactionWarConfig.getMaps().get(_currentMapIndex);
+		if (currentMap != null)
+			_lastCapturedFlagByFaction.put(killerFactionId, new Location(currentMap.getX(), currentMap.getY(), currentMap.getZ()));
 		
 		final int points = FactionWarConfig.getPointsPerFlagKill();
 		_scores.merge(killerFactionId, points, Integer::sum);
@@ -1505,6 +1518,16 @@ public class FactionWarManager
 		if (factionId == FactionWarConfig.getEvilFactionId())
 			return map.getEvilSpawn();
 		return null;
+	}
+	
+	/**
+	 * @param factionId : The faction to check.
+	 * @return The {@link Location} of the last flag captured by the given faction during the
+	 *         current war (main flag or last captured checkpoint), or null if none was captured.
+	 */
+	public Location getLastCapturedFlag(int factionId)
+	{
+		return _lastCapturedFlagByFaction.get(factionId);
 	}
 	
 	public String getRemainingTimeStr()

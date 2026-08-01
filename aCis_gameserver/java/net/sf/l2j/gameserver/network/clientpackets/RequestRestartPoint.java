@@ -1,6 +1,7 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
 import net.sf.l2j.commons.pool.ThreadPool;
+import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.manager.CastleManager;
@@ -122,10 +123,22 @@ public final class RequestRestartPoint extends L2GameClientPacket
 		// Fixed.
 		else if (_requestType == 4)
 		{
-			if (!player.isGM() && !player.isFestivalParticipant())
+			// Faction War: the "Fixed" button teleports to the last flag captured by the faction.
+			final Location capturedFlag = getLastCapturedFactionFlag(player);
+			if (capturedFlag != null)
+			{
+				// Small random spread so players don't revive exactly on top of the flag NPC.
+				loc = new Location(capturedFlag.getX() + Rnd.get(-200, 200), capturedFlag.getY() + Rnd.get(-200, 200), capturedFlag.getZ());
+				player.sendMessage("[Faction War] Teletransportado a la ultima bandera capturada por tu faccion.");
+			}
+			else if (!player.isGM() && !player.isFestivalParticipant())
+			{
+				if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != 0 && FactionWarManager.getInstance().isRunning())
+					player.sendMessage("[Faction War] Tu faccion no ha capturado ninguna bandera aun.");
 				return;
-			
-			loc = player.getPosition();
+			}
+			else
+				loc = player.getPosition();
 		}
 		// To jail.
 		else if (_requestType == 27)
@@ -138,15 +151,27 @@ public final class RequestRestartPoint extends L2GameClientPacket
 		// Nothing has been found, use regular "To town" behavior.
 		else
 		{
-			// Faction respawn: if Faction War is running, respawn at NEUTRAL ZONE
+			// Faction respawn: if Faction War is running, respawn at the last flag captured by the faction.
+			// If the faction captured no flag yet, fall back to the neutral zone.
 			// Otherwise, respawn at faction home.
 			if (Config.ENABLE_FACTION_SYSTEM)
 			{
 				if (player.getFactionId() != 0 && FactionWarManager.getInstance().isRunning())
 				{
-					// War is running - send to neutral zone (surrender/rendicion)
-					loc = FactionWarConfig.getNeutralSpawnLoc();
-					player.sendMessage("[Faction War] Has muerto en batalla. Ve al Registrador de Guerra para volver a tu base.");
+					final Location capturedFlag = getLastCapturedFactionFlag(player);
+					if (capturedFlag != null)
+					{
+						// War is running and the faction holds a captured flag - respawn there.
+						// Small random spread so players don't revive exactly on top of the flag NPC.
+						loc = new Location(capturedFlag.getX() + Rnd.get(-200, 200), capturedFlag.getY() + Rnd.get(-200, 200), capturedFlag.getZ());
+						player.sendMessage("[Faction War] Has muerto en batalla. Reapareces en la ultima bandera capturada por tu faccion.");
+					}
+					else
+					{
+						// War is running but no flag captured - send to neutral zone (surrender/rendicion)
+						loc = FactionWarConfig.getNeutralSpawnLoc();
+						player.sendMessage("[Faction War] Has muerto en batalla. Ve al Registrador de Guerra para volver a tu base.");
+					}
 				}
 				else if (player.getFactionId() != 0)
 				{
@@ -167,5 +192,22 @@ public final class RequestRestartPoint extends L2GameClientPacket
 			player.doRevive();
 		
 		player.teleportTo(loc, 20);
+	}
+	
+	/**
+	 * @param player : The player to check.
+	 * @return The {@link Location} of the last flag captured by the player's faction during the
+	 *         running Faction War, or null if the war is not running or no flag was captured.
+	 */
+	private static Location getLastCapturedFactionFlag(Player player)
+	{
+		if (!Config.ENABLE_FACTION_SYSTEM || player == null || player.getFactionId() == 0)
+			return null;
+		
+		final FactionWarManager manager = FactionWarManager.getInstance();
+		if (!manager.isRunning())
+			return null;
+		
+		return manager.getLastCapturedFlag(player.getFactionId());
 	}
 }
