@@ -209,6 +209,26 @@ public class BufferManager implements IXmlReader
 	}
 	
 	/**
+	 * Apply all effects of a preset buff set (Fighter/Mage) upon a {@link Creature} target.
+	 * @param npc : The {@link Npc} which apply effects.
+	 * @param target : The {@link Creature} benefactor.
+	 * @param skillIds : The {@link List} of skill ids to apply.
+	 */
+	public void applyBuffSet(Npc npc, Creature target, List<Integer> skillIds)
+	{
+		for (int skillId : skillIds)
+		{
+			final BuffSkill holder = getAvailableBuff(skillId);
+			if (holder != null)
+			{
+				final L2Skill skill = holder.getSkill();
+				if (skill != null)
+					skill.getEffects(npc, target);
+			}
+		}
+	}
+	
+	/**
 	 * @param playerId : The Player objectId to check.
 	 * @param schemeName : The scheme name to check.
 	 * @param skillId : The {@link L2Skill} id to check.

@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.l2j.Config;
@@ -18,6 +20,7 @@ import net.sf.l2j.gameserver.data.xml.NewbieBuffData;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.event.EventEngine;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.model.Faction;
@@ -33,6 +36,10 @@ public final class PhantomEngine
 	private static final CLogger LOGGER = new CLogger(PhantomEngine.class.getName());
 	private static final Map<Integer, Player> ACTIVE_PHANTOMS = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> NEXT_BUFFS = new ConcurrentHashMap<>();
+	
+	// FactionWar participants, selected once at war start by selectWarParticipants().
+	// Non-participants keep their normal city/neutral-zone life during the war.
+	private static final Set<Integer> WAR_PARTICIPANTS = ConcurrentHashMap.newKeySet();
 	
 	// Grand Boss hunting: phantom objectId -> boss npcId currently hunted.
 	private static final Map<Integer, Integer> BOSS_HUNTS = new ConcurrentHashMap<>();
@@ -142,11 +149,17 @@ public final class PhantomEngine
 		
 		applyStartupFeatures(phantom);
 		
-		// If faction war is running, teleport this phantom to the war map
+		// If faction war is running, teleport this phantom to the war map.
+		// Only phantoms selected as war participants travel; the rest keep their city life.
+		// If the war is already running but no selection was made yet in this JVM (e.g. server
+		// restart mid-war), run the selection once so a fixed roster is used consistently.
 		if (Config.ENABLE_FACTION_SYSTEM && FactionWarManager.getInstance().isRunning())
 		{
+			if (WAR_PARTICIPANTS.isEmpty())
+				selectWarParticipants();
+			
 			final int factionId = phantom.getFactionId();
-			if (factionId > 0)
+			if (factionId > 0 && isWarParticipant(objectId))
 			{
 				final Location warSpawn = FactionWarManager.getInstance().getFactionSpawn(factionId);
 				if (warSpawn != null)
@@ -403,16 +416,111 @@ public final class PhantomEngine
 	}
 	
 	/**
+	 * Selects which phantoms participate in the FactionWar based on config:
+	 * WarParticipationChance (%), WarMaxPerFaction (0 = unlimited) and
+	 * WarNearbyOnlyRange (0 = any distance). This keeps non-selected phantoms
+	 * living their normal city/neutral-zone life during the war.
+	 */
+	public static void selectWarParticipants()
+	{
+		WAR_PARTICIPANTS.clear();
+		
+		final int chance = PhantomConfig.warParticipationChance();
+		if (chance <= 0)
+			return;
+		
+		final int maxPerFaction = PhantomConfig.warMaxPerFaction();
+		final int nearbyRange = PhantomConfig.warNearbyOnlyRange();
+		final Location neutral = FactionWarConfig.getNeutralSpawnLoc();
+		
+		// Gather eligible candidates (online, factioned, not inside an active event, within
+		// nearby range when configured). Mirrors returnPhantomsFromWar() so a phantom fighting
+		// an event is never yanked to the war.
+		final List<Player> candidates = new ArrayList<>();
+		for (Player phantom : ACTIVE_PHANTOMS.values())
+		{
+			if (phantom == null || !phantom.isOnline() || phantom.getFactionId() <= 0)
+				continue;
+			
+			// Skip phantoms inside an active event (the event owns their position).
+			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+			if (event != null && event.getState() != AbstractEvent.State.IDLE && event.getState() != AbstractEvent.State.ENDED)
+				continue;
+			
+			// Nearby-only filter: when no neutral spawn is configured, treat the range as 0 (all).
+			if (nearbyRange > 0 && neutral != null && phantom.distance3D(neutral) > nearbyRange)
+				continue;
+			
+			candidates.add(phantom);
+		}
+		
+		// Shuffle so per-faction caps don't always favor the first phantoms in the map.
+		Collections.shuffle(candidates);
+		
+		final Map<Integer, Integer> perFaction = new HashMap<>();
+		for (Player phantom : candidates)
+		{
+			// Percentage chance.
+			if (Rnd.get(100) >= chance)
+				continue;
+			
+			// Per-faction cap.
+			final int factionId = phantom.getFactionId();
+			if (maxPerFaction > 0 && perFaction.getOrDefault(factionId, 0) >= maxPerFaction)
+				continue;
+			
+			WAR_PARTICIPANTS.add(phantom.getObjectId());
+			perFaction.merge(factionId, 1, Integer::sum);
+		}
+		
+		LOGGER.info("FactionWar: selected {} phantoms as participants (chance={}%, maxPerFaction={}, nearbyRange={}).", WAR_PARTICIPANTS.size(), chance, maxPerFaction, nearbyRange);
+	}
+	
+	/**
+	 * @param objectId : The phantom object ID.
+	 * @return True if the phantom was selected to participate in the current FactionWar.
+	 */
+	public static boolean isWarParticipant(int objectId)
+	{
+		return WAR_PARTICIPANTS.contains(objectId);
+	}
+	
+	/**
+	 * @param phantom : The phantom.
+	 * @return True when the phantom has a faction, the war is running and it was selected
+	 * to participate (config-gated). Used by the AI to decide war mode vs normal life.
+	 */
+	public static boolean canJoinWar(Player phantom)
+	{
+		return phantom != null && Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning() && isWarParticipant(phantom.getObjectId());
+	}
+	
+	/**
+	 * Clears the FactionWar participant selection (called when the war ends).
+	 */
+	public static void clearWarParticipants()
+	{
+		WAR_PARTICIPANTS.clear();
+	}
+	
+	/**
 	 * Teleports all active phantoms with valid faction IDs to the faction war map.
 	 * First simulates travel by walking toward the neutral zone and saying war phrases,
 	 * then after a short delay teleports them to the war map.
 	 */
 	public static int teleportPhantomsToWar()
 	{
+		// Select participants before teleporting (config-gated).
+		selectWarParticipants();
+		
 		int moved = 0;
 		for (Player phantom : ACTIVE_PHANTOMS.values())
 		{
 			if (phantom == null || !phantom.isOnline())
+				continue;
+			
+			// Only selected participants travel to the war; the rest keep their city life.
+			if (!WAR_PARTICIPANTS.contains(phantom.getObjectId()))
 				continue;
 			
 			final int factionId = phantom.getFactionId();
@@ -523,6 +631,11 @@ public final class PhantomEngine
 			if (phantom == null || !phantom.isOnline())
 				continue;
 			
+			// Only return phantoms that were selected as war participants. Non-participants
+			// never left their city, so yanking them to faction home/neutral would be wrong.
+			if (!WAR_PARTICIPANTS.contains(phantom.getObjectId()))
+				continue;
+			
 			// If the phantom is inside an active event (REGISTER/STARTING/RUNNING), the event owns
 			// its position (mirrors handleDeath). Don't yank it out to faction home / neutral zone.
 			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
@@ -571,6 +684,9 @@ public final class PhantomEngine
 			phantom.store();
 			moved++;
 		}
+		
+		// Clear the roster so the next war re-selects participants fresh.
+		clearWarParticipants();
 		return moved;
 	}
 	

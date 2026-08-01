@@ -1,14 +1,14 @@
 package net.sf.l2j.gameserver.model.actor.instance;
 
-import net.sf.l2j.commons.random.Rnd;
-
-import net.sf.l2j.gameserver.data.manager.HeroManager;
-import net.sf.l2j.gameserver.data.manager.RaidPointManager;
-import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.commons.random.Rnd;	import net.sf.l2j.gameserver.data.manager.HeroManager;
+	import net.sf.l2j.gameserver.data.manager.RaidPointManager;
+	import net.sf.l2j.gameserver.data.xml.FactionData;
+	import net.sf.l2j.gameserver.event.AbstractEvent;
 import net.sf.l2j.gameserver.event.EventEngine;
-import net.sf.l2j.gameserver.model.actor.Creature;
-import net.sf.l2j.gameserver.model.actor.Player;
-import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
+import net.sf.l2j.gameserver.model.actor.Creature;	import net.sf.l2j.gameserver.model.Faction;
+	import net.sf.l2j.gameserver.model.World;
+	import net.sf.l2j.gameserver.model.actor.Player;
+	import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
 import net.sf.l2j.gameserver.model.group.CommandChannel;
 import net.sf.l2j.gameserver.model.group.Party;import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.ItemList;
@@ -47,6 +47,16 @@ public class RaidBoss extends Monster
 	}
 	
 	@Override
+	public void onSpawn()
+	{
+		super.onSpawn();
+		
+		// Global announcement when a raid boss spawns (disabled by default to avoid spam).
+		if (net.sf.l2j.Config.ANNOUNCE_RAIDBOSS_SPAWN)
+			World.announceToOnlinePlayers("[Raid Boss]: " + getName() + " esta vivo.");
+	}
+	
+	@Override
 	public boolean doDie(Creature killer)
 	{
 		if (!super.doDie(killer))
@@ -57,6 +67,21 @@ public class RaidBoss extends Monster
 			final Player player = killer.getActingPlayer();
 			if (player != null)
 			{
+				// Global announcement of the kill, with clan and faction of the killer.
+				if (net.sf.l2j.Config.ANNOUNCE_RAIDBOSS_KILL)
+				{
+					final StringBuilder msg = new StringBuilder("[Raid Boss]: ").append(getName()).append(" fue derrotado por ").append(player.getName());
+					if (player.getClan() != null)
+						msg.append(" del clan ").append(player.getClan().getName());
+					if (net.sf.l2j.Config.ENABLE_FACTION_SYSTEM && player.getFactionId() > 0)
+					{
+						final Faction faction = FactionData.getInstance().getFaction(player.getFactionId());
+						if (faction != null)
+							msg.append(" de la faccion ").append(faction.getName());
+					}
+					World.announceToOnlinePlayers(msg.toString());
+				}
+				
 				// Notify event engine of raid boss kill (for "Raid in the Middle" event)
 				final AbstractEvent event = EventEngine.getInstance().getActiveEvent();
 				if (event != null && event.getData().getId() == 16 && event instanceof net.sf.l2j.gameserver.event.RaidInTheMiddleEvent raidEvent)

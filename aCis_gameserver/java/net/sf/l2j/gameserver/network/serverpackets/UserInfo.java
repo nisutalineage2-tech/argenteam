@@ -199,7 +199,7 @@ public class UserInfo extends L2GameServerPacket
 		writeD(_player.getStatus().getMaxCp());
 		writeD((int) _player.getStatus().getCp());
 		writeC((_player.isMounted()) ? 0 : _player.getEnchantEffect());
-		writeC((Config.PLAYER_SPAWN_PROTECTION > 0 && _player.isSpawnProtected()) ? TeamType.BLUE.getId() : _player.getTeam().getId());
+		writeC(_player.getTeam().getId());
 		writeD(_player.getClanCrestLargeId());
 		writeC((_player.isNoble()) ? 1 : 0);
 		writeC((_player.isHero() || (_player.isGM() && Config.GM_HERO_AURA)) ? 1 : 0);

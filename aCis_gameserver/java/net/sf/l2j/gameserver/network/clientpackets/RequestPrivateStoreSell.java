@@ -1,9 +1,8 @@
-package net.sf.l2j.gameserver.network.clientpackets;
-
-import net.sf.l2j.Config;
-import net.sf.l2j.gameserver.data.sql.OfflineTradersTable;
-import net.sf.l2j.gameserver.enums.actors.OperateType;
-import net.sf.l2j.gameserver.model.World;
+package net.sf.l2j.gameserver.network.clientpackets;	import net.sf.l2j.Config;
+	import net.sf.l2j.gameserver.data.sql.OfflineTradersTable;
+	import net.sf.l2j.gameserver.enums.actors.OperateType;
+	import net.sf.l2j.gameserver.factionwar.FactionWarManager;
+	import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.trade.ItemRequest;
@@ -65,7 +64,8 @@ public final class RequestPrivateStoreSell extends L2GameClientPacket
 		if (!player.isIn3DRadius(storePlayer, Npc.INTERACTION_DISTANCE))
 			return;
 		
-		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != storePlayer.getFactionId())
+		// Only restrict cross-faction trading while the faction war is running.
+		if (Config.ENABLE_FACTION_SYSTEM && FactionWarManager.getInstance().isRunning() && player.getFactionId() != storePlayer.getFactionId())
 			return;
 		
 		if (storePlayer.getOperateType() != OperateType.BUY)
@@ -84,7 +84,8 @@ public final class RequestPrivateStoreSell extends L2GameClientPacket
 		if (storeList.privateStoreSell(player, _items))
 		{
 			// Update offline trade record in realtime.
-			if (Config.OFFLINE_TRADE_ENABLE && Config.RESTORE_OFFLINERS && !storeList.isEmpty() && (storePlayer.getClient() == null || storePlayer.getClient().isDetached()))
+			// Realtime persistence applies only to real offline traders (detached client), not phantoms.
+			if (Config.OFFLINE_TRADE_ENABLE && Config.RESTORE_OFFLINERS && !storeList.isEmpty() && storePlayer.getClient() != null && storePlayer.getClient().isDetached())
 				OfflineTradersTable.storeOffliners();
 			
 			if (storeList.isEmpty())

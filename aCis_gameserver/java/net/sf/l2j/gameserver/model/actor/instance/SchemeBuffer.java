@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.l2j.commons.lang.StringUtil;
 import net.sf.l2j.commons.math.MathUtil;
@@ -21,6 +22,9 @@ public class SchemeBuffer extends Folk
 {
 	private static final int PAGE_LIMIT = 6;
 	
+	/** Timestamp of the last buffer action per player objectId, used for the anti-spam timeout. */
+	private static final Map<Integer, Long> LAST_ACTION = new ConcurrentHashMap<>();
+	
 	public SchemeBuffer(int objectId, NpcTemplate template)
 	{
 		super(objectId, template);
@@ -32,6 +36,13 @@ public class SchemeBuffer extends Folk
 		StringTokenizer st = new StringTokenizer(command, " ");
 		String currentCommand = st.nextToken();
 		
+		// Minimum level gate (GMs are exempt).
+		if (!player.isGM() && player.getStatus().getLevel() < Config.BUFFER_MIN_LEVEL)
+		{
+			player.sendMessage("Your level is too low to use the buffer. You must be at least level " + Config.BUFFER_MIN_LEVEL + ".");
+			return;
+		}
+		
 		if (currentCommand.startsWith("menu"))
 		{
 			final NpcHtmlMessage html = new NpcHtmlMessage(0);
@@ -41,11 +52,19 @@ public class SchemeBuffer extends Folk
 		}
 		else if (currentCommand.startsWith("cleanup"))
 		{
+			if (isTimedOut(player))
+				return;
+			
+			if (Config.BUFFER_REMOVE_PRICE > 0 && !player.reduceAdena(Config.BUFFER_REMOVE_PRICE, true))
+				return;
+			
 			player.stopAllEffectsExceptThoseThatLastThroughDeath();
 			
 			final Summon summon = player.getSummon();
 			if (summon != null)
 				summon.stopAllEffectsExceptThoseThatLastThroughDeath();
+			
+			recordAction(player);
 			
 			final NpcHtmlMessage html = new NpcHtmlMessage(0);
 			html.setFile(getHtmlPath(getNpcId(), 0));
@@ -54,11 +73,61 @@ public class SchemeBuffer extends Folk
 		}
 		else if (currentCommand.startsWith("heal"))
 		{
+			if (isTimedOut(player))
+				return;
+			
+			if (Config.BUFFER_HEAL_PRICE > 0 && !player.reduceAdena(Config.BUFFER_HEAL_PRICE, true))
+				return;
+			
 			player.getStatus().setMaxCpHpMp();
 			
 			final Summon summon = player.getSummon();
 			if (summon != null)
 				summon.getStatus().setMaxHpMp();
+			
+			recordAction(player);
+			
+			final NpcHtmlMessage html = new NpcHtmlMessage(0);
+			html.setFile(getHtmlPath(getNpcId(), 0));
+			html.replace("%objectId%", getObjectId());
+			player.sendPacket(html);
+		}
+		else if (currentCommand.startsWith("buffset"))
+		{
+			if (!Config.BUFFER_ENABLE_BUFF_SET)
+			{
+				player.sendMessage("Buff sets are disabled.");
+				return;
+			}
+			
+			if (isTimedOut(player))
+				return;
+			
+			final String setType = (st.hasMoreTokens()) ? st.nextToken() : "fighter";
+			
+			Creature target = player;
+			if (st.hasMoreTokens() && st.nextToken().equalsIgnoreCase("pet"))
+				target = player.getSummon();
+			
+			if (target == null)
+			{
+				player.sendMessage("You don't have a pet.");
+				return;
+			}
+			
+			final List<Integer> skillIds = (setType.equalsIgnoreCase("mage")) ? Config.BUFFER_SET_MAGE : Config.BUFFER_SET_FIGHTER;
+			
+			if (skillIds.isEmpty())
+			{
+				player.sendMessage("This buff set is not configured.");
+				return;
+			}
+			
+			if (Config.BUFFER_SET_PRICE > 0 && !player.reduceAdena(Config.BUFFER_SET_PRICE, true))
+				return;
+			
+			BufferManager.getInstance().applyBuffSet(this, target, skillIds);
+			recordAction(player);
 			
 			final NpcHtmlMessage html = new NpcHtmlMessage(0);
 			html.setFile(getHtmlPath(getNpcId(), 0));
@@ -86,8 +155,13 @@ public class SchemeBuffer extends Folk
 			
 			if (target == null)
 				player.sendMessage("You don't have a pet.");
+			else if (isTimedOut(player))
+				return;
 			else if (cost == 0 || player.reduceAdena(cost, true))
+			{
 				BufferManager.getInstance().applySchemeEffects(this, target, player.getObjectId(), schemeName);
+				recordAction(player);
+			}
 		}
 		else if (currentCommand.startsWith("editschemes"))
 		{
@@ -334,6 +408,34 @@ public class SchemeBuffer extends Folk
 		sb.append("</table>");
 		
 		return sb.toString();
+	}
+	
+	/**
+	 * @param player : The {@link Player} to check.
+	 * @return True if the player is still inside the anti-spam timeout window, or false otherwise.
+	 */
+	private static boolean isTimedOut(Player player)
+	{
+		if (!Config.BUFFER_ENABLE_TIMEOUT || Config.BUFFER_TIMEOUT_TIME <= 0)
+			return false;
+		
+		final Long last = LAST_ACTION.get(player.getObjectId());
+		if (last != null && System.currentTimeMillis() - last < Config.BUFFER_TIMEOUT_TIME * 1000L)
+		{
+			player.sendMessage("Wait a few seconds before using the buffer again.");
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Records the current timestamp as the last successful buffer action for the given {@link Player}.
+	 * @param player : The {@link Player} to check.
+	 */
+	private static void recordAction(Player player)
+	{
+		if (Config.BUFFER_ENABLE_TIMEOUT && Config.BUFFER_TIMEOUT_TIME > 0)
+			LAST_ACTION.put(player.getObjectId(), System.currentTimeMillis());
 	}
 	
 	/**

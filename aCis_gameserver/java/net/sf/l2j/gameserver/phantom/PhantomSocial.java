@@ -8,7 +8,6 @@ import net.sf.l2j.commons.random.Rnd;
 
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
-import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 
@@ -154,7 +153,8 @@ public final class PhantomSocial
 		if (Rnd.get(100) >= PhantomConfig.socialChatChance())
 			return;
 		
-		final boolean warRunning = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
+		// Only selected war participants say war phrases; the rest keep normal social chat.
+		final boolean warRunning = PhantomEngine.canJoinWar(phantom);
 		
 		final Player nearby = findNearbyRealPlayer(phantom, warRunning);
 		if (nearby == null)

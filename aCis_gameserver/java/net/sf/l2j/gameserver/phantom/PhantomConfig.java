@@ -141,6 +141,11 @@ public final class PhantomConfig
 	// Offline store (neutral zone vendor simulation)
 	private static boolean _storeEnabled = true;
 	private static int _storeChance = 30;
+	
+	// FactionWar participation control (avoids emptying the cities during the war)
+	private static int _warParticipationChance = 100;
+	private static int _warMaxPerFaction = 0;
+	private static int _warNearbyOnlyRange = 0;
 	private static int[] _storeItemIds = new int[]
 	{
 		1835, 1836, 1837, 2509, 2510, 2511, 1061, 1062, 1064, 1073, 736
@@ -300,6 +305,11 @@ public final class PhantomConfig
 			_storeTitle = props.getProperty("StoreTitle", "Vendo barato");
 			_storeDurationMinMs = Math.max(5000, props.getProperty("StoreDurationMinMs", 60000));
 			_storeDurationMaxMs = Math.max(_storeDurationMinMs, props.getProperty("StoreDurationMaxMs", 180000));
+			
+			// FactionWar participation control
+			_warParticipationChance = clampPercent(props.getProperty("WarParticipationChance", 100));
+			_warMaxPerFaction = Math.max(0, props.getProperty("WarMaxPerFaction", 0));
+			_warNearbyOnlyRange = Math.max(0, props.getProperty("WarNearbyOnlyRange", 0));
 			LOGGER.info("Loaded {} configured phantom ids and {} level zones.", _phantomIds.size(), _levelZones.size());
 		}
 		catch (Exception e)
@@ -426,6 +436,9 @@ public final class PhantomConfig
 		_storeTitle = "Vendo barato";
 		_storeDurationMinMs = 60000;
 		_storeDurationMaxMs = 180000;
+		_warParticipationChance = 100;
+		_warMaxPerFaction = 0;
+		_warNearbyOnlyRange = 0;
 		_phantomLogEnabled = true;
 		_phantomLogFile = "./log/phantoms.log";
 		_phantomLogBackupOnStartup = false;
@@ -1237,6 +1250,21 @@ public final class PhantomConfig
 	public static int storeDurationMaxMs()
 	{
 		return _storeDurationMaxMs;
+	}
+	
+	public static int warParticipationChance()
+	{
+		return _warParticipationChance;
+	}
+	
+	public static int warMaxPerFaction()
+	{
+		return _warMaxPerFaction;
+	}
+	
+	public static int warNearbyOnlyRange()
+	{
+		return _warNearbyOnlyRange;
 	}
 		private record LevelZone(int minLevel, int maxLevel, Location location)
 	{

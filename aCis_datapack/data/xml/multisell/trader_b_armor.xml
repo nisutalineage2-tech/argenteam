@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- General Trader - Grade B Armor (Zubei's + Blue Wolf sets) -->
+<list>
+	<npcs>
+		<npc>90012</npc>
+	</npcs>
+	<!-- Zubei's set -->
+	<item>
+		<ingredient id="57" count="3000000"/>
+		<production id="357" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="2000000"/>
+		<production id="383" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="1200000"/>
+		<production id="503" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="1200000"/>
+		<production id="612" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="1200000"/>
+		<production id="554" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="1500000"/>
+		<production id="633" count="1"/>
+	</item>
+	<!-- Blue Wolf set -->
+	<item>
+		<ingredient id="57" count="3000000"/>
+		<production id="358" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="2000000"/>
+		<production id="2380" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="1200000"/>
+		<production id="2416" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="1200000"/>
+		<production id="2487" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="1200000"/>
+		<production id="2439" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="2800000"/>
+		<production id="2391" count="1"/>
+	</item>
+</list>

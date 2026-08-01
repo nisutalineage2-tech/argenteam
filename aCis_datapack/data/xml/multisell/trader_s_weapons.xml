@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- General Trader - Grade S Weapons -->
+<list>
+	<npcs>
+		<npc>90012</npc>
+	</npcs>
+	<item>
+		<ingredient id="57" count="120000000"/>
+		<production id="82" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="110000000"/>
+		<production id="165" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="110000000"/>
+		<production id="237" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="110000000"/>
+		<production id="290" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="110000000"/>
+		<production id="306" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="110000000"/>
+		<production id="307" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6364" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6365" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6367" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6368" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6369" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6370" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6371" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="100000000"/>
+		<production id="6372" count="1"/>
+	</item>
+</list>

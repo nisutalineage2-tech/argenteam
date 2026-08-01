@@ -221,7 +221,7 @@ public final class PhantomAI
 			// If the faction war starts, close the store so the phantom can fight.
 			if (phantom.getOperateType() != OperateType.NONE)
 			{
-				final boolean warStarting = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
+				final boolean warStarting = PhantomEngine.canJoinWar(phantom);
 				if (warStarting)
 				{
 					phantom.getSellList().clear();
@@ -264,7 +264,7 @@ public final class PhantomAI
 			// === FACTION WAR MODE: highest priority. Runs BEFORE loot/farm/level-zone teleports,
 			// otherwise maybeMoveToFarmZoneStep() would yank the phantom right back to its farm
 			// zone a few seconds after it arrives on the war map (phantom would never be seen). ===
-			final boolean warRunning = Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning();
+			final boolean warRunning = PhantomEngine.canJoinWar(phantom);
 			final boolean inNeutralZone = Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(phantom.getPosition());
 			
 			if (warRunning)
@@ -943,8 +943,9 @@ public final class PhantomAI
 			if (town != null)
 				phantom.teleportTo(town, 20);
 			
-			// BUG FIX: If faction war is still running, teleport phantom back to war map after respawn
-			if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+			// BUG FIX: If faction war is still running and this phantom participates, teleport
+			// it back to the war map after respawn (non-participants stay in town).
+			if (PhantomEngine.canJoinWar(phantom))
 			{
 				final Location warSpawn = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
 				if (warSpawn != null)
@@ -965,7 +966,7 @@ public final class PhantomAI
 			LAST_ACTIONS.put(phantom.getObjectId(), "Respawn " + (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 ? "faction base" : "town"));
 			phantom.store();
 			
-			if (PhantomConfig.returnToLevelZoneAfterDeath() && PhantomConfig.useLevelZones() && !FactionWarManager.getInstance().isRunning())
+			if (PhantomConfig.returnToLevelZoneAfterDeath() && PhantomConfig.useLevelZones() && !PhantomEngine.canJoinWar(phantom))
 				ThreadPool.schedule(() -> returnToLevelZone(phantom), PhantomConfig.returnToLevelZoneDelayMs());
 			else
 				DEATH_HANDLING.remove(phantom.getObjectId());
@@ -1263,7 +1264,7 @@ public final class PhantomAI
 	private static boolean maybeRelocateToLevelZone(Player phantom, boolean initial)
 	{
 		// Never pull a phantom out of an active faction war.
-		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+		if (PhantomEngine.canJoinWar(phantom))
 			return false;
 		
 		if (!PhantomConfig.useLevelZones())
@@ -1293,7 +1294,7 @@ public final class PhantomAI
 	private static boolean maybeMoveToFarmZoneStep(Player phantom)
 	{
 		// Never pull a phantom out of an active faction war.
-		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+		if (PhantomEngine.canJoinWar(phantom))
 			return false;
 		
 		if (!PhantomConfig.autoMoveToFarmZones() || !PhantomConfig.useLevelZones())
@@ -1324,7 +1325,7 @@ public final class PhantomAI
 	private static boolean forceMoveToFarmZone(Player phantom, String action)
 	{
 		// Never pull a phantom out of an active faction war.
-		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+		if (PhantomEngine.canJoinWar(phantom))
 			return false;
 		
 		if (!PhantomConfig.useLevelZones())
@@ -1907,7 +1908,7 @@ public final class PhantomAI
 	{
 		// During an active faction war the racial safe spawn is off the war map;
 		// do NOT yank the phantom out of the battle.
-		if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning())
+		if (PhantomEngine.canJoinWar(phantom))
 			return false;
 		
 		final Location safe = phantom.getBaseTemplate().getRandomSpawn();

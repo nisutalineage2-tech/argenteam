@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- General Trader - Grade A Armor (Dark Crystal + Tallum + Nightmare + Majestic) -->
+<list>
+	<npcs>
+		<npc>90012</npc>
+	</npcs>
+	<!-- Dark Crystal set -->
+	<item>
+		<ingredient id="57" count="12000000"/>
+		<production id="365" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="8000000"/>
+		<production id="388" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="512" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="2472" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="563" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="6000000"/>
+		<production id="641" count="1"/>
+	</item>
+	<!-- Tallum set -->
+	<item>
+		<ingredient id="57" count="12000000"/>
+		<production id="2382" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="547" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="2478" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="5780" count="1"/>
+	</item>
+	<!-- Nightmare set -->
+	<item>
+		<ingredient id="57" count="12000000"/>
+		<production id="374" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="2418" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="2479" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="2440" count="1"/>
+	</item>
+	<!-- Majestic set -->
+	<item>
+		<ingredient id="57" count="12000000"/>
+		<production id="2383" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="2419" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="2482" count="1"/>
+	</item>
+	<item>
+		<ingredient id="57" count="5000000"/>
+		<production id="583" count="1"/>
+	</item>
+</list>

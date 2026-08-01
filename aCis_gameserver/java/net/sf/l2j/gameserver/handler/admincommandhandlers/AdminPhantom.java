@@ -473,53 +473,57 @@ public class AdminPhantom implements IAdminCommandHandler
 		// Faction War status band
 		if (warEnabled)
 		{
-			sb.append("<table width=330><tr><td align=center bgcolor=").append(warRunning ? "003300" : "330000").append("><font color=").append(warRunning ? "00FF00" : "FF0000").append(">").append(warRunning ? "FACTION WAR - RUNNING" : "FACTION WAR - STOPPED").append("</font></td></tr></table>");
+			sb.append("<table width=330><tr><td align=center bgcolor=").append(warRunning ? "003300" : "330000").append("><font color=").append(warRunning ? "00FF00" : "FF0000").append(">").append(warRunning ? "FACTION WAR - EN CURSO" : "FACTION WAR - DETENIDA").append("</font></td></tr></table>");
 			sb.append("<table width=330><tr>");
-			sb.append("<td width=110 align=center><font color=0000FF>Good: ").append(warGoodScore).append("</font></td>");
+			sb.append("<td width=110 align=center><font color=0000FF>").append(htmlSafe(FactionWarConfig.getGoodFactionName())).append(": ").append(warGoodScore).append("</font></td>");
 			sb.append("<td width=110 align=center>");
 			if (!warRunning)
-				sb.append("<a action=\"bypass -h admin_factionwar start\">Start</a>");
+				sb.append("<a action=\"bypass -h admin_factionwar start\">Iniciar</a>");
 			else
-				sb.append("<a action=\"bypass -h admin_factionwar stop\">Stop</a>");
-			sb.append(" | <a action=\"bypass -h admin_factionwar reload\">Reload</a>");
+				sb.append("<a action=\"bypass -h admin_factionwar stop\">Detener</a>");
+			sb.append(" | <a action=\"bypass -h admin_factionwar reload\">Recargar</a>");
 			sb.append("</td>");
-			sb.append("<td width=110 align=center><font color=FF0000>Evil: ").append(warEvilScore).append("</font></td>");
+			sb.append("<td width=110 align=center><font color=FF0000>").append(htmlSafe(FactionWarConfig.getEvilFactionName())).append(": ").append(warEvilScore).append("</font></td>");
 			sb.append("</tr></table>");
 		}
 		else
-			sb.append("<center><font color=808080>Faction system disabled</font></center>");
+			sb.append("<center><font color=808080>Sistema de facciones desactivado</font></center>");
 		
 		sb.append("<br>");
 		
 		// Section: Estado
 		sectionTitle(sb, "Estado");
 		sb.append("<table width=330>");
-		infoRow(sb, "Active", allPhantoms.size());
-		infoRow(sb, "Config IDs", PhantomConfig.getPhantomIds().size());
-		sb.append("<tr><td width=140>AI</td><td width=190><font color=").append(PhantomAI.isAiPaused() ? "FF0000" : "00FF00").append(">").append(PhantomAI.isAiPaused() ? "OFF (paused)" : "ON").append("</font></td></tr>");
-		infoRow(sb, "Tick", PhantomConfig.aiTickMs() + "ms");
-		infoRow(sb, "Zone", PhantomConfig.levelZoneProfile());
+		infoRow(sb, "Phantoms activos", allPhantoms.size());
+		infoRow(sb, "IDs configurados", PhantomConfig.getPhantomIds().size());
+		sb.append("<tr><td width=140>IA</td><td width=190><font color=").append(PhantomAI.isAiPaused() ? "FF0000" : "00FF00").append(">").append(PhantomAI.isAiPaused() ? "OFF (pausada)" : "ON").append("</font></td></tr>");
+		infoRow(sb, "Tick IA", PhantomConfig.aiTickMs() + " ms");
+		infoRow(sb, "Zona de nivel", PhantomConfig.levelZoneProfile());
+		if (warEnabled)
+			infoRow(sb, "Participan en guerra", PhantomConfig.warParticipationChance() + "%, max " + PhantomConfig.warMaxPerFaction() + "/fac, rango " + PhantomConfig.warNearbyOnlyRange());
 		sb.append("</table>");
 		
-		// Section: Config AI
-		sectionTitle(sb, "Config AI");
+		// Section: Configuracion IA
+		sectionTitle(sb, "Configuracion IA");
 		sb.append("<table width=330>");
-		infoRow(sb, "Skills", PhantomConfig.advancedSkillUsage());
-		infoRow(sb, "Mage", PhantomConfig.mageNeverMelee());
-		infoRow(sb, "Herbs", PhantomConfig.autoLootHerbs());
-		infoRow(sb, "PVP", PhantomConfig.pvpEnabled());
-		infoRow(sb, "PK", PhantomConfig.pkEnabled());
-		infoRow(sb, "Chat", PhantomConfig.phantomChatEnabled());
+		infoRow(sb, "Skills avanzados", siNo(PhantomConfig.advancedSkillUsage()));
+		infoRow(sb, "Mago a distancia", siNo(PhantomConfig.mageNeverMelee()));
+		infoRow(sb, "Hierbas", siNo(PhantomConfig.autoLootHerbs()));
+		infoRow(sb, "PvP", siNo(PhantomConfig.pvpEnabled()));
+		infoRow(sb, "PK", siNo(PhantomConfig.pkEnabled()));
+		infoRow(sb, "Chat IA", siNo(PhantomConfig.phantomChatEnabled()));
 		sb.append("</table>");
 		
 		// Section: Acciones
 		sectionTitle(sb, "Acciones");
-		buttonRow(sb, "Restore", "admin_phantom start", "New 1", "admin_phantom create 1", "New 10", "admin_phantom create 10");
-		buttonRow(sb, "AI On", "admin_phantom ai on", "AI Off", "admin_phantom ai off", "Set Home", "admin_phantom ai home");
-		buttonRow(sb, "Bring", "admin_phantom bring", "Radar", "admin_phantom radar phantoms", "Reload", "admin_phantom reload");
+		buttonRow2(sb, "Cargar config", "admin_phantom start", "Crear 1", "admin_phantom create 1");
+		buttonRow2(sb, "Crear 10", "admin_phantom create 10", "IA On", "admin_phantom ai on");
+		buttonRow2(sb, "IA Off", "admin_phantom ai off", "Fijar Home", "admin_phantom ai home");
+		buttonRow2(sb, "Traer todos", "admin_phantom bring", "Radar", "admin_phantom radar phantoms");
+		buttonRow2(sb, "Recargar", "admin_phantom reload", "Revivir", "admin_phantom resurrect");
 		
 		// Faction bring buttons (auto-detect available factions)
-		if (FactionWarConfig.isEnabled() && FactionData.getInstance().getFactionCount() > 0)
+		if (warEnabled && FactionData.getInstance().getFactionCount() > 0)
 		{
 			final int[] factionIds = FactionData.getInstance().getFactionIds();
 			int col = 0;
@@ -531,26 +535,55 @@ public class AdminPhantom implements IAdminCommandHandler
 				final Faction f = FactionData.getInstance().getFaction(fid);
 				final String label = (f != null) ? f.getName() : ("F" + fid);
 				final String shortLabel = (label.length() > 6) ? label.substring(0, 6).trim() : label;
-				button(sb, "Bring " + shortLabel, "admin_phantom bringfaction " + fid);
+				button(sb, "Traer " + htmlSafe(shortLabel), "admin_phantom bringfaction " + fid, 100);
 				col++;
 			}
 			while (col % 3 != 0)
 			{
-				sb.append("<td width=90></td>");
+				sb.append("<td width=100></td>");
 				col++;
 			}
 			sb.append("</tr></table>");
 		}
 		else
 		{
-			buttonRowSkipEmpty(sb, "Bring All", "admin_phantom bringfaction 0", "", "", "", "");
+			buttonRowSkipEmpty(sb, "Traer todos", "admin_phantom bringfaction 0", "", "", "", "");
 		}
 		
-		buttonRow(sb, "Resurrect", "admin_phantom resurrect", "Stop All", "admin_phantom stop", "Clear", "admin_phantom radar clear");
-		buttonRow(sb, "Online", "admin_phantom online 0", "Delete ALL", "admin_phantom deleteall", "Party", "admin_phantom party");
-		buttonRowSkipEmpty(sb, "Store", "admin_phantom store", "", "", "", "");
+		buttonRow2(sb, "Parar todo", "admin_phantom stop", "Limpiar radar", "admin_phantom radar clear");
+		buttonRow2(sb, "Lista online", "admin_phantom online 0", "Borrar todos", "admin_phantom deleteall");
+		buttonRow2(sb, "Formar party", "admin_phantom party", "Tiendas on/off", "admin_phantom store");
+		
+		// Asignar faccion a todos los phantoms sin faccion (factionall)
+		if (warEnabled && FactionData.getInstance().getFactionCount() > 0)
+		{
+			final int[] factionIds = FactionData.getInstance().getFactionIds();
+			int col = 0;
+			for (int fid : factionIds)
+			{
+				if (col % 3 == 0)
+					sb.append(col == 0 ? "<table width=300><tr>" : "</tr></table><table width=300><tr>");
+				
+				final Faction f = FactionData.getInstance().getFaction(fid);
+				final String label = (f != null) ? f.getName() : ("F" + fid);
+				final String shortLabel = (label.length() > 6) ? label.substring(0, 6).trim() : label;
+				button(sb, "Todos->" + htmlSafe(shortLabel), "admin_phantom factionall " + fid, 100);
+				col++;
+			}
+			while (col % 3 != 0)
+			{
+				sb.append("<td width=100></td>");
+				col++;
+			}
+			sb.append("</tr></table>");
+		}
+		else
+		{
+			buttonRowSkipEmpty(sb, "Tiendas on/off", "admin_phantom store", "", "", "", "");
+		}
+		
 		if (warEnabled)
-			buttonRow(sb, "War Panel", "admin_factionwar", "War Start", "admin_factionwar start", "War Stop", "admin_factionwar stop");
+			buttonRow2(sb, "Panel Guerra", "admin_factionwar", warRunning ? "Detener guerra" : "Iniciar guerra", warRunning ? "admin_factionwar stop" : "admin_factionwar start");
 		
 		if (!allPhantoms.isEmpty())
 		{
@@ -567,10 +600,10 @@ public class AdminPhantom implements IAdminCommandHandler
 				
 				sb.append("<tr><td width=210><font color=FFD700>");
 				if (fKey == 0)
-					sb.append("No Faction");
+					sb.append("Sin faccion");
 				else
-					sb.append("Faction ").append(fKey).append(faction != null ? " (" + faction.getName() + ")" : "");
-				sb.append("</font></td><td width=40 align=center><font color=00FF00>").append(list.size()).append("</font></td><td width=80 align=center><a action=\"bypass -h admin_phantom factions ").append(fKey).append(" 0\">View</a></td></tr>");
+					sb.append("Faccion ").append(fKey).append(faction != null ? " (" + htmlSafe(faction.getName()) + ")" : "");
+				sb.append("</font></td><td width=40 align=center><font color=00FF00>").append(list.size()).append("</font></td><td width=80 align=center><a action=\"bypass -h admin_phantom factions ").append(fKey).append(" 0\">Ver</a></td></tr>");
 			}
 			sb.append("</table>");
 			
@@ -587,18 +620,18 @@ public class AdminPhantom implements IAdminCommandHandler
 					goodW = 329;
 				}
 				
-				sb.append("<br><table width=330><tr><td width=165 align=center><font color=0000FF>Good</font></td><td width=165 align=center><font color=FF0000>Evil</font></td></tr></table>");
+				sb.append("<br><table width=330><tr><td width=165 align=center><font color=0000FF>").append(htmlSafe(shortText(FactionWarConfig.getGoodFactionName(), 14))).append("</font></td><td width=165 align=center><font color=FF0000>").append(htmlSafe(shortText(FactionWarConfig.getEvilFactionName(), 14))).append("</font></td></tr></table>");
 				sb.append("<table width=330><tr>");
 				sb.append("<td width=").append(goodW).append(" bgcolor=0000FF align=center><font color=FFFFFF>").append(warGoodScore).append("</font></td>");
 				sb.append("<td width=").append(evilW).append(" bgcolor=FF0000 align=center><font color=FFFFFF>").append(warEvilScore).append("</font></td>");
 				sb.append("</tr></table>");
 			}
 			
-			sb.append("<br><center><font color=808080>Use 'Online' button for full management.</font></center>");
+			sb.append("<br><center><font color=808080>Usa 'Lista online' para gestionar cada phantom.</font></center>");
 		}
 		else
 		{
-			sb.append("<br><center><font color=808080>No phantoms active.</font></center>");
+			sb.append("<br><center><font color=808080>No hay phantoms activos.</font></center>");
 		}
 		
 		sb.append("</body></html>");
@@ -626,11 +659,11 @@ public class AdminPhantom implements IAdminCommandHandler
 		{
 			phantoms = filterByFaction(phantoms, filterFaction);
 			final Faction f = FactionData.getInstance().getFaction(filterFaction);
-			title = "Phantoms - Faction " + filterFaction + (f != null ? " (" + f.getName() + ")" : "");
+			title = "Phantoms - Faccion " + filterFaction + (f != null ? " (" + htmlSafe(f.getName()) + ")" : "");
 		}
 		else
 		{
-			title = "Phantoms Online";
+			title = "Phantoms en linea";
 		}
 		
 		final int maxPage = phantoms.isEmpty() ? 0 : (phantoms.size() - 1) / PAGE_SIZE;
@@ -641,9 +674,9 @@ public class AdminPhantom implements IAdminCommandHandler
 		if (message != null)
 			sb.append("<font color=99FF99>").append(message).append("</font><br1>");
 		
-		sb.append("Count: <font color=LEVEL>").append(phantoms.size()).append("</font> | Page: ").append(page + 1).append("/").append(maxPage + 1).append("<br1>");
+		sb.append("Total: <font color=LEVEL>").append(phantoms.size()).append("</font> | Pagina: ").append(page + 1).append("/").append(maxPage + 1).append("<br1>");
 		sb.append("<table width=310>");
-		sb.append("<tr><td width=60>Name</td><td width=16>Lv</td><td width=22>Fct</td><td width=26>Mode</td><td width=44>State</td><td width=22>K</td><td width=30>Stop</td><td width=22>Del</td><td width=28>Fct</td></tr>");
+		sb.append("<tr><td width=70>Nombre</td><td width=16>Nv</td><td width=20>Fac</td><td width=26>Modo</td><td width=44>Accion</td><td width=22>K</td><td width=30>S</td><td width=22>X</td><td width=30>Fac</td></tr>");
 		
 		final int start = page * PAGE_SIZE;
 		final int end = Math.min(start + PAGE_SIZE, phantoms.size());
@@ -653,7 +686,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			final int objectId = phantom.getObjectId();
 			final int fId = phantom.getFactionId();
 			final String factionTag = (FactionWarConfig.isEnabled() && fId > 0) ? String.valueOf(fId) : "-";
-			sb.append("<tr><td>").append(shortText(phantom.getName(), 10)).append("</td><td>").append(phantom.getStatus().getLevel()).append("</td><td>").append(factionTag).append("</td><td>").append(shortText(PhantomState.label(objectId), 5)).append("</td><td>").append(shortText(PhantomAI.getLastAction(phantom), 6)).append("</td>");
+			sb.append("<tr><td>").append(htmlSafe(shortText(phantom.getName(), 12))).append("</td><td>").append(phantom.getStatus().getLevel()).append("</td><td>").append(factionTag).append("</td><td>").append(shortText(PhantomState.label(objectId), 5)).append("</td><td>").append(shortText(PhantomAI.getLastAction(phantom), 8)).append("</td>");
 			sb.append("<td>");
 			miniButton(sb, "K", "admin_phantom kill " + page + " " + filterFaction + " " + objectId, 22);
 			sb.append("</td><td>");
@@ -663,29 +696,60 @@ public class AdminPhantom implements IAdminCommandHandler
 			sb.append("</td><td>");
 			if (FactionWarConfig.isEnabled())
 			{
-				final int nextFaction = (fId == 0) ? 1 : (fId >= FactionData.getInstance().getFactionCount()) ? 0 : fId + 1;
-				miniButton(sb, (fId == 0) ? "+" : String.valueOf(fId), "admin_phantom faction " + page + " " + filterFaction + " " + objectId + " " + nextFaction, 28);
+				final int nextFaction = getNextFactionId(fId);
+				miniButton(sb, (fId == 0) ? "+" : String.valueOf(fId), "admin_phantom faction " + page + " " + filterFaction + " " + objectId + " " + nextFaction, 30);
 			}
 			sb.append("</td></tr>");
 		}
-		sb.append("</table><br>");
+		sb.append("</table>");
+		sb.append("<center><font color=808080>K = matar | S = detener | X = borrar | Fac = cambiar faccion</font></center><br>");
 		
 		sb.append("<table width=300><tr>");
 		if (filterFaction > 0)
 		{
-			button(sb, "Prev", "admin_phantom factions " + filterFaction + " " + Math.max(0, page - 1));
-			button(sb, "All", "admin_phantom online 0");
-			button(sb, "Next", "admin_phantom factions " + filterFaction + " " + Math.min(maxPage, page + 1));
+			button(sb, "Anterior", "admin_phantom factions " + filterFaction + " " + Math.max(0, page - 1));
+			button(sb, "Todos", "admin_phantom online 0");
+			button(sb, "Siguiente", "admin_phantom factions " + filterFaction + " " + Math.min(maxPage, page + 1));
 		}
 		else
 		{
-			button(sb, "Prev", "admin_phantom online " + Math.max(0, page - 1));
-			button(sb, "Main", "admin_phantom");
-			button(sb, "Next", "admin_phantom online " + Math.min(maxPage, page + 1));
+			button(sb, "Anterior", "admin_phantom online " + Math.max(0, page - 1));
+			button(sb, "Principal", "admin_phantom");
+			button(sb, "Siguiente", "admin_phantom online " + Math.min(maxPage, page + 1));
 		}
 		sb.append("</tr></table>");
 		sb.append("</body></html>");
 		sendHtml(player, sb);
+	}
+	
+	/**
+	 * Cycles to the next real faction id (from faction.xml), wrapping back to 0 after
+	 * the last one. Unlike the old fId+1 logic, this works with non-contiguous ids.
+	 */
+	private static int getNextFactionId(int current)
+	{
+		if (!FactionWarConfig.isEnabled())
+			return 0;
+		
+		final int[] factionIds = FactionData.getInstance().getFactionIds();
+		if (factionIds.length == 0)
+			return 0;
+		
+		if (current == 0)
+			return factionIds[0];
+		
+		for (int i = 0; i < factionIds.length; i++)
+		{
+			if (factionIds[i] == current)
+				return (i + 1 < factionIds.length) ? factionIds[i + 1] : 0;
+		}
+		
+		return factionIds[0];
+	}
+	
+	private static String siNo(boolean value)
+	{
+		return value ? "Si" : "No";
 	}
 	
 	private static String shortText(String text, int max)
@@ -693,6 +757,13 @@ public class AdminPhantom implements IAdminCommandHandler
 		if (text == null)
 			return "-";
 		return text.length() <= max ? text : text.substring(0, max);
+	}
+	
+	private static String htmlSafe(String text)
+	{
+		if (text == null)
+			return "";
+		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
 	}
 	
 	private static void sendHtml(Player player, StringBuilder sb)
@@ -712,30 +783,34 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("<tr><td width=140>").append(label).append("</td><td width=190><font color=LEVEL>").append(value).append("</font></td></tr>");
 	}
 	
-	private static void buttonRow(StringBuilder sb, String label1, String bypass1, String label2, String bypass2, String label3, String bypass3)
-	{
-		sb.append("<table width=300><tr>");
-		button(sb, label1, bypass1);
-		button(sb, label2, bypass2);
-		button(sb, label3, bypass3);
-		sb.append("</tr></table>");
+
+	private static void buttonRow2(StringBuilder sb, String label1, String bypass1, String label2, String bypass2)
+	{			sb.append("<table width=300><tr>");
+			button(sb, label1, bypass1, 150);
+			button(sb, label2, bypass2, 150);
+			sb.append("</tr></table>");
 	}
 	
 	private static void buttonRowSkipEmpty(StringBuilder sb, String label1, String bypass1, String label2, String bypass2, String label3, String bypass3)
 	{
 		sb.append("<table width=300><tr>");
 		if (!label1.isEmpty())
-			button(sb, label1, bypass1);
+			button(sb, label1, bypass1, 150);
 		if (!label2.isEmpty())
-			button(sb, label2, bypass2);
+			button(sb, label2, bypass2, 150);
 		if (!label3.isEmpty())
-			button(sb, label3, bypass3);
+			button(sb, label3, bypass3, 150);
 		sb.append("</tr></table>");
 	}
 	
 	private static void button(StringBuilder sb, String label, String bypass)
 	{
 		sb.append("<td><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=90 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+	}
+	
+	private static void button(StringBuilder sb, String label, String bypass, int width)
+	{
+		sb.append("<td><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=").append(width).append(" height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 	}
 	
 	private static void miniButton(StringBuilder sb, String label, String bypass, int width)

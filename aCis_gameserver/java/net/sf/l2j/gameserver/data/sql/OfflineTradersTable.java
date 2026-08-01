@@ -11,9 +11,9 @@ import net.sf.l2j.commons.pool.ConnectionPool;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.LoginServerThread;
 import net.sf.l2j.gameserver.data.xml.RecipeData;
-import net.sf.l2j.gameserver.enums.actors.OperateType;
-import net.sf.l2j.gameserver.model.World;
-import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.enums.actors.OperateType;	import net.sf.l2j.gameserver.model.World;
+	import net.sf.l2j.gameserver.model.actor.Player;
+	import net.sf.l2j.gameserver.phantom.PhantomEngine;
 import net.sf.l2j.gameserver.model.records.ManufactureItem;
 import net.sf.l2j.gameserver.model.records.Recipe;
 import net.sf.l2j.gameserver.model.trade.TradeItem;
@@ -62,7 +62,8 @@ public class OfflineTradersTable
 				{
 					try
 					{
-						if (pc.getOperateType() != OperateType.NONE && (pc.getClient() == null || pc.getClient().isDetached()))
+						// Only real offline traders (detached client) are persisted; phantoms must never be stored/restored as offline traders.
+					if (pc.getOperateType() != OperateType.NONE && pc.getClient() != null && pc.getClient().isDetached() && !PhantomEngine.isPhantom(pc.getObjectId()))
 						{
 							stm.setInt(1, pc.getObjectId());
 							stm.setLong(2, pc.getOfflineStartTime());
