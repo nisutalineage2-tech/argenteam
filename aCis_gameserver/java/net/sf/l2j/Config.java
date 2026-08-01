@@ -490,6 +490,7 @@ public final class Config
 	public static boolean L2WALKER_PROTECTION;
 	public static boolean SERVER_NEWS;
 	public static int ZONE_TOWN;
+	public static String SERVER_NAME;
 	
 	// --------------------------------------------------
 	// Those "hidden" settings haven't configs to avoid admins to fuck their server
@@ -1037,6 +1038,7 @@ public final class Config
 		L2WALKER_PROTECTION = server.getProperty("L2WalkerProtection", false);
 		ZONE_TOWN = server.getProperty("ZoneTown", 0);
 		SERVER_NEWS = server.getProperty("ShowServerNews", false);
+		SERVER_NAME = server.getProperty("ServerName", "aCis Server");
 	}
 	
 	/**

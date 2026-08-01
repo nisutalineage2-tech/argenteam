@@ -35,6 +35,7 @@ import net.sf.l2j.gameserver.network.serverpackets.ActionFailed;
 import net.sf.l2j.gameserver.network.serverpackets.Die;
 import net.sf.l2j.gameserver.network.serverpackets.EtcStatusUpdate;
 import net.sf.l2j.gameserver.network.serverpackets.ExMailArrived;
+import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
 import net.sf.l2j.gameserver.network.serverpackets.ExStorageMaxCount;
 import net.sf.l2j.gameserver.network.serverpackets.FriendList;
 import net.sf.l2j.gameserver.network.serverpackets.HennaInfo;
@@ -223,6 +224,8 @@ public class EnterWorld extends L2GameClientPacket
 		player.sendPacket(SystemMessageId.WELCOME_TO_LINEAGE);
 		player.sendPacket(SevenSignsManager.getInstance().getCurrentPeriod().getMessageId());
 		AnnouncementData.getInstance().showAnnouncements(player, false);
+		
+		player.sendPacket(new ExShowScreenMessage("Bienvenido " + player.getName() + " al servidor " + Config.SERVER_NAME + ".", 10000, ExShowScreenMessage.SMPOS.BOTTOM_RIGHT, false));
 		
 		// If the Player is a Dark Elf, check for Shadow Sense at night.
 		if (player.getRace() == ClassRace.DARK_ELF && player.hasSkill(L2Skill.SKILL_SHADOW_SENSE))
