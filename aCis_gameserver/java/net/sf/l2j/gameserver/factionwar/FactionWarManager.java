@@ -380,6 +380,10 @@ public class FactionWarManager
 		if (!_running && !_votingPhaseActive)
 			return;
 		
+		// Remember whether the war actually ran (vs. a voting phase being cancelled).
+		// If it never ran, we skip revive/teleport of phantoms and faction players.
+		final boolean warWasRunning = _running;
+		
 		// Cancel any pending end-freeze task (avoid double-freeze)
 		cancelTask(_endFreezeTask);
 		
@@ -400,14 +404,15 @@ public class FactionWarManager
 		cancelTask(_scoreboardTask);
 		cancelTask(_countdownTask);
 		
-		// 2. Freeze all players on the battlefield
-		freezeAllPlayers();
+		// 2. Freeze all players on the battlefield (only if the war actually ran)
+		if (warWasRunning)
+			freezeAllPlayers();
 		
 		// 3. Build and broadcast winner announcement
 		final String winnerMsg = buildWinnerMessage(_winningFaction, goodScore, evilScore);
 		final int freezeSeconds = FactionWarConfig.getEndFreezeSeconds();
 		
-		if (FactionWarConfig.isAnnounceEnd())
+		if (warWasRunning && FactionWarConfig.isAnnounceEnd())
 		{
 			broadcast(winnerMsg);
 			final String endMsg = (_winningFaction > 0)
@@ -422,8 +427,8 @@ public class FactionWarManager
 		{
 			try
 			{
-				// Give rewards
-				if (FactionWarConfig.isAnnounceEnd())
+				// Give rewards (only if the war actually ran)
+				if (warWasRunning && FactionWarConfig.isAnnounceEnd())
 				{
 					final List<FactionWarStats> top3 = getTopPlayers(3);
 					announceTopPlayers(top3);
@@ -437,11 +442,16 @@ public class FactionWarManager
 				despawnRegistrar();
 				_checkpoints.despawn();
 				
-				// Return phantoms
-				final int returned = net.sf.l2j.gameserver.phantom.PhantomEngine.returnPhantomsFromWar();
-				
-				// Teleport all faction players to neutral zone
-				teleportFactionPlayersToNeutral();
+				// Return phantoms + teleport faction players to neutral zone
+				// (only if the war actually ran - otherwise players never left their spot)
+				final int returned;
+				if (warWasRunning)
+				{
+					returned = net.sf.l2j.gameserver.phantom.PhantomEngine.returnPhantomsFromWar();
+					teleportFactionPlayersToNeutral();
+				}
+				else
+					returned = 0;
 				
 				// Unfreeze all players
 				unfreezeAllPlayers();
@@ -962,6 +972,12 @@ public class FactionWarManager
 		for (Player player : World.getInstance().getPlayers())
 		{
 			if (player == null || !player.isOnline())
+				continue;
+			
+			// Phantoms are already handled by PhantomEngine.returnPhantomsFromWar() with the
+			// phantom-safe teleport pattern (forced onTeleported + revalidateZone). A second raw
+			// teleport here would leave them stuck teleporting and make them vanish.
+			if (net.sf.l2j.gameserver.phantom.PhantomEngine.isPhantom(player.getObjectId()))
 				continue;
 			
 			if (player.getFactionId() != 0)

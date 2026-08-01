@@ -15,6 +15,8 @@ import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.gameserver.data.xml.FactionData;
 import net.sf.l2j.gameserver.data.xml.NewbieBuffData;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
+import net.sf.l2j.gameserver.event.AbstractEvent;
+import net.sf.l2j.gameserver.event.EventEngine;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.model.Faction;
@@ -471,8 +473,10 @@ public final class PhantomEngine
 	}
 	
 	/**
-	 * Returns all phantoms from the war map to their faction home locations.
-	 * Dead phantoms are revived first.
+	 * Returns all phantoms from the war map to their faction home locations
+	 * (or to the neutral zone when the phantom has no faction / no home defined).
+	 * Dead phantoms are revived first. Uses the phantom-safe teleport pattern so
+	 * bots without a real client complete the teleport and stay visible/stable.
 	 */
 	public static int returnPhantomsFromWar()
 	{
@@ -482,12 +486,27 @@ public final class PhantomEngine
 			if (phantom == null || !phantom.isOnline())
 				continue;
 			
-			final int factionId = phantom.getFactionId();
-			if (factionId <= 0)
+			// If the phantom is inside an active event (REGISTER/STARTING/RUNNING), the event owns
+			// its position (mirrors handleDeath). Don't yank it out to faction home / neutral zone.
+			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+			if (event != null && event.getState() != AbstractEvent.State.IDLE && event.getState() != AbstractEvent.State.ENDED)
 				continue;
 			
-			final Faction faction = FactionData.getInstance().getFaction(factionId);
-			if (faction == null || faction.getHomeLocation() == null)
+			final int factionId = phantom.getFactionId();
+			Location destination = null;
+			
+			if (factionId > 0)
+			{
+				final Faction faction = FactionData.getInstance().getFaction(factionId);
+				if (faction != null)
+					destination = faction.getHomeLocation();
+			}
+			
+			// Fallback: no faction or no home defined -> neutral zone
+			if (destination == null)
+				destination = net.sf.l2j.gameserver.factionwar.FactionWarConfig.getNeutralSpawnLoc();
+			
+			if (destination == null)
 				continue;
 			
 			// Revive dead phantoms before returning them
@@ -499,11 +518,20 @@ public final class PhantomEngine
 				PhantomAI.clearDeathFlag(phantom.getObjectId());
 			}
 			
-			phantom.teleportTo(faction.getHomeLocation(), 20);
+			phantom.teleportTo(destination, 20);
+			
+			// Force the teleport to complete for phantom clients (no real client to send Appearing).
 			if (phantom.isTeleporting())
 				phantom.onTeleported();
 			
+			// Re-register the region + zones and reset transient stuck/idle tracking so the
+			// phantom stays visible and stable at the destination instead of vanishing.
+			phantom.revalidateZone(true);
+			phantom.broadcastUserInfo();
+			PhantomAI.clearStuckState(phantom.getObjectId());
+			
 			PhantomAI.setHome(phantom);
+			phantom.store();
 			moved++;
 		}
 		return moved;
