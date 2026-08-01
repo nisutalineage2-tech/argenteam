@@ -7,12 +7,13 @@
 		<node x="-81600" y="151600"/>
 		<node x="-82800" y="151600"/>
 	</territory>
-	<npcmaker name="faction_neutral_zone_maker" territory="faction_neutral_zone" maximumNpcs="5">
+	<npcmaker name="faction_neutral_zone_maker" territory="faction_neutral_zone" maximumNpcs="6">
 		<ai type="default_maker"/>
 		<npc id="90004" pos="-82205;151169;-3120;16384" total="1" respawn="1min"/>
 		<npc id="90002" pos="-82205;150569;-3120;16384" total="1" respawn="1min"/>
 		<npc id="90007" pos="-81905;150869;-3120;16384" total="1" respawn="1min"/>
 		<npc id="90005" pos="-82505;150869;-3120;16384" total="1" respawn="1min"/>
 		<npc id="90006" pos="-82005;150969;-3120;16384" total="1" respawn="1min"/>
+		<npc id="90008" pos="-82305;151169;-3120;16384" total="1" respawn="1min"/>
 	</npcmaker>
 </list>

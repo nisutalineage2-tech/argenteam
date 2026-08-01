@@ -184,6 +184,7 @@ public class GameServer
 		HealSpsData.getInstance();
 		RestartPointData.getInstance();
 		FactionData.getInstance();
+		net.sf.l2j.gameserver.guildmission.GuildMissionManager.getInstance();
 		
 		StringUtil.printSection("Community server");
 		CommunityBoard.getInstance();

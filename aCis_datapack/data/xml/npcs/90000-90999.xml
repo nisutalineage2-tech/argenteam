@@ -243,6 +243,42 @@
 		<set name="seedable" val="false"/>
 	</npc>
 	
+	<npc id="90008" idTemplate="31228" name="Guild Mission Manager" title="Misiones de Clan" alias="guild_mission_npc">
+		<set name="usingServerSideName" val="true"/>
+		<set name="usingServerSideTitle" val="true"/>
+		<set name="type" val="GuildMissionNpc"/>
+		<set name="level" val="80"/>
+		<set name="radius" val="8.0"/>
+		<set name="height" val="24.0"/>
+		<set name="hitTimeFactor" val="0.61"/>
+		<set name="rHand" val="0"/>
+		<set name="lHand" val="0"/>
+		<set name="exp" val="0"/>
+		<set name="sp" val="0"/>
+		<set name="hp" val="999999"/>
+		<set name="mp" val="1"/>
+		<set name="hpRegen" val="999"/>
+		<set name="mpRegen" val="0"/>
+		<set name="baseAttackRange" val="40"/>
+		<set name="baseDamageRange" val="0;0;0;0"/>
+		<set name="baseRandomDamage" val="0"/>
+		<set name="pAtk" val="1"/>
+		<set name="pDef" val="9999"/>
+		<set name="mAtk" val="1"/>
+		<set name="mDef" val="9999"/>
+		<set name="crit" val="1.0"/>
+		<set name="atkSpd" val="200"/>
+		<set name="walkSpd" val="0"/>
+		<set name="runSpd" val="0"/>
+		<set name="canSeeThrough" val="true"/>
+		<set name="canBeAttacked" val="false"/>
+		<set name="canMove" val="false"/>
+		<set name="corpseTime" val="0"/>
+		<set name="noSleepMode" val="true"/>
+		<set name="aggroRange" val="0"/>
+		<set name="seedable" val="false"/>
+	</npc>
+	
 	<npc id="90007" idTemplate="31228" name="Event Manager" title="Administrador de Eventos" alias="event_manager">
 		<set name="usingServerSideName" val="true"/>
 		<set name="usingServerSideTitle" val="true"/>

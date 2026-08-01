@@ -1,0 +1,16 @@
+package net.sf.l2j.gameserver.guildmission;
+
+public enum MissionType
+{
+	KILL_MONSTER,
+	KILL_PLAYER,
+	KILL_RAID_BOSS,
+	CRAFT_ITEM,
+	COLLECT_ITEM,
+	ONLINE_TIME,
+	ENCHANT_ITEM,
+	CLAN_LEVEL,
+	CASTLE_SIEGE,
+	OLYMPIAD,
+	CUSTOM_EVENT
+}

@@ -71,6 +71,20 @@ public class Monster extends Attackable
 			return;
 		}
 		
+		// Feed the Guild Mission system (monster and raid boss kills).
+		if (creature != null)
+		{
+			final Player killerPlayer = creature.getActingPlayer();
+			if (killerPlayer != null && killerPlayer.getClan() != null)
+			{
+				final int clanId = killerPlayer.getClanId();
+				if (isRaidBoss())
+					net.sf.l2j.gameserver.guildmission.GuildMissionManager.getInstance().onRaidKill(clanId, getNpcId());
+				else
+					net.sf.l2j.gameserver.guildmission.GuildMissionManager.getInstance().onMonsterKill(clanId, getNpcId(), getStatus().getLevel());
+			}
+		}
+		
 		if (getAI().getAggroList().isEmpty())
 			return;
 		

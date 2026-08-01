@@ -180,7 +180,13 @@ public abstract class Playable extends Creature
 		{
 			final Player player = killer.getActingPlayer();
 			if (player != null)
+			{
 				player.onKillUpdatePvPKarma(this);
+				
+				// Feed the Guild Mission system (player kills only).
+				if (player.getClan() != null && this instanceof Player victim)
+					net.sf.l2j.gameserver.guildmission.GuildMissionManager.getInstance().onPlayerKill(player.getClanId(), victim.getObjectId(), victim.getStatus().getLevel());
+			}
 		}
 		
 		return true;
