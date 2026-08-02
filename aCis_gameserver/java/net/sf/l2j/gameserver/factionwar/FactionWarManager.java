@@ -400,6 +400,12 @@ public class FactionWarManager
 		_running = false;
 		_votingPhaseActive = false;
 		
+		// Notify EventEngine synchronously that FW ended (alternance: FW -> event).
+		// Must happen BEFORE the freeze delay: otherwise the alternance scheduler (10s tick)
+		// sees _running=false with the flag still true and starts a new vote phase, which then
+		// opens an event registration while that vote/war is active -> war and event overlap.
+		net.sf.l2j.gameserver.event.EventEngine.getInstance().onFactionWarEnded();
+		
 		cancelTask(_mapRotationTask);
 		cancelTask(_mapVoteTask);
 		cancelTask(_flagRespawnTask);
@@ -459,9 +465,6 @@ public class FactionWarManager
 				
 				// Unfreeze all players
 				unfreezeAllPlayers();
-				
-				// Notify EventEngine that FW ended (alternance: FW -> event)
-				net.sf.l2j.gameserver.event.EventEngine.getInstance().onFactionWarEnded();
 				
 				LOGGER.info("Faction War stopped. Winner: {}. Score: {}-{}. Returned {} phantoms.", getFactionName(winningFaction), goodScore, evilScore, returned);
 			}

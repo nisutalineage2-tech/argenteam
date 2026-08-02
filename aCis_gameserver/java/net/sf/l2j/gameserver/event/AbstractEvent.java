@@ -23,6 +23,7 @@ import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.network.serverpackets.SetupGauge;	import net.sf.l2j.gameserver.network.serverpackets.CreatureSay;
 	import net.sf.l2j.gameserver.phantom.PhantomEngine;
 	import net.sf.l2j.gameserver.phantom.PhantomLog;
+	import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 
 public abstract class AbstractEvent
 {
@@ -124,6 +125,15 @@ public abstract class AbstractEvent
 	{
 		if (_state != State.REGISTER)
 			return;
+		
+		// Never let an event start while the Faction War is running: the alternance owns the
+		// battlefield. This guards manual admin restarts that force a war during an open event.
+		if (FactionWarManager.getInstance().isRunning())
+		{
+			broadcastEvent("[Event] " + _data.getEventName() + " cancelado - la guerra de facciones esta en curso.");
+			stop();
+			return;
+		}
 		
 		if (_allPlayers.size() < _data.getMinPlayers())
 		{
