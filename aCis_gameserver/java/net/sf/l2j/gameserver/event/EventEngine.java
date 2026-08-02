@@ -50,6 +50,10 @@ public final class EventEngine
 	
 	public void init()
 	{
+		// Load the events config BEFORE registering events. Without this the event list is empty
+		// at startup and the Event Manager NPC only shows the buffs button (no events to join).
+		EventConfig.load();
+		
 		_alternanceExpectsFw = true;
 		_events.clear();
 		
@@ -290,7 +294,6 @@ public final class EventEngine
 				event.stop();
 		}
 		
-		EventConfig.load();
 		init();
 	}
 	
