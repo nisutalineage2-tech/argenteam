@@ -44,6 +44,7 @@ import net.sf.l2j.gameserver.model.item.kind.Item;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.model.spawn.MultiSpawn;
 import net.sf.l2j.gameserver.model.spawn.NpcMaker;
+import net.sf.l2j.gameserver.network.serverpackets.SocialAction;
 import net.sf.l2j.gameserver.skills.L2Skill;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Npc;
@@ -75,6 +76,10 @@ public final class PhantomAI
 	private static final Map<Integer, Long> FARM_ZONE_READY_TIMES = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> WAR_LOG_TIMES = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> WAR_STRAFE_TIMES = new ConcurrentHashMap<>();
+	private static final Map<Integer, Long> NEXT_IDLE_ACTIONS = new ConcurrentHashMap<>();
+	
+	/** Safe client social action ids used for idle emotes (wave, cheer, clap, think, bow, laugh, applause, victory). */
+	private static final int[] IDLE_EMOTES = { 1, 2, 3, 5, 6, 7, 8, 9 };
 	
 	/** Runtime AI pause flag (admin panel "AI On/Off"). When true, all phantom AI loops are suspended without cancelling tasks or wiping state. */
 	private static volatile boolean AI_PAUSED;
@@ -353,7 +358,7 @@ public final class PhantomAI
 			if (maybeMoveToFarmZoneStep(phantom))
 				return;
 			
-			// === NEUTRAL ZONE BEHAVIOR: Wander or open private store (war is not running here) ===
+			// === NEUTRAL ZONE BEHAVIOR: open private store or human-like idle (war is not running here) ===
 			if (inNeutralZone)
 			{
 				// Store sold out: the phantom was left seated with no store, stand up and resume.
@@ -364,7 +369,7 @@ public final class PhantomAI
 					return;
 				}
 				
-				// Sit and open a real sell store, or just wander.
+				// Sit and open a real sell store.
 				if (PhantomConfig.storeEnabled() && phantom.getOperateType() == OperateType.NONE && !phantom.isSitting() && Rnd.get(100) < PhantomConfig.storeChance())
 				{
 					openPrivateStore(phantom);
@@ -379,10 +384,11 @@ public final class PhantomAI
 					return;
 				}
 				
-				// Wander around the neutral zone
-				if (!phantom.isMoving() && Rnd.get(100) < 60)
+				// Human-like idle: wander, sit/stand, emote and glance at players instead of
+				// standing like a statue until something happens.
+				if (!phantom.isMoving())
 				{
-					wander(phantom);
+					handleIdleBehavior(phantom, true);
 					return;
 				}
 				
@@ -458,16 +464,15 @@ public final class PhantomAI
 			if (maybeRelocateToLevelZone(phantom, false))
 				return;
 			
-			if (PhantomConfig.patrolEnabled())
+			// Human-like idle: patrol/wander with pauses, emotes and brief stops so the
+			// phantom does not look frozen when there is nothing to fight.
+			if (!phantom.isMoving())
 			{
-				patrol(phantom);
+				handleIdleBehavior(phantom, false);
 				return;
 			}
 			
-			if (!phantom.isMoving() && Rnd.get(100) < 45)
-				wander(phantom);
-			else
-				LAST_ACTIONS.put(phantom.getObjectId(), "Scanning");
+			LAST_ACTIONS.put(phantom.getObjectId(), "Scanning");
 		}
 		catch (Exception e)
 		{
@@ -1594,17 +1599,118 @@ public final class PhantomAI
 		return withSpread(phantom, base, PhantomConfig.patrolRadius());
 	}
 	
-	private static void wander(Player phantom)
+	/**
+	 * Idle human-like behavior: when the phantom has nothing to do it mimics a real player
+	 * instead of standing like a statue - short walks, pauses, sitting/standing (only in
+	 * safe areas) and social emotes. A new action is picked every few seconds and movement
+	 * is kept up between actions so the phantom never looks frozen.
+	 * @param phantom : The phantom.
+	 * @param canSit : True in safe areas (neutral zone / town) where sitting is believable.
+	 */
+	private static void handleIdleBehavior(Player phantom, boolean canSit)
 	{
-		final Location home = HOMES.getOrDefault(phantom.getObjectId(), new Location(phantom.getX(), phantom.getY(), phantom.getZ()));
-		final Location destination = withSpread(phantom, home, PhantomConfig.wanderRange());
+		final int objectId = phantom.getObjectId();
+		final long now = System.currentTimeMillis();
 		
-		final WorldObject target = phantom.getTarget();
-		if (target instanceof Monster monster && monster.isDead())
-			phantom.setTarget(null);
+		// Waiting for the next scheduled action: keep small movement going so the phantom
+		// does not look frozen between actions.
+		final long next = NEXT_IDLE_ACTIONS.getOrDefault(objectId, 0L);
+		if (now < next)
+		{
+			if (!phantom.isMoving() && !phantom.isSitting() && Rnd.get(100) < 45)
+				idleMove(phantom, canSit);
+			return;
+		}
 		
-		LAST_ACTIONS.put(phantom.getObjectId(), "Wander");
-		moveTo(phantom, destination, "Wander");
+		// Pick the next idle action.
+		NEXT_IDLE_ACTIONS.put(objectId, now + Rnd.get(5000, 14000));
+		
+		final int roll = Rnd.get(100);
+		if (roll < 15 && canSit && !phantom.isSitting() && phantom.getOperateType() == OperateType.NONE)
+		{
+			// Sit for a few seconds like a player idling / chatting.
+			phantom.sitDown();
+			LAST_ACTIONS.put(objectId, "Idle sit");
+		}
+		else if ((roll < 27 || phantom.isSitting()) && canSit && phantom.getOperateType() == OperateType.NONE)
+		{
+			// Stand up again (also guarantees a seated phantom never stays sitting forever).
+			phantom.standUp();
+			LAST_ACTIONS.put(objectId, "Idle stand");
+		}
+		else if (roll < 42)
+		{
+			doIdleEmote(phantom);
+		}
+		else if (roll < 52 && canSit)
+		{
+			idleLookAt(phantom);
+		}
+		else if (!phantom.isMoving())
+		{
+			if (PhantomConfig.patrolEnabled() && !canSit)
+				patrol(phantom);
+			else
+				idleMove(phantom, canSit);
+		}
+		else
+		{
+			LAST_ACTIONS.put(objectId, "Idle pause");
+		}
+	}
+	
+	/**
+	 * Short random walk around the current position so the phantom keeps shifting around
+	 * like a real player instead of pacing one fixed spot.
+	 */
+	private static void idleMove(Player phantom, boolean canSit)
+	{
+		final int range = canSit ? 500 : 350;
+		final Location destination = withSpread(phantom, new Location(phantom.getX(), phantom.getY(), phantom.getZ()), range);
+		LAST_ACTIONS.put(phantom.getObjectId(), "Idle move");
+		moveTo(phantom, destination, "Idle move");
+	}
+	
+	/**
+	 * Broadcasts a random social emote (wave, cheer, clap, think, bow, laugh, applause,
+	 * victory) so the phantom looks alive to nearby players.
+	 */
+	private static void doIdleEmote(Player phantom)
+	{
+		if (phantom.isSitting())
+			return;
+		
+		phantom.broadcastPacket(new SocialAction(phantom, IDLE_EMOTES[Rnd.get(IDLE_EMOTES.length)]));
+		LAST_ACTIONS.put(phantom.getObjectId(), "Idle emote");
+	}
+	
+	/**
+	 * Briefly looks at a nearby real player (sets the phantom's target to them) so it seems
+	 * aware of its surroundings like a real player would be.
+	 */
+	private static void idleLookAt(Player phantom)
+	{
+		final Player[] target = new Player[1];
+		phantom.forEachKnownTypeInRadius(Player.class, 700, player ->
+		{
+			if (target[0] != null || player == null || player == phantom || player.isDead() || !player.isVisible())
+				return;
+			
+			if (PhantomEngine.isPhantom(player.getObjectId()))
+				return;
+			
+			// Don't stare at enemies.
+			if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && player.getFactionId() > 0 && player.getFactionId() != phantom.getFactionId())
+				return;
+			
+			target[0] = player;
+		});
+		
+		if (target[0] != null)
+		{
+			phantom.setTarget(target[0]);
+			LAST_ACTIONS.put(phantom.getObjectId(), "Idle look");
+		}
 	}
 	
 	private static Player findEnemyFactionPlayer(Player phantom)
