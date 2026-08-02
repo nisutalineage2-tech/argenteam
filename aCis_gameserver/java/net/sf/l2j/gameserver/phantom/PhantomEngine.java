@@ -267,10 +267,41 @@ public final class PhantomEngine
 	
 	public static int resurrectAll()
 	{
+		return resurrectFaction(0);
+	}
+	
+	/**
+	 * Revives a single phantom (full HP/MP).
+	 * @param objectId : The phantom object ID.
+	 * @return True if the phantom was dead and got revived.
+	 */
+	public static boolean resurrect(int objectId)
+	{
+		final Player phantom = ACTIVE_PHANTOMS.get(objectId);
+		if (phantom == null || !phantom.isOnline() || !phantom.isDead())
+			return false;
+		
+		phantom.doRevive();
+		phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+		phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
+		phantom.broadcastUserInfo();
+		PhantomAI.clearDeathFlag(objectId);
+		return true;
+	}
+	
+	/**
+	 * Revives all phantoms of a given faction (0 = every active phantom).
+	 * @param factionId : The faction ID to filter by.
+	 * @return The amount of phantoms revived.
+	 */
+	public static int resurrectFaction(int factionId)
+	{
 		int revived = 0;
 		for (Player phantom : ACTIVE_PHANTOMS.values())
 		{
 			if (phantom == null || !phantom.isOnline())
+				continue;
+			if (factionId > 0 && phantom.getFactionId() != factionId)
 				continue;
 			
 			if (phantom.isDead())
@@ -284,6 +315,46 @@ public final class PhantomEngine
 			}
 		}
 		return revived;
+	}
+	
+	/**
+	 * Heals a single phantom (full HP/MP).
+	 * @param objectId : The phantom object ID.
+	 * @return True if the phantom was healed.
+	 */
+	public static boolean heal(int objectId)
+	{
+		final Player phantom = ACTIVE_PHANTOMS.get(objectId);
+		if (phantom == null || !phantom.isOnline() || phantom.isDead())
+			return false;
+		
+		phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+		phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
+		phantom.broadcastUserInfo();
+		return true;
+	}
+	
+	/**
+	 * Heals all phantoms of a given faction (0 = every active phantom).
+	 * @param factionId : The faction ID to filter by.
+	 * @return The amount of phantoms healed.
+	 */
+	public static int healFaction(int factionId)
+	{
+		int healed = 0;
+		for (Player phantom : ACTIVE_PHANTOMS.values())
+		{
+			if (phantom == null || !phantom.isOnline() || phantom.isDead())
+				continue;
+			if (factionId > 0 && phantom.getFactionId() != factionId)
+				continue;
+			
+			phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+			phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
+			phantom.broadcastUserInfo();
+			healed++;
+		}
+		return healed;
 	}
 	
 	public static int deleteAll()
@@ -474,6 +545,36 @@ public final class PhantomEngine
 		}
 		
 		LOGGER.info("FactionWar: selected {} phantoms as participants (chance={}%, maxPerFaction={}, nearbyRange={}).", WAR_PARTICIPANTS.size(), chance, maxPerFaction, nearbyRange);
+	}
+	
+	/**
+	 * Teleports a single phantom to the given player (admin).
+	 * @param gm : The admin player.
+	 * @param objectId : The phantom object ID.
+	 * @return True if the phantom was teleported.
+	 */
+	public static boolean bring(Player gm, int objectId)
+	{
+		final Player phantom = ACTIVE_PHANTOMS.get(objectId);
+		if (gm == null || phantom == null || !phantom.isOnline() || phantom.isDead())
+			return false;
+		
+		final int x = gm.getX() + Rnd.get(-180, 180);
+		final int y = gm.getY() + Rnd.get(-180, 180);
+		phantom.teleportTo(x, y, gm.getZ(), 20);
+		
+		// Force the teleport to complete for phantom clients (no real client to send Appearing).
+		if (phantom.isTeleporting())
+			phantom.onTeleported();
+		
+		// Re-register the region + zones and reset transient stuck/idle tracking so the
+		// phantom stays visible and stable at the destination instead of vanishing after a second.
+		phantom.revalidateZone(true);
+		phantom.broadcastUserInfo();
+		PhantomAI.clearStuckState(phantom.getObjectId());
+		PhantomAI.setHome(phantom);
+		phantom.store();
+		return true;
 	}
 	
 	/**

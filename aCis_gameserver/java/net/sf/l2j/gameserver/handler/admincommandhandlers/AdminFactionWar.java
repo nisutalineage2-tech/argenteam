@@ -2,6 +2,7 @@ package net.sf.l2j.gameserver.handler.admincommandhandlers;
 
 import java.util.StringTokenizer;
 
+import net.sf.l2j.commons.pool.ThreadPool;
 import net.sf.l2j.gameserver.handler.IAdminCommandHandler;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -57,6 +58,16 @@ public class AdminFactionWar implements IAdminCommandHandler
 			{
 				FactionWarManager.getInstance().stop();
 				showPanel(player, "Faction War stopped.");
+			}
+			case "restart" ->
+			{
+				// Restart = stop + delayed start. The wait lets the end-freeze cleanup task
+				// (despawn, return phantoms, teleport players, unfreeze) finish so it doesn't
+				// stomp on the newly started war.
+				final int delaySeconds = Math.max(FactionWarConfig.getEndFreezeSeconds(), 5) + 2;
+				FactionWarManager.getInstance().stop();
+				ThreadPool.schedule(() -> FactionWarManager.getInstance().start(0), delaySeconds * 1000L);
+				showPanel(player, "Faction War reiniciandose en " + delaySeconds + "s...");
 			}
 			case "register" ->
 			{
@@ -114,7 +125,7 @@ public class AdminFactionWar implements IAdminCommandHandler
 				FactionWarConfig.load();
 				showPanel(player, "Faction War config reloaded.");
 			}
-			default -> showPanel(player, "Usage: factionwar start|stop|register|registerall|score|reload");
+			default -> showPanel(player, "Usage: factionwar start|stop|restart|register|registerall|score|reload");
 		}
 	}
 	
@@ -148,6 +159,7 @@ public class AdminFactionWar implements IAdminCommandHandler
 		sb.append("</tr></table>");
 		
 		sb.append("<table width=290><tr>");
+		sb.append("<td><button value=\"Restart\" action=\"bypass -h admin_factionwar restart\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 		sb.append("<td><button value=\"Register Me\" action=\"bypass -h admin_factionwar register\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 		sb.append("<td><button value=\"Register All\" action=\"bypass -h admin_factionwar registerall\" width=85 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 		sb.append("</tr></table>");
