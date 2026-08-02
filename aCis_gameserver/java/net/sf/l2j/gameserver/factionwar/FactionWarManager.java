@@ -1075,9 +1075,13 @@ public class FactionWarManager
 	/**
 	 * Spawns flags defined in faction_flags.xml for the current map.
 	 * These are additional flag NPCs placed at strategic points around the map.
+	 * Disabled by default so the war uses a single main flag (bandera) in the map center.
 	 */
 	private void spawnXmlFlags()
 	{
+		if (!FactionWarConfig.isEnableXmlFlags())
+			return;
+		
 		if (FactionWarConfig.getMaps().isEmpty())
 			return;
 		

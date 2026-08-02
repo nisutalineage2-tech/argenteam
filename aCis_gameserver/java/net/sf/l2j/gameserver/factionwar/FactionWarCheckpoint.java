@@ -71,8 +71,9 @@ public class FactionWarCheckpoint
 		// 50% and 80% of the guard circle radius, so checkpoints sit between
 		// the center flag and the outer guards/edges.
 		final int baseRadius = FactionWarConfig.getCheckpointRadius();
-		// Minimal separation between any two checkpoints (in units)
-		final int minSeparation = 600;
+		// Minimal separation between any two checkpoints, scaled to the radius
+		// so a 4-checkpoint layout spreads evenly instead of clustering near the center.
+		final int minSeparation = Math.max(200, baseRadius / 2);
 		
 		final java.util.List<Location> placed = new java.util.ArrayList<>();
 		

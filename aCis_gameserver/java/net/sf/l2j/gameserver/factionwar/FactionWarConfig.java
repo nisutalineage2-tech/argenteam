@@ -40,6 +40,7 @@ public class FactionWarConfig
 	private static int _checkpointNpcId;
 	private static int _checkpointCount;
 	private static int _checkpointRadius;
+	private static boolean _enableXmlFlags;
 	private static int _mapRotationMinutes;
 	private static int _mapVoteSeconds;
 	private static final List<WarMap> _maps = new ArrayList<>();
@@ -215,6 +216,7 @@ public class FactionWarConfig
 		_checkpointRespawnDelay = props.getProperty("CheckpointRespawnDelay", 15) * 1000L;
 		_checkpointScoreInterval = props.getProperty("CheckpointScoreInterval", 30);
 		_checkpointPointsPerTick = props.getProperty("CheckpointPointsPerTick", 1);
+		_enableXmlFlags = props.getProperty("EnableXmlFlags", false);
 		_mapRotationMinutes = props.getProperty("MapRotationMinutes", 30);
 		_mapVoteSeconds = props.getProperty("MapVoteSeconds", 30);
 		_neutralSpawnLoc = parseLoc(props.getProperty("NeutralSpawnLoc", "147300,25750,-2000"));
@@ -550,6 +552,7 @@ public class FactionWarConfig
 	public static long getCheckpointRespawnDelay() { return _checkpointRespawnDelay; }
 	public static int getCheckpointScoreInterval() { return _checkpointScoreInterval; }
 	public static int getCheckpointPointsPerTick() { return _checkpointPointsPerTick; }
+	public static boolean isEnableXmlFlags() { return _enableXmlFlags; }
 	public static int getMapRotationMinutes() { return _mapRotationMinutes; }
 	public static int getMapVoteSeconds() { return _mapVoteSeconds; }
 	public static List<WarMap> getMaps() { return _maps; }
