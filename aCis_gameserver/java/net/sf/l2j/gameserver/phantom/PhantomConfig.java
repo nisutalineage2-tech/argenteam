@@ -146,6 +146,8 @@ public final class PhantomConfig
 	private static int _warParticipationChance = 100;
 	private static int _warMaxPerFaction = 0;
 	private static int _warNearbyOnlyRange = 0;
+	private static int _warRespawnDelayMs = 12000;
+	private static int _warRespawnRandomMs = 8000;
 	private static int[] _storeItemIds = new int[]
 	{
 		1835, 1836, 1837, 2509, 2510, 2511, 1061, 1062, 1064, 1073, 736
@@ -310,6 +312,8 @@ public final class PhantomConfig
 			_warParticipationChance = clampPercent(props.getProperty("WarParticipationChance", 100));
 			_warMaxPerFaction = Math.max(0, props.getProperty("WarMaxPerFaction", 0));
 			_warNearbyOnlyRange = Math.max(0, props.getProperty("WarNearbyOnlyRange", 0));
+			_warRespawnDelayMs = Math.max(1000, props.getProperty("WarRespawnDelayMs", 12000));
+			_warRespawnRandomMs = Math.max(0, props.getProperty("WarRespawnRandomMs", 8000));
 			LOGGER.info("Loaded {} configured phantom ids and {} level zones.", _phantomIds.size(), _levelZones.size());
 		}
 		catch (Exception e)
@@ -439,6 +443,8 @@ public final class PhantomConfig
 		_warParticipationChance = 100;
 		_warMaxPerFaction = 0;
 		_warNearbyOnlyRange = 0;
+		_warRespawnDelayMs = 12000;
+		_warRespawnRandomMs = 8000;
 		_phantomLogEnabled = true;
 		_phantomLogFile = "./log/phantoms.log";
 		_phantomLogBackupOnStartup = false;
@@ -1265,6 +1271,16 @@ public final class PhantomConfig
 	public static int warNearbyOnlyRange()
 	{
 		return _warNearbyOnlyRange;
+	}
+	
+	public static int warRespawnDelayMs()
+	{
+		return _warRespawnDelayMs;
+	}
+	
+	public static int warRespawnRandomMs()
+	{
+		return _warRespawnRandomMs;
 	}
 		private record LevelZone(int minLevel, int maxLevel, Location location)
 	{

@@ -74,6 +74,7 @@ public final class PhantomAI
 	private static final Map<Integer, Integer> FARM_ZONE_BUCKETS = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> FARM_ZONE_READY_TIMES = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> WAR_LOG_TIMES = new ConcurrentHashMap<>();
+	private static final Map<Integer, Long> WAR_STRAFE_TIMES = new ConcurrentHashMap<>();
 	
 	/** Runtime AI pause flag (admin panel "AI On/Off"). When true, all phantom AI loops are suspended without cancelling tasks or wiping state. */
 	private static volatile boolean AI_PAUSED;
@@ -242,6 +243,14 @@ public final class PhantomAI
 			if (detectAndEscapeStuck(phantom))
 				return;
 			
+			// War combat strafing: melee phantoms occasionally circle around their current war
+			// target instead of standing still, so the battle spreads out instead of everyone
+			// attacking in a straight line. Runs before the busy guard so it can break off a
+			// melee swing to reposition (mages keep casting from range).
+			final boolean warRunning = PhantomEngine.canJoinWar(phantom);
+			if (warRunning && maybeRepositionDuringWarCombat(phantom))
+				return;
+			
 			if (phantom.getAttack().isAttackingNow() || phantom.getCast().isCastingNow())
 			{
 				LAST_ACTIONS.put(phantom.getObjectId(), "Busy");
@@ -267,7 +276,6 @@ public final class PhantomAI
 			// === FACTION WAR MODE: highest priority. Runs BEFORE loot/farm/level-zone teleports,
 			// otherwise maybeMoveToFarmZoneStep() would yank the phantom right back to its farm
 			// zone a few seconds after it arrives on the war map (phantom would never be seen). ===
-			final boolean warRunning = PhantomEngine.canJoinWar(phantom);
 			final boolean inNeutralZone = Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(phantom.getPosition());
 			
 			if (warRunning)
@@ -504,6 +512,61 @@ public final class PhantomAI
 		
 		LAST_ACTIONS.put(phantom.getObjectId(), action + target.getName());
 		phantom.getAI().tryToAttack(target, true, false);
+	}
+	
+	/**
+	 * War combat repositioning: when a melee phantom is attacking a war-relevant target
+	 * (enemy faction player, flag, checkpoint or guard) at close range, it occasionally
+	 * breaks off to a flanking point around the target instead of standing still. Mages
+	 * keep casting from range and are not affected. Throttled so the phantom does not
+	 * jitter between a strafe and the attack every tick.
+	 * @return True if the phantom was told to reposition this tick.
+	 */
+	private static boolean maybeRepositionDuringWarCombat(Player phantom)
+	{
+		if (phantom == null || phantom.isMoving())
+			return false;
+		
+		// Only during active combat.
+		if (!phantom.getAttack().isAttackingNow() && !phantom.getCast().isCastingNow())
+			return false;
+		
+		final WorldObject target = phantom.getTarget();
+		if (target == null || target == phantom)
+			return false;
+		
+		// Only reposition around war-relevant targets.
+		final boolean warTarget = (target instanceof Player player && player.getFactionId() > 0 && player.getFactionId() != phantom.getFactionId() && !player.isDead())
+			|| target instanceof FactionWarFlag || target instanceof FactionWarCpFlag || target instanceof FactionWarGuard;
+		if (!warTarget)
+			return false;
+		
+		// Mages keep their distance; only close-range melee strafes.
+		if (phantom.distance3D(target) > 220)
+			return false;
+		
+		// Throttle: at most one strafe per phantom every 15 seconds.
+		final int objectId = phantom.getObjectId();
+		final long now = System.currentTimeMillis();
+		final long last = WAR_STRAFE_TIMES.getOrDefault(objectId, 0L);
+		if (now - last < 15000)
+			return false;
+		
+		// Roll a chance to reposition.
+		if (Rnd.get(100) >= 30)
+			return false;
+		
+		// Flanking point around the target at a random bearing, keeping the target ahead.
+		final double angle = Math.toRadians(Rnd.get(360));
+		final int radius = Rnd.get(260, 450);
+		final int nx = target.getX() + (int) Math.round(Math.cos(angle) * radius);
+		final int ny = target.getY() + (int) Math.round(Math.sin(angle) * radius);
+		final Location destination = validateDestination(phantom, new Location(nx, ny, target.getZ()));
+		
+		WAR_STRAFE_TIMES.put(objectId, now);
+		LAST_ACTIONS.put(objectId, "War strafe");
+		moveTo(phantom, destination, "War strafe");
+		return true;
 	}
 	
 	/**
@@ -921,7 +984,16 @@ public final class PhantomAI
 		}
 		
 		LAST_ACTIONS.put(phantom.getObjectId(), "Dead - to nearest town");
-		ThreadPool.schedule(() -> respawnInTown(phantom), PhantomConfig.respawnDelayMs());
+		// War participants respawn with a longer, randomized delay so the corpse stays a while
+		// and phantoms trickle back to the fight instead of vanishing instantly and re-dying.
+		final long respawnDelay = PhantomEngine.canJoinWar(phantom) ? warRespawnDelay() : PhantomConfig.respawnDelayMs();
+		ThreadPool.schedule(() -> respawnInTown(phantom), respawnDelay);
+	}
+	
+	private static long warRespawnDelay()
+	{
+		final int random = PhantomConfig.warRespawnRandomMs();
+		return PhantomConfig.warRespawnDelayMs() + (random > 0 ? Rnd.get(0, random) : 0);
 	}
 	
 	private static void respawnInTown(Player phantom)
@@ -931,41 +1003,44 @@ public final class PhantomAI
 			if (phantom == null || !phantom.isOnline())
 				return;
 			
-			Location town = null;
+			// War participants respawn straight at their faction war spawn (single teleport,
+			// no town detour that blinks the phantom twice). Non-participants revive at the
+			// faction base or nearest town as usual.
+			final boolean returnToWar = PhantomEngine.canJoinWar(phantom);
 			
-			if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0)
+			Location destination = null;
+			if (returnToWar)
+				destination = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
+			else if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0)
 			{
 				final Faction faction = FactionData.getInstance().getFaction(phantom.getFactionId());
 				if (faction != null && faction.getHomeLocation() != null)
-					town = faction.getHomeLocation();
+					destination = faction.getHomeLocation();
 			}
 			
-			if (town == null)
+			if (destination == null)
 			{
-				town = RestartPointData.getInstance().getLocationToTeleport(phantom, RestartType.TOWN);
-				if (town == null)
-					town = RestartPointData.getInstance().getNearestRestartLocation(phantom);
+				destination = RestartPointData.getInstance().getLocationToTeleport(phantom, RestartType.TOWN);
+				if (destination == null)
+					destination = RestartPointData.getInstance().getNearestRestartLocation(phantom);
 			}
 			
 			if (phantom.isDead())
 				phantom.doRevive();
 			
-			if (town != null)
-				phantom.teleportTo(town, 20);
-			
-			// BUG FIX: If faction war is still running and this phantom participates, teleport
-			// it back to the war map after respawn (non-participants stay in town).
-			if (PhantomEngine.canJoinWar(phantom))
+			if (destination != null)
 			{
-				final Location warSpawn = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
-				if (warSpawn != null)
+				final int rx = destination.getX() + Rnd.get(-250, 250);
+				final int ry = destination.getY() + Rnd.get(-250, 250);
+				phantom.teleportTo(rx, ry, destination.getZ(), 20);
+				if (phantom.isTeleporting())
+					phantom.onTeleported();
+				
+				if (returnToWar)
 				{
-					final int rx = warSpawn.getX() + Rnd.get(-250, 250);
-					final int ry = warSpawn.getY() + Rnd.get(-250, 250);
-					phantom.teleportTo(rx, ry, warSpawn.getZ(), 20);
-					if (phantom.isTeleporting())
-						phantom.onTeleported();
-					
+					phantom.revalidateZone(true);
+					phantom.broadcastUserInfo();
+					clearStuckState(phantom.getObjectId());
 					PhantomLog.info("Phantom " + phantom.getName() + " returned to war map after death.");
 				}
 			}
@@ -973,10 +1048,10 @@ public final class PhantomAI
 			final Location home = new Location(phantom.getX(), phantom.getY(), phantom.getZ());
 			HOMES.put(phantom.getObjectId(), home);
 			PATROL_POINTS.put(phantom.getObjectId(), nextPatrolPoint(phantom));
-			LAST_ACTIONS.put(phantom.getObjectId(), "Respawn " + (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 ? "faction base" : "town"));
+			LAST_ACTIONS.put(phantom.getObjectId(), "Respawn " + (returnToWar ? "war map" : (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 ? "faction base" : "town")));
 			phantom.store();
 			
-			if (PhantomConfig.returnToLevelZoneAfterDeath() && PhantomConfig.useLevelZones() && !PhantomEngine.canJoinWar(phantom))
+			if (PhantomConfig.returnToLevelZoneAfterDeath() && PhantomConfig.useLevelZones() && !returnToWar)
 				ThreadPool.schedule(() -> returnToLevelZone(phantom), PhantomConfig.returnToLevelZoneDelayMs());
 			else
 				DEATH_HANDLING.remove(phantom.getObjectId());
@@ -1772,16 +1847,21 @@ public final class PhantomAI
 			final Location center = currentMap.getCenter();
 			if (phantom.distance3D(center) <= 800)
 			{
-				// Already near center - patrol around the flag area
-				final Location patrolPoint = withSpread(phantom, center, 400);
+				// Already near center - patrol around the flag area with a per-phantom spread
+				// so phantoms fan out around the flag instead of stacking on it.
+				final Location patrolPoint = withSpread(phantom, center, 500 + Rnd.get(0, 250));
 				LAST_ACTIONS.put(phantom.getObjectId(), "War patrol");
 				moveTo(phantom, patrolPoint, "War patrol");
 				return;
 			}
 			
-			// Move toward the flag center with some randomization to avoid clumping
-			final int offsetX = Rnd.get(-300, 300);
-			final int offsetY = Rnd.get(-300, 300);
+			// Advance toward a random point of a ring around the flag center so the two
+			// factions converge on the flag from all sides instead of marching in a straight
+			// line and clumping on a single point.
+			final int offset = Rnd.get(400, 900);
+			final double angle = Math.toRadians(Rnd.get(360));
+			final int offsetX = (int) Math.round(Math.cos(angle) * offset);
+			final int offsetY = (int) Math.round(Math.sin(angle) * offset);
 			final Location destination = new Location(center.getX() + offsetX, center.getY() + offsetY, center.getZ());
 			
 			LAST_ACTIONS.put(phantom.getObjectId(), "War advance");
