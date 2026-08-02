@@ -142,6 +142,10 @@ public final class PhantomConfig
 	private static boolean _storeEnabled = true;
 	private static int _storeChance = 30;
 	
+	// Town NPC interaction simulation (walk up to a known NPC and "talk" to it while idle)
+	private static boolean _npcInteractionEnabled = true;
+	private static int _npcInteractionChance = 30;
+	
 	// FactionWar participation control (avoids emptying the cities during the war)
 	private static int _warParticipationChance = 100;
 	private static int _warMaxPerFaction = 0;
@@ -308,6 +312,10 @@ public final class PhantomConfig
 			_storeDurationMinMs = Math.max(5000, props.getProperty("StoreDurationMinMs", 60000));
 			_storeDurationMaxMs = Math.max(_storeDurationMinMs, props.getProperty("StoreDurationMaxMs", 180000));
 			
+			// Town NPC interaction simulation
+			_npcInteractionEnabled = props.getProperty("NpcInteractionEnabled", true);
+			_npcInteractionChance = clampPercent(props.getProperty("NpcInteractionChance", 30));
+			
 			// FactionWar participation control
 			_warParticipationChance = clampPercent(props.getProperty("WarParticipationChance", 100));
 			_warMaxPerFaction = Math.max(0, props.getProperty("WarMaxPerFaction", 0));
@@ -440,6 +448,8 @@ public final class PhantomConfig
 		_storeTitle = "Vendo barato";
 		_storeDurationMinMs = 60000;
 		_storeDurationMaxMs = 180000;
+		_npcInteractionEnabled = true;
+		_npcInteractionChance = 30;
 		_warParticipationChance = 100;
 		_warMaxPerFaction = 0;
 		_warNearbyOnlyRange = 0;
@@ -1256,6 +1266,16 @@ public final class PhantomConfig
 	public static int storeDurationMaxMs()
 	{
 		return _storeDurationMaxMs;
+	}
+	
+	public static boolean npcInteractionEnabled()
+	{
+		return _npcInteractionEnabled;
+	}
+	
+	public static int npcInteractionChance()
+	{
+		return _npcInteractionChance;
 	}
 	
 	public static int warParticipationChance()

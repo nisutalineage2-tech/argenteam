@@ -78,6 +78,11 @@ public final class PhantomAI
 	private static final Map<Integer, Long> WAR_STRAFE_TIMES = new ConcurrentHashMap<>();
 	private static final Map<Integer, Long> NEXT_IDLE_ACTIONS = new ConcurrentHashMap<>();
 	
+	/** Emulated town NPC interactions: phantom objectId -> target Npc objectId. */
+	private static final Map<Integer, Integer> NPC_TALK_TARGETS = new ConcurrentHashMap<>();
+	/** Emulated town NPC interactions: phantom objectId -> interaction end time. */
+	private static final Map<Integer, Long> NPC_TALK_UNTIL = new ConcurrentHashMap<>();
+	
 	/** Safe client social action ids used for idle emotes (wave, cheer, clap, think, bow, laugh, applause, victory). */
 	private static final int[] IDLE_EMOTES = { 1, 2, 3, 5, 6, 7, 8, 9 };
 	
@@ -150,6 +155,8 @@ public final class PhantomAI
 		FARM_ZONE_BUCKETS.remove(objectId);
 		FARM_ZONE_READY_TIMES.remove(objectId);
 		WAR_LOG_TIMES.remove(objectId);
+		NPC_TALK_TARGETS.remove(objectId);
+		NPC_TALK_UNTIL.remove(objectId);
 	}
 	
 	public static void setHome(Player phantom)
@@ -183,6 +190,8 @@ public final class PhantomAI
 		FARM_ZONE_BUCKETS.clear();
 		FARM_ZONE_READY_TIMES.clear();
 		WAR_LOG_TIMES.clear();
+		NPC_TALK_TARGETS.clear();
+		NPC_TALK_UNTIL.clear();
 	}
 	
 	public static Location getLastTarget(Player phantom)
@@ -395,9 +404,12 @@ public final class PhantomAI
 				}
 				
 				// Human-like idle: wander, sit/stand, emote and glance at players instead of
-				// standing like a statue until something happens.
+				// standing like a statue until something happens. In town phantoms also
+				// occasionally walk up to a known NPC and emulate interacting with it.
 				if (!phantom.isMoving())
 				{
+					if (tryNpcInteraction(phantom))
+						return;
 					handleIdleBehavior(phantom, true);
 					return;
 				}
@@ -478,6 +490,8 @@ public final class PhantomAI
 			// phantom does not look frozen when there is nothing to fight.
 			if (!phantom.isMoving())
 			{
+				if (tryNpcInteraction(phantom))
+					return;
 				handleIdleBehavior(phantom, false);
 				return;
 			}
@@ -1775,6 +1789,123 @@ public final class PhantomAI
 			phantom.setTarget(target[0]);
 			LAST_ACTIONS.put(phantom.getObjectId(), "Idle look");
 		}
+	}
+	
+	/**
+	 * Emulates a player going up to a known town NPC and "interacting" with it: the phantom
+	 * walks to a spot next to the NPC, faces it and holds for a few seconds as if talking,
+	 * then resumes its normal idle behaviour. Purely cosmetic - it never opens dialogues,
+	 * fires bypasses or triggers NPC scripts.
+	 * @param phantom : The phantom to run the behaviour for.
+	 * @return True if the phantom is busy walking to / talking with an NPC this tick.
+	 */
+	private static boolean tryNpcInteraction(Player phantom)
+	{
+		if (!PhantomConfig.npcInteractionEnabled())
+			return false;
+		
+		final int objectId = phantom.getObjectId();
+		final long now = System.currentTimeMillis();
+		
+		final Integer targetId = NPC_TALK_TARGETS.get(objectId);
+		if (targetId != null)
+		{
+			// Sitting in a store or the interaction window elapsed: release the phantom.
+			final long until = NPC_TALK_UNTIL.getOrDefault(objectId, 0L);
+			if (now >= until || phantom.isSitting() || phantom.getOperateType() != OperateType.NONE)
+			{
+				NPC_TALK_TARGETS.remove(objectId);
+				NPC_TALK_UNTIL.remove(objectId);
+				return false;
+			}
+			
+			final Npc npc = getKnownNpc(phantom, targetId);
+			if (npc == null || !npc.isVisible() || npc.isDead())
+			{
+				NPC_TALK_TARGETS.remove(objectId);
+				NPC_TALK_UNTIL.remove(objectId);
+				return false;
+			}
+			
+			// Still walking to the NPC.
+			if (phantom.isMoving())
+				return true;
+			
+			// Knocked away or drifted: close the distance again.
+			if (phantom.distance3D(npc) > 90)
+			{
+				final Location dest = withSpread(phantom, new Location(npc.getX(), npc.getY(), npc.getZ()), 50);
+				moveTo(phantom, dest, "Going to " + npc.getName());
+				return true;
+			}
+			
+			// Next to the NPC: face it and hold as if talking.
+			phantom.setTarget(npc);
+			LAST_ACTIONS.put(objectId, "Talking to " + npc.getName());
+			if (Rnd.get(100) < 20)
+				doIdleEmote(phantom);
+			return true;
+		}
+		
+		// Not interacting yet: occasionally pick a nearby town NPC and walk up to it.
+		if (phantom.isMoving() || phantom.isSitting() || phantom.getOperateType() != OperateType.NONE || Rnd.get(100) >= PhantomConfig.npcInteractionChance())
+			return false;
+		
+		final Npc npc = findTownNpc(phantom, 900);
+		if (npc == null)
+			return false;
+		
+		NPC_TALK_TARGETS.put(objectId, npc.getObjectId());
+		NPC_TALK_UNTIL.put(objectId, now + Rnd.get(15000, 30000));
+		
+		if (phantom.distance3D(npc) <= 80)
+		{
+			phantom.setTarget(npc);
+			LAST_ACTIONS.put(objectId, "Talking to " + npc.getName());
+		}
+		else
+		{
+			final Location dest = withSpread(phantom, new Location(npc.getX(), npc.getY(), npc.getZ()), 50);
+			moveTo(phantom, dest, "Going to " + npc.getName());
+		}
+		return true;
+	}
+	
+	/**
+	 * Picks a random nearby "known" town NPC to interact with: any non-hostile Npc the
+	 * phantom can see (merchants, gatekeepers, faction/event NPCs, etc.). War-only NPCs
+	 * (flags, checkpoints, guards) and monsters are excluded.
+	 * @param phantom : The phantom looking for an NPC.
+	 * @param range : Maximum distance to search.
+	 * @return A suitable Npc target, or null if none is available.
+	 */
+	private static Npc findTownNpc(Player phantom, int range)
+	{
+		final List<Npc> candidates = new ArrayList<>();
+		phantom.forEachKnownTypeInRadius(Npc.class, range, npc ->
+		{
+			if (npc == null || !npc.isVisible() || npc.isDead() || npc instanceof Monster)
+				return;
+			
+			candidates.add(npc);
+		});
+		
+		return candidates.isEmpty() ? null : candidates.get(Rnd.get(candidates.size()));
+	}
+	
+	/**
+	 * Looks up a Npc by object id inside the phantom's known objects list.
+	 * @return The Npc instance, or null if it is no longer known/visible.
+	 */
+	private static Npc getKnownNpc(Player phantom, int npcObjectId)
+	{
+		final Npc[] result = new Npc[1];
+		phantom.forEachKnownTypeInRadius(Npc.class, 1500, npc ->
+		{
+			if (result[0] == null && npc != null && npc.getObjectId() == npcObjectId)
+				result[0] = npc;
+		});
+		return result[0];
 	}
 	
 	private static Player findEnemyFactionPlayer(Player phantom)
