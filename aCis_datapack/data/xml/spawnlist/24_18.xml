@@ -876,28 +876,6 @@ Aden Area
 	</npcmaker>
 	
 	<!--  -->
-	<territory name="aden13_npc2418_pg1" minZ="-3240" maxZ="-1240">
-		<node x="140726" y="20481"/>
-		<node x="153013" y="20045"/>
-		<node x="153430" y="32286"/>
-		<node x="140184" y="32492"/>
-	</territory>
-	<territory name="aden13_npc2418_pg1b" minZ="-2672" maxZ="328">
-		<node x="142980" y="20349"/>
-		<node x="151624" y="20103"/>
-		<node x="151563" y="31632"/>
-		<node x="142954" y="31792"/>
-	</territory>
-	<npcmaker name="aden13_npc2418_pg1m1" territory="aden13_npc2418_pg1" ban="aden13_npc2418_pg1b" maximumNpcs="172">
-		<ai type="event_maker">
-				<set name="EventName" val="event_mutant_pig"/>
-		</ai>
-		<npc id="13031" total="55" respawn="20sec"/>
-		<npc id="13032" total="1" respawn="1hour" respawnRand="10min"/>
-		<npc id="13035" total="1" respawn="10min" respawnRand="2min"/>
-	</npcmaker>
-	
-	<!--  -->
 	<territory name="aden13_npc2418_pg2" minZ="-2456" maxZ="-2256">
 		<node x="142172" y="26524"/>
 		<node x="142372" y="26524"/>

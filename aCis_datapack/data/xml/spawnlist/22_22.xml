@@ -1601,29 +1601,6 @@ Giran Area
 	</npcmaker>
 	
 	<!--  -->
-	<territory name="giran_2222_pg01" minZ="-3877" maxZ="-3377">
-		<node x="78091" y="140054"/>
-		<node x="81825" y="139968"/>
-		<node x="82151" y="141000"/>
-		<node x="81144" y="142888"/>
-		<node x="77267" y="145809"/>
-		<node x="74316" y="143669"/>
-	</territory>
-	<territory name="giran_2222_pg02" minZ="-3666" maxZ="-3116">
-		<node x="73060" y="139385"/>
-		<node x="74097" y="138161"/>
-		<node x="77413" y="141103"/>
-		<node x="76653" y="141737"/>
-		<node x="74873" y="141041"/>
-	</territory>
-	<territory name="giran_2222_pg03" minZ="-3854" maxZ="-2954">
-		<node x="71753" y="145671"/>
-		<node x="73750" y="144505"/>
-		<node x="76288" y="144978"/>
-		<node x="78157" y="146263"/>
-		<node x="75773" y="148157"/>
-		<node x="71459" y="147145"/>
-	</territory>
 	<territory name="giran_2222_pg04" minZ="-3671" maxZ="-3171">
 		<node x="81910" y="140759"/>
 		<node x="82804" y="139373"/>
@@ -1631,36 +1608,11 @@ Giran Area
 		<node x="89016" y="142986"/>
 		<node x="84616" y="140909"/>
 	</territory>
-	<npcmaker name="giran_2222_pg01m1" territory="giran_2222_pg01" maximumNpcs="90">
-		<ai type="event_maker">
-				<set name="EventName" val="event_mutant_pig"/>
-		</ai>
-		<npc id="13031" total="30" respawn="20sec"/>
-	</npcmaker>
-	<npcmaker name="giran_2222_pg02m1" territory="giran_2222_pg02" maximumNpcs="45">
-		<ai type="event_maker">
-				<set name="EventName" val="event_mutant_pig"/>
-		</ai>
-		<npc id="13031" total="15" respawn="20sec"/>
-	</npcmaker>
-	<npcmaker name="giran_2222_pg03m1" territory="giran_2222_pg03" maximumNpcs="66">
-		<ai type="event_maker">
-				<set name="EventName" val="event_mutant_pig"/>
-		</ai>
-		<npc id="13031" total="22" respawn="20sec"/>
-	</npcmaker>
 	<npcmaker name="giran_2222_pg04m1" territory="giran_2222_pg04" maximumNpcs="90">
 		<ai type="event_maker">
 				<set name="EventName" val="event_mutant_pig"/>
 		</ai>
 		<npc id="13031" total="30" respawn="20sec"/>
-	</npcmaker>
-	<npcmaker name="giran_2222_pg1m1" territory="giran_2222_pg01;giran_2222_pg02;giran_2222_pg03;giran_2222_pg04" maximumNpcs="7">
-		<ai type="event_maker">
-				<set name="EventName" val="event_mutant_pig"/>
-		</ai>
-		<npc id="13035" total="1" respawn="10min" respawnRand="3min"/>
-		<npc id="13032" total="1" respawn="1hour" respawnRand="10min"/>
 	</npcmaker>
 	
 	<!--  -->
