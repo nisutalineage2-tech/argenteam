@@ -312,6 +312,16 @@ public final class PhantomAI
 				final Player warTarget = findEnemyFactionPlayerInWar(phantom);
 				if (warTarget != null)
 				{
+					// Human-like mass combat: when closing in on a stationary enemy the phantom
+					// first approaches a personal flanking slot around it, so a group of phantoms
+					// surrounds the victim from different angles instead of stacking on the same
+					// tile and hitting it "in a straight line" like bots.
+					if (maybeMoveToWarFlankSlot(phantom, warTarget))
+					{
+						logWarMove(phantom, "flanking " + warTarget.getName());
+						return;
+					}
+					
 					attackPlayer(phantom, warTarget, "Faction war ");
 					logWarMove(phantom, "attacking player " + warTarget.getName());
 					PhantomSocial.sayWarAction(phantom);
@@ -517,6 +527,46 @@ public final class PhantomAI
 		
 		LAST_ACTIONS.put(phantom.getObjectId(), action + target.getName());
 		phantom.getAI().tryToAttack(target, true, false);
+	}
+	
+	/**
+	 * Human-like mass combat positioning for war PvP: when a phantom is closing in on a
+	 * stationary enemy player at close-mid range it first approaches a personal flanking
+	 * slot around the target instead of stacking on the exact same tile as every other
+	 * phantom. The slot is derived deterministically from the phantom's object id, so a
+	 * group of phantoms surrounds a single victim from different angles like real players.
+	 * Moving targets (who are kiting) are chased directly instead.
+	 * @return True if the phantom was redirected to its flanking slot this tick.
+	 */
+	private static boolean maybeMoveToWarFlankSlot(Player phantom, Player target)
+	{
+		if (phantom == null || target == null || target.isDead() || !target.isVisible())
+			return false;
+		
+		final double distance = phantom.distance3D(target);
+		if (distance <= 140 || distance > 450)
+			return false;
+		
+		// Flanking only makes sense against a stationary target; moving ones are chased.
+		if (target.isMoving())
+			return false;
+		
+		// Personal flanking slot around the target, spread by object id.
+		final int angle = (phantom.getObjectId() * 137) % 360;
+		final int radius = 110 + (phantom.getObjectId() % 150);
+		final double radians = Math.toRadians(angle);
+		final int sx = target.getX() + (int) Math.round(Math.cos(radians) * radius);
+		final int sy = target.getY() + (int) Math.round(Math.sin(radians) * radius);
+		final Location slot = validateDestination(phantom, new Location(sx, sy, target.getZ()));
+		
+		// Already in position (or the slot is on the far side of a very close target):
+		// let the normal attack flow take over.
+		if (phantom.distance3D(slot) <= 80 || phantom.distance3D(slot) > 400)
+			return false;
+		
+		LAST_ACTIONS.put(phantom.getObjectId(), "War flank");
+		moveTo(phantom, slot, "War flank");
+		return true;
 	}
 	
 	/**
@@ -1771,9 +1821,10 @@ public final class PhantomAI
 		// Use double the normal aggro range for war, min 1500
 		final int warRange = Math.max(1500, PhantomConfig.aggroRange() * 2);
 		
-		final Player[] nearest = new Player[1];
-		final double[] nearestDistance = { Double.MAX_VALUE };
-		
+		// Collect all valid enemy candidates, then pick the nearest (most of the time) or a
+		// random one (sometimes), so a group of phantoms spreads across several enemies
+		// instead of every phantom stacking on the exact same closest target.
+		final List<Player> candidates = new ArrayList<>();
 		phantom.forEachKnownTypeInRadius(Player.class, warRange, player ->
 		{
 			if (player == null || player == phantom || player.isDead() || !player.isVisible())
@@ -1786,14 +1837,27 @@ public final class PhantomAI
 			if (FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(player.getPosition()))
 				return;
 			
-			final double distance = phantom.distance3D(player);
-			if (distance < nearestDistance[0])
-			{
-				nearest[0] = player;
-				nearestDistance[0] = distance;
-			}
+			candidates.add(player);
 		});
-		return nearest[0];
+		
+		if (candidates.isEmpty())
+			return null;
+		
+		if (candidates.size() > 1 && Rnd.get(100) < 25)
+			return candidates.get(Rnd.get(candidates.size()));
+		
+		Player nearest = null;
+		double nearestDistance = Double.MAX_VALUE;
+		for (Player player : candidates)
+		{
+			final double distance = phantom.distance3D(player);
+			if (distance < nearestDistance)
+			{
+				nearest = player;
+				nearestDistance = distance;
+			}
+		}
+		return nearest;
 	}
 	
 	/**
