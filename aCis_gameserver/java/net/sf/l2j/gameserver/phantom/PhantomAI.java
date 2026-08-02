@@ -1055,18 +1055,32 @@ public final class PhantomAI
 	{
 		try
 		{
-			if (phantom == null || !phantom.isOnline())
+			if (phantom == null)
 				return;
+			
+			// Never leave a dead phantom without a pending respawn: if it is offline when the
+			// timer fires, retry shortly (the corpse stays until it comes back). If it was
+			// removed from the engine, drop the death flag and give up.
+			if (!phantom.isOnline())
+			{
+				if (PhantomEngine.isPhantom(phantom.getObjectId()))
+					ThreadPool.schedule(() -> respawnInTown(phantom), 10000);
+				else
+					DEATH_HANDLING.remove(phantom.getObjectId());
+				return;
+			}
 			
 			// War participants respawn straight at their faction war spawn (single teleport,
 			// no town detour that blinks the phantom twice). Non-participants revive at the
 			// faction base or nearest town as usual.
 			final boolean returnToWar = PhantomEngine.canJoinWar(phantom);
 			
+			// Always fall back to the faction home base before a generic town: a dead phantom
+			// must return to its faction base no matter what.
 			Location destination = null;
 			if (returnToWar)
 				destination = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
-			else if (Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0)
+			if (destination == null && Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0)
 			{
 				final Faction faction = FactionData.getInstance().getFaction(phantom.getFactionId());
 				if (faction != null && faction.getHomeLocation() != null)
