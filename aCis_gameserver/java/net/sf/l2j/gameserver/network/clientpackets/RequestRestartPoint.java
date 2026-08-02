@@ -151,26 +151,48 @@ public final class RequestRestartPoint extends L2GameClientPacket
 		// Nothing has been found, use regular "To town" behavior.
 		else
 		{
-			// Faction respawn: if Faction War is running, respawn at the last flag captured by the faction.
-			// If the faction captured no flag yet, fall back to the neutral zone.
+			// Faction respawn: if Faction War is running, the respawn location depends on the
+			// configurable DeathRespawnMode (UltimaBandera / Base / ZonaNeutral).
 			// Otherwise, respawn at faction home.
 			if (Config.ENABLE_FACTION_SYSTEM)
 			{
 				if (player.getFactionId() != 0 && FactionWarManager.getInstance().isRunning())
 				{
-					final Location capturedFlag = getLastCapturedFactionFlag(player);
-					if (capturedFlag != null)
+					final String mode = FactionWarConfig.getDeathRespawnMode();
+					
+					// Base: respawn at the faction base spawn on the war map.
+					if ("Base".equalsIgnoreCase(mode))
 					{
-						// War is running and the faction holds a captured flag - respawn there.
-						// Small random spread so players don't revive exactly on top of the flag NPC.
-						loc = new Location(capturedFlag.getX() + Rnd.get(-200, 200), capturedFlag.getY() + Rnd.get(-200, 200), capturedFlag.getZ());
-						player.sendMessage("[Faction War] Has muerto en batalla. Reapareces en la ultima bandera capturada por tu faccion.");
+						final Location baseLoc = FactionWarManager.getInstance().getFactionSpawn(player.getFactionId());
+						if (baseLoc != null)
+						{
+							loc = new Location(baseLoc.getX() + Rnd.get(-200, 200), baseLoc.getY() + Rnd.get(-200, 200), baseLoc.getZ());
+							player.sendMessage("[Faction War] Has muerto en batalla. Reapareces en la base de tu faccion.");
+						}
 					}
-					else
+					// ZonaNeutral: send to the neutral zone (surrender/rendicion).
+					else if ("ZonaNeutral".equalsIgnoreCase(mode))
 					{
-						// War is running but no flag captured - send to neutral zone (surrender/rendicion)
 						loc = FactionWarConfig.getNeutralSpawnLoc();
 						player.sendMessage("[Faction War] Has muerto en batalla. Ve al Registrador de Guerra para volver a tu base.");
+					}
+					// UltimaBandera (default): respawn at the last flag captured by the faction.
+					else
+					{
+						final Location capturedFlag = getLastCapturedFactionFlag(player);
+						if (capturedFlag != null)
+						{
+							// War is running and the faction holds a captured flag - respawn there.
+							// Small random spread so players don't revive exactly on top of the flag NPC.
+							loc = new Location(capturedFlag.getX() + Rnd.get(-200, 200), capturedFlag.getY() + Rnd.get(-200, 200), capturedFlag.getZ());
+							player.sendMessage("[Faction War] Has muerto en batalla. Reapareces en la ultima bandera capturada por tu faccion.");
+						}
+						else
+						{
+							// War is running but no flag captured - send to neutral zone (surrender/rendicion)
+							loc = FactionWarConfig.getNeutralSpawnLoc();
+							player.sendMessage("[Faction War] Has muerto en batalla. Ve al Registrador de Guerra para volver a tu base.");
+						}
 					}
 				}
 				else if (player.getFactionId() != 0)

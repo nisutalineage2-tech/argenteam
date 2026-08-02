@@ -66,6 +66,9 @@ public class FactionWarConfig
 	// Unstuck delay in seconds
 	private static int _unstuckDelaySeconds;
 	
+	// Death respawn mode: UltimaBandera / Base / ZonaNeutral
+	private static String _deathRespawnMode;
+	
 	// Rewards
 	private static int _rewardItemId;
 	private static final int[] _topRewardAmounts = new int[3];
@@ -228,6 +231,7 @@ public class FactionWarConfig
 		_warDurationMinutes = props.getProperty("WarDurationMinutes", 120);
 		_endFreezeSeconds = props.getProperty("EndFreezeSeconds", 5);
 		_unstuckDelaySeconds = props.getProperty("UnstuckDelaySeconds", 10);
+		_deathRespawnMode = props.getProperty("DeathRespawnMode", "UltimaBandera");
 		_rewardItemId = props.getProperty("RewardItemId", 57);
 		_topRewardAmounts[0] = props.getProperty("Top1Reward", 500000);
 		_topRewardAmounts[1] = props.getProperty("Top2Reward", 300000);
@@ -577,6 +581,7 @@ public class FactionWarConfig
 	public static int getWarDurationMinutes() { return _warDurationMinutes; }
 	public static int getEndFreezeSeconds() { return _endFreezeSeconds; }
 	public static int getUnstuckDelaySeconds() { return _unstuckDelaySeconds; }
+	public static String getDeathRespawnMode() { return _deathRespawnMode; }
 	public static int getNeutralZoneRadius() { return _neutralZoneRadius; }
 	public static int getRewardItemId() { return _rewardItemId; }
 	public static int[] getTopRewardAmounts() { return _topRewardAmounts; }
