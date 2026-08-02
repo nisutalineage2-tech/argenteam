@@ -13,11 +13,11 @@ public class TreasureHuntEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(TreasureHuntEvent.class.getName());
 	
-	private int _chestInterval = 20;
-	private int _totalChests = 10;
-	private int _spawnRadius = 500;
-	private int _chestRewardId = 57;
-	private int _chestRewardCount = 500;
+	private int _chestInterval;
+	private int _totalChests;
+	private int _spawnRadius;
+	private int _chestRewardId;
+	private int _chestRewardCount;
 	
 	private final java.util.List<TreasureChest> _chests = new java.util.ArrayList<>();
 	private int _chestsSpawned;
@@ -28,6 +28,11 @@ public class TreasureHuntEvent extends AbstractEvent
 	public TreasureHuntEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_chestInterval = getData().getCustomInt("ChestInterval", 20);
+		_totalChests = getData().getCustomInt("TotalChests", 10);
+		_spawnRadius = getData().getCustomInt("SpawnRadius", 500);
+		_chestRewardId = getData().getCustomInt("ChestRewardId", 57);
+		_chestRewardCount = getData().getCustomInt("ChestRewardCount", 500);
 	}
 	
 	@Override

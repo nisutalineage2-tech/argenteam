@@ -13,13 +13,11 @@ public class LuckyChestsEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(LuckyChestsEvent.class.getName());
 	
-	private static final int CHEST_NPC_ID = 90010;
-	
-	private int _maxChests = 5;
-	private int _chestInterval = 15;
-	private int _explodeChance = 30;
-	private int _chestRewardId = 57;
-	private int _chestRewardCount = 100;
+	private int _maxChests;
+	private int _chestInterval;
+	private int _explodeChance;
+	private int _chestRewardId;
+	private int _chestRewardCount;
 	
 	private final java.util.List<Chest> _chests = new java.util.ArrayList<>();
 	private ScheduledFuture<?> _spawnTask;
@@ -27,6 +25,11 @@ public class LuckyChestsEvent extends AbstractEvent
 	public LuckyChestsEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_maxChests = getData().getCustomInt("MaxChests", 5);
+		_chestInterval = getData().getCustomInt("ChestInterval", 15);
+		_explodeChance = getData().getCustomInt("ExplodeChance", 30);
+		_chestRewardId = getData().getCustomInt("ChestRewardId", 57);
+		_chestRewardCount = getData().getCustomInt("ChestRewardCount", 100);
 	}
 	
 	@Override

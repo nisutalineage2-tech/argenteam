@@ -19,7 +19,7 @@ public class SimonSaysEvent extends AbstractEvent
 		"yacht", "zebra", "blitz", "crisp", "dwarf", "fjord", "glyph", "hymn"
 	};
 	
-	private int _roundTime = 10;
+	private int _roundTime;
 	private String _currentWord = "";
 	private boolean _waitingForAnswer;
 	private ScheduledFuture<?> _roundTask;
@@ -28,6 +28,7 @@ public class SimonSaysEvent extends AbstractEvent
 	public SimonSaysEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_roundTime = getData().getCustomInt("RoundTime", 10);
 	}
 	
 	@Override

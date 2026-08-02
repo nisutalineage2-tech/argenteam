@@ -13,14 +13,17 @@ public class DominationEvent extends AbstractEvent
 	private static final CLogger LOGGER = new CLogger(DominationEvent.class.getName());
 	
 	private Location _zoneCenter;
-	private int _zoneRadius = 300;
-	private int _pointsPerTick = 1;
-	private int _tickInterval = 5;
+	private int _zoneRadius;
+	private int _pointsPerTick;
+	private int _tickInterval;
 	private ScheduledFuture<?> _zoneTask;
 	
 	public DominationEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_zoneRadius = getData().getCustomInt("ZoneRadius", 300);
+		_pointsPerTick = getData().getCustomInt("PointsPerTick", 1);
+		_tickInterval = getData().getCustomInt("TickInterval", 5);
 	}
 	
 	@Override

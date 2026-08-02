@@ -12,8 +12,8 @@ public class RussianRouletteEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(RussianRouletteEvent.class.getName());
 	
-	private int _chestCount = 5;
-	private int _roundTime = 15;
+	private int _chestCount;
+	private int _roundTime;
 	
 	private final java.util.List<Chest> _currentChests = new java.util.ArrayList<>();
 	private final java.util.List<EventPlayer> _eliminated = new java.util.ArrayList<>();
@@ -23,6 +23,8 @@ public class RussianRouletteEvent extends AbstractEvent
 	public RussianRouletteEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_chestCount = getData().getCustomInt("ChestCount", 5);
+		_roundTime = getData().getCustomInt("RoundTime", 15);
 	}
 	
 	@Override

@@ -9,9 +9,12 @@ public class HuntingGroundsEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(HuntingGroundsEvent.class.getName());
 	
+	private int _bowId;
+	
 	public HuntingGroundsEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_bowId = getData().getCustomInt("BowId", 9999);
 	}
 	
 	@Override
@@ -27,6 +30,7 @@ public class HuntingGroundsEvent extends AbstractEvent
 			if (!ep.isOnline())
 				continue;
 			final Player p = ep.getPlayer();
+			p.getInventory().addItem(_bowId, 1);
 			p.setTitle("[Hunt] " + p.getName());
 			p.broadcastTitleInfo();
 			p.sendMessage("[Hunt] Un disparo, una muerte. Usa tu arco.");

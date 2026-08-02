@@ -13,14 +13,17 @@ public class DoubleDominationEvent extends AbstractEvent
 	private static final CLogger LOGGER = new CLogger(DoubleDominationEvent.class.getName());
 	
 	private Location _zone1, _zone2;
-	private int _zoneRadius = 200;
-	private int _pointsPerTick = 1;
-	private int _tickInterval = 5;
+	private int _zoneRadius;
+	private int _pointsPerTick;
+	private int _tickInterval;
 	private ScheduledFuture<?> _zoneTask;
 	
 	public DoubleDominationEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_zoneRadius = getData().getCustomInt("ZoneRadius", 200);
+		_pointsPerTick = getData().getCustomInt("PointsPerTick", 1);
+		_tickInterval = getData().getCustomInt("TickInterval", 5);
 	}
 	
 	@Override
@@ -31,8 +34,11 @@ public class DoubleDominationEvent extends AbstractEvent
 	@Override
 	protected void onStartMatch()
 	{
-		_zone1 = getData().getPositionAll();
-		_zone2 = getData().getPositionBlue();
+		_zone1 = getData().getCustomLoc("Zone1");
+		_zone2 = getData().getCustomLoc("Zone2");
+		
+		if (_zone1 == null) _zone1 = getData().getPositionAll();
+		if (_zone2 == null) _zone2 = getData().getPositionBlue();
 		
 		if (_zone1 == null) _zone1 = new Location(-54500, -69600, -3371);
 		if (_zone2 == null) _zone2 = new Location(-54400, -69400, -3371);

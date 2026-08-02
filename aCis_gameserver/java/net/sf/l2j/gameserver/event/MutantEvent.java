@@ -11,11 +11,12 @@ public class MutantEvent extends AbstractEvent
 	private static final CLogger LOGGER = new CLogger(MutantEvent.class.getName());
 	
 	private EventPlayer _currentMutant;
-	private int _mutantSkillId = 9007;
+	private int _mutantSkillId;
 	
 	public MutantEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_mutantSkillId = getData().getCustomInt("MutantSkillId", 9007);
 	}
 	
 	@Override

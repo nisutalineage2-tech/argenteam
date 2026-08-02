@@ -12,12 +12,16 @@ public class ZombieEvent extends AbstractEvent
 	private static final CLogger LOGGER = new CLogger(ZombieEvent.class.getName());
 	
 	private final java.util.List<EventPlayer> _zombies = new java.util.ArrayList<>();
-	private int _humanBowId = 9999;
-	private int _zombieSkillId = 9008;
+	private int _humanBowId;
+	private int _zombieSkillId;
+	private int _initialZombies;
 	
 	public ZombieEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_humanBowId = getData().getCustomInt("HumanBowId", 9999);
+		_zombieSkillId = getData().getCustomInt("ZombieSkillId", 9008);
+		_initialZombies = getData().getCustomInt("InitialZombies", 2);
 	}
 	
 	@Override
@@ -38,7 +42,7 @@ public class ZombieEvent extends AbstractEvent
 			p.broadcastTitleInfo();
 		}
 		
-		int zombieCount = Math.max(1, Math.min(2, getAllPlayers().size() / 3));
+		int zombieCount = Math.max(1, Math.min(_initialZombies, getAllPlayers().size() / 2));
 		final java.util.List<EventPlayer> shuffled = new java.util.ArrayList<>(getAllPlayers());
 		java.util.Collections.shuffle(shuffled);
 		

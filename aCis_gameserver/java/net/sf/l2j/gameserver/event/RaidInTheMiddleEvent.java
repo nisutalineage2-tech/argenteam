@@ -11,14 +11,16 @@ public class RaidInTheMiddleEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(RaidInTheMiddleEvent.class.getName());
 	
-	private int _bossNpcId = 29001;
-	private int _bossSpawnDelay = 30;
+	private int _bossNpcId;
+	private int _bossSpawnDelay;
 	private Spawn _bossSpawn;
 	private boolean _bossAlive;
 	
 	public RaidInTheMiddleEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_bossNpcId = getData().getCustomInt("BossNpcId", 29001);
+		_bossSpawnDelay = getData().getCustomInt("BossSpawnDelay", 30);
 	}
 	
 	@Override

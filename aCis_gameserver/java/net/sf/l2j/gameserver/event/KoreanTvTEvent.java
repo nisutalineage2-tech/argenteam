@@ -15,7 +15,7 @@ public class KoreanTvTEvent extends AbstractEvent
 {
 	private static final CLogger LOGGER = new CLogger(KoreanTvTEvent.class.getName());
 	
-	private int _playersPerRound = 0;
+	private int _playersPerRound;
 	private final List<EventPlayer> _eliminated = new ArrayList<>();
 	private List<EventPlayer> _activeFighters = new ArrayList<>();
 	private ScheduledFuture<?> _roundStartTask;
@@ -24,6 +24,7 @@ public class KoreanTvTEvent extends AbstractEvent
 	public KoreanTvTEvent(EventConfig.EventData data)
 	{
 		super(data);
+		_playersPerRound = getData().getCustomInt("PlayersPerRound", 0);
 	}
 	
 	@Override
