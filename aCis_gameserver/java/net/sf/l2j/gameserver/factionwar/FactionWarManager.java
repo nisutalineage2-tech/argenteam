@@ -1530,6 +1530,46 @@ public class FactionWarManager
 		return _lastCapturedFlagByFaction.get(factionId);
 	}
 	
+	/**
+	 * @param factionId : The faction to check.
+	 * @return All flags currently held by the given faction during the running war: the main flag
+	 *         (if that faction last killed it) plus every checkpoint owned by it, in no particular
+	 *         order. Empty if the war is not running or the faction holds nothing.
+	 */
+	public List<CapturedFlag> getCapturedFlagsByFaction(int factionId)
+	{
+		final List<CapturedFlag> result = new ArrayList<>();
+		if (!_running || factionId <= 0)
+			return result;
+		
+		// Main flag: held by the faction that last killed it (its location is the map center).
+		if (_lastMainFlagKillerFaction == factionId)
+		{
+			final FactionWarConfig.WarMap map = FactionWarConfig.getMaps().isEmpty() ? null : FactionWarConfig.getMaps().get(_currentMapIndex);
+			if (map != null)
+				result.add(new CapturedFlag(FactionWarConfig.getGoodFactionId() == factionId ? FactionWarConfig.getGoodFactionName() : FactionWarConfig.getEvilFactionName() + " (principal)", new Location(map.getX(), map.getY(), map.getZ())));
+		}
+		
+		// Checkpoints owned by the faction.
+		for (Map.Entry<Integer, Integer> entry : _checkpoints.getOwners().entrySet())
+		{
+			if (entry.getValue() == factionId)
+			{
+				final java.util.List<Location> locations = _checkpoints.getLocations();
+				final int index = entry.getKey();
+				if (index >= 0 && index < locations.size())
+					result.add(new CapturedFlag("Checkpoint " + (index + 1), locations.get(index)));
+			}
+		}
+		
+		return result;
+	}
+	
+	/** A flag captured by a faction: display name + location. */
+	public record CapturedFlag(String name, Location location)
+	{
+	}
+	
 	public String getRemainingTimeStr()
 	{
 		if (_durationMs <= 0 || _startTime <= 0)

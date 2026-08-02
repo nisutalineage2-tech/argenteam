@@ -33,6 +33,8 @@ public class FactionWarNpc extends Folk
 		switch (cmd)
 		{
 			case "warGoToBase" -> handleGoToBase(player);
+			case "warFlags" -> handleCapturedFlags(player);
+			case "warFlagTeleport" -> handleFlagTeleport(player, st);
 			case "warCheckpoints" -> handleCheckpointStatus(player);
 			case "fwVote" -> handleVote(player, st);
 			case "warVoteMenu" -> handleVoteMenu(player);
@@ -67,6 +69,86 @@ public class FactionWarNpc extends Folk
 		// Teleport to faction's base on the war map
 		FactionWarManager.getInstance().teleportToWarMap(player);
 		player.sendMessage("Teletransportado a la base de tu faccion. Lucha por la gloria.");
+	}
+	
+	/**
+	 * Shows the list of all flags captured by the player's faction (main flag + owned
+	 * checkpoints) with their locations and owner, so the player can choose which one to go to.
+	 */
+	private void handleCapturedFlags(Player player)
+	{
+		if (!FactionWarManager.getInstance().isRunning())
+		{
+			showPanel(player, "La guerra de facciones no esta activa.");
+			return;
+		}
+		
+		if (player.getFactionId() <= 0)
+		{
+			showPanel(player, "No tienes una faccion. Habla con el Faction Manager primero.");
+			return;
+		}
+		
+		final java.util.List<FactionWarManager.CapturedFlag> flags = FactionWarManager.getInstance().getCapturedFlagsByFaction(player.getFactionId());
+		
+		final StringBuilder sb = new StringBuilder(2048);
+		
+		if (flags.isEmpty())
+		{
+			sb.append("<tr><td colspan=3 align=center><font color=808080>Tu faccion no tiene banderas capturadas.</font></td></tr>");
+		}
+		else
+		{
+			for (int i = 0; i < flags.size(); i++)
+			{
+				final FactionWarManager.CapturedFlag flag = flags.get(i);
+				final Location loc = flag.location();
+				
+				sb.append("<tr><td>").append(i + 1).append("</td>");
+				sb.append("<td>").append(flag.name()).append("</td>");
+				sb.append("<td>").append(loc.getX()).append(", ").append(loc.getY()).append("</td>");
+				sb.append("<td><a action=\"bypass -h npc_%objectId%_warFlagTeleport ").append(i).append("\">Ir</a></td></tr>");
+			}
+		}
+		
+		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
+		html.setFile("data/html/mods/factionwar/90002_flags.htm");
+		html.replace("%ROWS%", sb.toString());
+		html.replace("%objectId%", getObjectId());
+		player.sendPacket(html);
+	}
+	
+	/**
+	 * Teleports the player to the flag captured by their faction at the given list index.
+	 */
+	private void handleFlagTeleport(Player player, StringTokenizer st)
+	{
+		if (!st.hasMoreTokens())
+			return;
+		
+		try
+		{
+			final int index = Integer.parseInt(st.nextToken());
+			
+			if (!FactionWarManager.getInstance().isRunning() || player.getFactionId() <= 0)
+				return;
+			
+			final java.util.List<FactionWarManager.CapturedFlag> flags = FactionWarManager.getInstance().getCapturedFlagsByFaction(player.getFactionId());
+			if (index < 0 || index >= flags.size())
+			{
+				player.sendMessage("Bandera invalida.");
+				return;
+			}
+			
+			final Location loc = flags.get(index).location();
+			// Small random spread so players don't land exactly on top of the flag NPC.
+			player.teleportTo(loc.getX() + net.sf.l2j.commons.random.Rnd.get(-200, 200), loc.getY() + net.sf.l2j.commons.random.Rnd.get(-200, 200), loc.getZ(), 50);
+			player.sendMessage("Teletransportado a " + flags.get(index).name() + ".");
+		}
+		catch (NumberFormatException e)
+		{
+			player.sendMessage("Destino invalido.");
+		}
 	}
 	
 	/**
