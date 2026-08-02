@@ -179,15 +179,6 @@ public class FactionWarConfig
 	private static String _evilNpcText;
 	private static String _evilPlayerText;
 	
-	// Chaos event
-	private static boolean _enableChaosEvent;
-	private static int _chaosSuperHasteLvl;
-	private static int _chaosEventDuration;
-	private static int _chaosEventInterval;
-	private static int _chaosEventRewardId;
-	private static int _chaosEventRewardAmount;
-	private static boolean _enableAuraTeam;
-	
 	private static Location _newbieSpawnLoc;
 	
 	public static void load()
@@ -336,15 +327,6 @@ public class FactionWarConfig
 		_goodPlayerText = props.getProperty("GoodPlayerText", "Siento el poder.");
 		_evilNpcText = props.getProperty("EvilNpcText", "Gracias por registrarte en %faction% %n.");
 		_evilPlayerText = props.getProperty("EvilPlayerText", "Siento el poder oscuro.");
-		
-		// Chaos event
-		_enableChaosEvent = props.getProperty("EnableChaosEvent", false);
-		_chaosSuperHasteLvl = props.getProperty("ChaosSuperHasteLvl", 2);
-		_chaosEventDuration = props.getProperty("ChaosEventDuration", 20);
-		_chaosEventInterval = props.getProperty("ChaosEventInterval", 360);
-		_chaosEventRewardId = props.getProperty("ChaosEventRewardId", 57);
-		_chaosEventRewardAmount = props.getProperty("ChaosEventRewardAmount", 99);
-		_enableAuraTeam = props.getProperty("EnableAuraTeam", true);
 		
 		_newbieSpawnLoc = parseLoc(props.getProperty("NewbieSpawnLoc", "45346,49026,-3061"));
 		
@@ -690,15 +672,6 @@ public class FactionWarConfig
 	public static String getGoodPlayerText() { return _goodPlayerText; }
 	public static String getEvilNpcText() { return _evilNpcText; }
 	public static String getEvilPlayerText() { return _evilPlayerText; }
-	
-	// Chaos event getters
-	public static boolean isEnableChaosEvent() { return _enableChaosEvent; }
-	public static int getChaosSuperHasteLvl() { return _chaosSuperHasteLvl; }
-	public static int getChaosEventDuration() { return _chaosEventDuration; }
-	public static int getChaosEventInterval() { return _chaosEventInterval; }
-	public static int getChaosEventRewardId() { return _chaosEventRewardId; }
-	public static int getChaosEventRewardAmount() { return _chaosEventRewardAmount; }
-	public static boolean isEnableAuraTeam() { return _enableAuraTeam; }
 	
 	public static Location getNewbieSpawnLoc() { return _newbieSpawnLoc; }
 	
