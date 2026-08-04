@@ -508,7 +508,7 @@ public class AdminPhantom implements IAdminCommandHandler
 				for (int i = 0; i < topPlayers.size(); i++)
 				{
 					final FactionWarManager.FactionWarStats stats = topPlayers.get(i);
-					sb.append("<tr><td>").append(i + 1).append(". ").append(stats.playerName);
+					sb.append("<tr><td>").append(i + 1).append(". ").append(htmlSafe(stats.playerName));
 					sb.append(" (Fac ").append(stats.factionId).append("): ");
 					sb.append(stats.points).append(" pts (").append(stats.kills).append(" kills, ").append(stats.deaths).append(" deaths)</td></tr>");
 				}
@@ -977,8 +977,8 @@ public class AdminPhantom implements IAdminCommandHandler
 
 		final StringBuilder sb = new StringBuilder(8192);
 		sb.append("<html><body><center><font color=LEVEL>").append(title).append("</font></center><br>");
-		if (message != null)
-			sb.append("<font color=99FF99>").append(message).append("</font><br1>");
+		if (message != null && !message.isEmpty())
+			sb.append("<font color=99FF99>").append(htmlSafe(message)).append("</font><br1>");
 
 		sb.append("Total: <font color=LEVEL>").append(phantoms.size()).append("</font> | Pagina: ").append(page + 1).append("/").append(maxPage + 1).append("<br1>");
 		sb.append("<table width=310>");
@@ -991,7 +991,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			final int objectId = phantom.getObjectId();
 			final int fId = phantom.getFactionId();
 			final String factionTag = (FactionWarConfig.isEnabled() && fId > 0) ? String.valueOf(fId) : "-";
-			sb.append("<tr><td><font color=FFD700>").append(htmlSafe(shortText(phantom.getName(), 14))).append("</font> | Nv").append(phantom.getStatus().getLevel()).append(" | Fac ").append(factionTag).append(" | ").append(shortText(PhantomState.label(objectId), 6)).append(" | ").append(shortText(PhantomAI.getLastAction(phantom), 10)).append("</td></tr>");
+			sb.append("<tr><td><font color=FFD700>").append(htmlSafe(shortText(phantom.getName(), 14))).append("</font> | Nv").append(phantom.getStatus().getLevel()).append(" | Fac ").append(factionTag).append(" | ").append(htmlSafe(shortText(PhantomState.label(objectId), 6))).append(" | ").append(htmlSafe(shortText(PhantomAI.getLastAction(phantom), 10))).append("</td></tr>");
 			sb.append("<tr><td>");
 			miniButton(sb, "Traer", "admin_phantom bring " + page + " " + filterFaction + " " + objectId, 44);
 			miniButton(sb, "Rev", "admin_phantom resurrect " + page + " " + filterFaction + " " + objectId, 36);
