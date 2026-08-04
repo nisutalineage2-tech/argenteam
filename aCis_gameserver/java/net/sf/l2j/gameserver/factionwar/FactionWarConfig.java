@@ -202,7 +202,9 @@ public class FactionWarConfig
 		_guardRespawnDelay = props.getProperty("GuardRespawnDelay", 60) * 1000L;
 		_warRegistrarNpcId = props.getProperty("WarRegistrarNpcId", 90002);
 		_checkpointNpcId = props.getProperty("CheckpointNpcId", 90003);
-		_checkpointCount = props.getProperty("CheckpointCount", 3);
+		// Design: 1 main flag (90000) in the map center + N capturable checkpoints.
+		// Default is 4 so the battlefield has 4 contested points around the flag.
+		_checkpointCount = props.getProperty("CheckpointCount", 4);
 		_checkpointRadius = props.getProperty("CheckpointRadius", 2000);
 		_checkpointRespawnDelay = props.getProperty("CheckpointRespawnDelay", 15) * 1000L;
 		_checkpointScoreInterval = props.getProperty("CheckpointScoreInterval", 30);

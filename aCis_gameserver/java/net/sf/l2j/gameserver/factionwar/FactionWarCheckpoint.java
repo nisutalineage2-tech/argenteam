@@ -67,13 +67,12 @@ public class FactionWarCheckpoint
 		final int centerY = map.getY();
 		final int centerZ = map.getZ();
 		
-		// Base radius = distance from center flag. We use a radius that is between
-		// 50% and 80% of the guard circle radius, so checkpoints sit between
-		// the center flag and the outer guards/edges.
+		// Base radius = distance from center flag. All checkpoints sit at (almost) the
+		// same distance from the main flag so none is closer/farther than the others.
 		final int baseRadius = FactionWarConfig.getCheckpointRadius();
-		// Minimal separation between any two checkpoints, scaled to the radius
-		// so a 4-checkpoint layout spreads evenly instead of clustering near the center.
-		final int minSeparation = Math.max(200, baseRadius / 2);
+		// Minimal separation between any two checkpoints: with 4 checkpoints on a circle
+		// the ideal spacing is ~1.41 * radius, so requiring radius keeps them well apart.
+		final int minSeparation = Math.max(300, baseRadius);
 		
 		final java.util.List<Location> placed = new java.util.ArrayList<>();
 		
@@ -85,12 +84,14 @@ public class FactionWarCheckpoint
 			
 			for (int attempt = 0; attempt < 30; attempt++)
 			{
-				// Distribute evenly around the circle but add randomness
+				// Distribute evenly around the circle. Small jitter only (tenths of a radian)
+				// so checkpoints stay visually equidistant from the main flag.
 				final double baseAngle = (2 * Math.PI * i) / count;
-				final double angle = baseAngle + (Rnd.nextDouble() * 0.8) - 0.4;
+				final double angle = baseAngle + (Rnd.nextDouble() * 0.4) - 0.2;
 				
-				// Vary radius slightly to avoid perfect circle clustering
-				final int r = baseRadius + Rnd.get(-150, 150);
+				// Keep the radius essentially fixed so all checkpoints share the same
+				// distance to the flag; tiny variation only to avoid perfect-circle look.
+				final int r = baseRadius + Rnd.get(-60, 60);
 				final int x = centerX + (int) (r * Math.cos(angle));
 				final int y = centerY + (int) (r * Math.sin(angle));
 				final int z = centerZ;
@@ -106,7 +107,7 @@ public class FactionWarCheckpoint
 						minDist = dist;
 				}
 				
-				// Also ensure distance from center flag is reasonable
+				// Keep a healthy distance from the center flag too.
 				final int flagDx = x - centerX;
 				final int flagDy = y - centerY;
 				final int flagDist = (int) Math.sqrt(flagDx * flagDx + flagDy * flagDy);
@@ -120,7 +121,7 @@ public class FactionWarCheckpoint
 						break;
 					}
 				}
-				else if (minDist >= minSeparation && flagDist >= baseRadius / 3)
+				else if (minDist >= minSeparation && flagDist >= baseRadius / 2)
 				{
 					// Good position: far from other checkpoints and not too close to center
 					if (minDist > bestDist)

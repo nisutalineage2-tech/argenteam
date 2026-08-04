@@ -24,7 +24,13 @@ public class EventManagerNpc extends Folk
 	@Override
 	public void onBypassFeedback(Player player, String command)
 	{
+		// Guard: a malformed/empty bypass (e.g. "npc_<id>_") must never crash the handler thread.
+		if (command == null || command.isEmpty())
+			return;
+		
 		StringTokenizer st = new StringTokenizer(command, " ");
+		if (!st.hasMoreTokens())
+			return;
 		String currentCommand = st.nextToken();
 		
 		if (currentCommand.startsWith("event_buff_clear"))
