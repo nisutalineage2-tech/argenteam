@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.ai.CtrlIntention;
 import net.sf.l2j.gameserver.ai.L2CharacterAI;
+import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.model.L2Object;
 import net.sf.l2j.gameserver.model.actor.L2Character;
 import net.sf.l2j.gameserver.model.actor.instance.L2EvilGuardInstance;
@@ -53,7 +54,7 @@ public class EvilGuardKnownList extends AttackableKnownList
             // Check if the object added is a L2PcInstance that owns Karma
             L2PcInstance player = (L2PcInstance) object;
 
-            if (player.isgood() )
+            if (FactionWarConfig.isEnabled() && player.getFactionId() == FactionWarConfig.getGoodFactionId())
             {
                 if (Config.DEBUG) _log.fine(getActiveChar().getObjectId()+": PK "+player.getObjectId()+" entered scan range");
 
