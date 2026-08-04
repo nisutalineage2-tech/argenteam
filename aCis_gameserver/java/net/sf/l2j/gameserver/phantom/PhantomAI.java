@@ -373,9 +373,11 @@ public final class PhantomAI
 			// === NEUTRAL ZONE BEHAVIOR: open private store or human-like idle (war is not running here) ===
 			if (inNeutralZone)
 			{
-				// Phantom self-registration for Faction War: move toward War Registrar NPC to join war
-				final boolean canJoinWar = PhantomEngine.canJoinWar(phantom);
-				if (canJoinWar && phantom.getFactionId() == 0) // Not yet assigned to a faction
+				// Phantom self-registration for Faction War: move toward War Registrar NPC to join war.
+				// Fully automatic - no admin command needed. Any factionless phantom in the neutral
+				// zone walks to the War Registrar while the war is running, picks the side with fewer
+				// players and is registered as a war participant on the spot.
+				if (Config.ENABLE_FACTION_SYSTEM && FactionWarManager.getInstance().isRunning() && phantom.getFactionId() == 0) // Not yet assigned to a faction
 				{
 					final int registrarNpcId = FactionWarConfig.getWarRegistrarNpcId();
 					if (registrarNpcId > 0)
@@ -408,6 +410,10 @@ public final class PhantomAI
 								int factionId = (goodCount <= evilCount) ? FactionWarConfig.getGoodFactionId() : FactionWarConfig.getEvilFactionId();
 
 								phantom.setFactionId(factionId);
+								
+								// Register as war participant so the AI treats it as one (search flags,
+								// attack enemies, respawn back on the war map instead of the city).
+								PhantomEngine.addWarParticipant(phantom.getObjectId());
 								phantom.broadcastUserInfo();
 
 								// Teleport to faction spawn point
