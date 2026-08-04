@@ -235,7 +235,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			switch (mode)
 			{
 				case "on" -> showPanel(player, "AI started for: " + PhantomEngine.startAi());
-				case "off" -> showPanel(player, "AI paused for: " + PhantomEngine.stopAi());
+				case "off" -> showPanel(player, "La IA de los phantoms esta siempre activa, no se puede pausar. Phantoms activos: " + PhantomEngine.stopAi());
 				case "home" -> showPanel(player, "AI home updated for: " + PhantomEngine.setHomes());
 				default -> showPanel(player, "Usage: AI on/off/home");
 			}
@@ -889,8 +889,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		// --- General Stats ---
 		sb.append("<table width=350><tr><td bgcolor=000080 align=center><font color=FFFFFF><b>Estadisticas</b></font></td></tr></table>");
 		sb.append("<table width=350>");
-		infoRow(sb, "Phantoms activos", allPhantoms.size());
-		sb.append("<tr><td width=140>IA del Sistema:</td><td width=210><font color=").append(PhantomAI.isAiPaused() ? "FF0000" : "00FF00").append("><b>").append(PhantomAI.isAiPaused() ? "OFF" : "ON").append("</b></font></td></tr>");
+		infoRow(sb, "Phantoms activos", allPhantoms.size());			sb.append("<tr><td width=140>IA del Sistema:</td><td width=210><font color=00FF00><b>ON (siempre activa)</b></font></td></tr>");
 		if (warEnabled)
 			infoRow(sb, "Participacion Guerra", PhantomConfig.warParticipationChance() + "% max " + PhantomConfig.warMaxPerFaction() + "/fac");
 		sb.append("</table><br1>");

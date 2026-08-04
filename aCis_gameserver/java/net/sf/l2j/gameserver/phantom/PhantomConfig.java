@@ -198,7 +198,9 @@ public final class PhantomConfig
 				_phantomIds = Collections.emptyList();
 			}
 			_spawnAtGm = props.getProperty("SpawnAtGm", true);
-			_aiEnabled = props.getProperty("AIEnabled", true);
+			// The phantom AI is always active by design; the AIEnabled property is ignored
+			// so no config or admin toggle can ever leave phantoms static.
+			_aiEnabled = true;
 			_aiTickMs = Math.max(1000, props.getProperty("AITickMs", 3500));
 			_aggroRange = Math.max(100, props.getProperty("AggroRange", 900));
 			_wanderRange = Math.max(50, props.getProperty("WanderRange", 280));

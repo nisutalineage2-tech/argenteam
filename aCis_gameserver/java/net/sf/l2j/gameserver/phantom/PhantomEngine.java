@@ -443,10 +443,8 @@ public final class PhantomEngine
 	
 	public static int startAi()
 	{
-		// Resume the runtime AI loop for every active phantom, bypassing the config gate
-		// so the admin can force the AI on at any time without a server restart.
-		PhantomAI.setAiPaused(false);
-		
+		// (Re)create the AI loop task for every active phantom. The AI is always active
+		// by design, so there is no pause flag to reset anymore.
 		int started = 0;
 		for (Player phantom : ACTIVE_PHANTOMS.values())
 		{
@@ -466,9 +464,8 @@ public final class PhantomEngine
 	
 	public static int stopAi()
 	{
-		// Pause the runtime AI loop WITHOUT cancelling tasks or wiping homes/targets state,
-		// so toggling AI back on resumes exactly where it left off (no desync).
-		PhantomAI.setAiPaused(true);
+		// The phantom AI is always active by design; pausing was removed.
+		// Kept for command compatibility - it just reports the active count.
 		return ACTIVE_PHANTOMS.size();
 	}
 	

@@ -88,21 +88,8 @@ public final class PhantomAI
 	/** Safe client social action ids used for idle emotes (wave, cheer, clap, think, bow, laugh, applause, victory). */
 	private static final int[] IDLE_EMOTES = { 1, 2, 3, 5, 6, 7, 8, 9 };
 	
-	/** Runtime AI pause flag (admin panel "AI On/Off"). When true, all phantom AI loops are suspended without cancelling tasks or wiping state. */
-	private static volatile boolean AI_PAUSED;
-	
 	private PhantomAI()
 	{
-	}
-	
-	public static void setAiPaused(boolean paused)
-	{
-		AI_PAUSED = paused;
-	}
-	
-	public static boolean isAiPaused()
-	{
-		return AI_PAUSED;
 	}
 	
 	public static boolean hasTask(int objectId)
@@ -214,13 +201,6 @@ public final class PhantomAI
 		{
 			if (phantom != null)
 				stop(phantom.getObjectId());
-			return;
-		}
-		
-		// Runtime pause (admin "AI Off"): suspend the loop without cancelling the task or wiping state.
-		if (AI_PAUSED)
-		{
-			LAST_ACTIONS.put(phantom.getObjectId(), "AI paused");
 			return;
 		}
 		
