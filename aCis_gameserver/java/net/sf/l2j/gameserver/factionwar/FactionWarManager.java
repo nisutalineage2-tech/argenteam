@@ -259,8 +259,8 @@ public class FactionWarManager
 		final FactionWarConfig.WarMap chosen;
 		if (bestVotes == 0 || _currentVoteMaps == null)
 		{
-			chosen = FactionWarConfig.getMaps().get(Rnd.get(FactionWarConfig.getMaps().size()));
-			broadcast("[Faction War] Nadie voto. Mapa aleatorio: " + chosen.getName());
+			chosen = FactionWarConfig.getMaps().get(0);
+			broadcast("[Faction War] Nadie voto. Se selecciono el mapa predeterminado: " + chosen.getName());
 		}
 		else
 		{
@@ -1453,8 +1453,8 @@ public class FactionWarManager
 		FactionWarConfig.WarMap chosen;
 		if (bestVotes == 0 || _currentVoteMaps == null)
 		{
-			chosen = FactionWarConfig.getMaps().get(Rnd.get(FactionWarConfig.getMaps().size()));
-			broadcast("[Faction War] Nadie voto. Mapa aleatorio seleccionado: " + chosen.getName());
+			chosen = FactionWarConfig.getMaps().get(0);
+			broadcast("[Faction War] Nadie voto. Se selecciono el mapa predeterminado: " + chosen.getName());
 		}
 		else
 		{
