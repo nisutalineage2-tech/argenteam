@@ -965,7 +965,7 @@ public class AdminPhantom implements IAdminCommandHandler
 				button(sb, "Curar", "admin_phantom healfaction " + fid, 65);
 				button(sb, "Ver", "admin_phantom factions " + fid + " 0", 65);
 				sb.append("</tr>");
-				sb.append("<tr><td height=3></td></tr>");
+				sb.append("<tr><td colspan=5 height=3></td></tr>");
 			}
 			sb.append("</table><br1>");
 		}
@@ -1106,25 +1106,6 @@ public class AdminPhantom implements IAdminCommandHandler
 	private static void infoRow(StringBuilder sb, String label, Object value)
 	{
 		sb.append("<tr><td width=140>").append(label).append("</td><td width=190><font color=LEVEL>").append(value).append("</font></td></tr>");
-	}
-
-	private static void buttonRow2(StringBuilder sb, String label1, String bypass1, String label2, String bypass2)
-	{			sb.append("<table width=300><tr>");
-			button(sb, label1, bypass1, 150);
-			button(sb, label2, bypass2, 150);
-			sb.append("</tr></table>");
-	}
-
-	private static void buttonRowSkipEmpty(StringBuilder sb, String label1, String bypass1, String label2, String bypass2, String label3, String bypass3)
-	{
-		sb.append("<table width=300><tr>");
-		if (!label1.isEmpty())
-			button(sb, label1, bypass1, 150);
-		if (!label2.isEmpty())
-			button(sb, label2, bypass2, 150);
-		if (!label3.isEmpty())
-			button(sb, label3, bypass3, 150);
-		sb.append("</tr></table>");
 	}
 
 	private static void button(StringBuilder sb, String label, String bypass)
