@@ -79,26 +79,36 @@ public class FactionData implements IXmlReader
 			// que el gate 'faction != null' funcione para jugadores reales (colores + teleport).
 			applyFactionVisuals(player);
 			
-			// Real players far from the neutral zone are teleported there after a short delay.
+			// Real players with a faction are teleported to their OWN faction zone after a short
+			// delay, so each faction has its own base (faction.xml homeX/homeY/homeZ) instead of
+			// everyone sharing the neutral zone:
+			//   - If the war is running -> faction base on the current war map.
+			//   - Otherwise            -> faction home city defined in faction.xml.
 			// (Phantoms use applyFactionVisuals() directly to skip this behavior.)
 			final Faction faction = _factions.get(player.getFactionId());
 			if (faction != null && FactionWarConfig.isEnabled())
 			{
-				final Location neutralLoc = FactionWarConfig.getNeutralSpawnLoc();
-				if (neutralLoc != null)
+				Location target = null;
+				if (FactionWarManager.getInstance().isRunning())
+					target = FactionWarManager.getInstance().getFactionSpawn(player.getFactionId());
+				if (target == null)
+					target = faction.getHomeLocation();
+				
+				if (target != null)
 				{
 					final int px = player.getX();
 					final int py = player.getY();
 					final int pz = player.getZ();
 					
-					if (Math.abs(px - neutralLoc.getX()) > 100 || Math.abs(py - neutralLoc.getY()) > 100 || Math.abs(pz - neutralLoc.getZ()) > 50)
+					if (Math.abs(px - target.getX()) > 100 || Math.abs(py - target.getY()) > 100 || Math.abs(pz - target.getZ()) > 50)
 					{
+						final Location dest = target;
 						ThreadPool.schedule(() ->
 						{
 							if (player.isOnline() && !player.isInJail())
 							{
-								player.teleportTo(neutralLoc, 50);
-								player.sendMessage("Bienvenido a la zona neutral de la Faction War.");
+								player.teleportTo(dest, 50);
+								player.sendMessage("Bienvenido a la base de " + faction.getName() + ".");
 							}
 						}, 3000);
 					}
