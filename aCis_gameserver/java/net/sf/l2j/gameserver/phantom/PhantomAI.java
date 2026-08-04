@@ -20,6 +20,7 @@ import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.enums.actors.ClassId;
 import net.sf.l2j.gameserver.enums.actors.OperateType;
 import net.sf.l2j.gameserver.enums.skills.SkillType;	import net.sf.l2j.gameserver.event.AbstractEvent;
+	import net.sf.l2j.gameserver.event.EventConfig;
 	import net.sf.l2j.gameserver.event.EventEngine;
 	import net.sf.l2j.gameserver.event.EventPlayer;
 	import net.sf.l2j.gameserver.event.EventTeam;
@@ -270,9 +271,16 @@ public final class PhantomAI
 				return;
 			}
 			
-			// Registered but event not started yet - behave normally until teleport.
+			// Registered but event not started yet (REGISTER/STARTING): walk to the Event
+			// Manager NPC of the city and wait there, simulating a player registering for the
+			// event. The return is unconditional: a registered phantom must NOT farm, open a
+			// store or join the war while waiting - the event owns it until the match starts
+			// and teleports everyone to the arena.
 			if (event != null)
-				LAST_ACTIONS.put(phantom.getObjectId(), "Event waiting");
+			{
+				moveToEventManager(phantom);
+				return;
+			}
 			
 			// === FACTION WAR MODE: highest priority. Runs BEFORE loot/farm/level-zone teleports,
 			// otherwise maybeMoveToFarmZoneStep() would yank the phantom right back to its farm
@@ -1035,6 +1043,45 @@ public final class PhantomAI
 			}
 		});
 		return nearest[0];
+	}
+	
+	/**
+	 * Moves a registered phantom toward the city Event Manager NPC while its event is in
+	 * REGISTER/STARTING state. The phantom waits near the manager until the match starts.
+	 * @return True if the phantom was told to move this tick.
+	 */
+	private static boolean moveToEventManager(Player phantom)
+	{
+		final int managerNpcId = EventConfig.getManagerNpcId();
+		if (managerNpcId <= 0)
+			return false;
+		
+		// Find the Event Manager NPC by template id within a generous radius.
+		final Npc manager = getKnownNpcByNpcId(phantom, managerNpcId);
+		if (manager == null || manager.isDead())
+			return false;
+		
+		// Already waiting next to the manager.
+		if (phantom.distance3D(manager) <= 200)
+			return false;
+		
+		LAST_ACTIONS.put(phantom.getObjectId(), "To event manager");
+		moveTo(phantom, new Location(manager.getX(), manager.getY(), manager.getZ()), "To event manager");
+		return true;
+	}
+	
+	/**
+	 * Finds a known {@link Npc} by its template id (npcId), not objectId.
+	 */
+	private static Npc getKnownNpcByNpcId(Player phantom, int npcId)
+	{
+		final Npc[] result = new Npc[1];
+		phantom.forEachKnownTypeInRadius(Npc.class, 2000, npc ->
+		{
+			if (result[0] == null && npc != null && !npc.isDead() && npc.getNpcId() == npcId)
+				result[0] = npc;
+		});
+		return result[0];
 	}
 	
 	/**

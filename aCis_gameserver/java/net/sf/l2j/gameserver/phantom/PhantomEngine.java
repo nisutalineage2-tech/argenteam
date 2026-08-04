@@ -590,7 +590,14 @@ public final class PhantomEngine
 	 */
 	public static boolean canJoinWar(Player phantom)
 	{
-		return phantom != null && Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0 && FactionWarManager.getInstance().isRunning() && isWarParticipant(phantom.getObjectId());
+		if (phantom == null || !Config.ENABLE_FACTION_SYSTEM || phantom.getFactionId() <= 0 || !FactionWarManager.getInstance().isRunning() || !isWarParticipant(phantom.getObjectId()))
+			return false;
+		
+		// A phantom registered to an active event (REGISTER/STARTING/RUNNING) never joins
+		// the war: the event owns its position. This is the central safety net that covers
+		// every caller (AI think, respawn, returnPhantomsFromWar, admin warforcejoin...).
+		final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+		return event == null || event.getState() == AbstractEvent.State.IDLE || event.getState() == AbstractEvent.State.ENDED;
 	}
 	
 	/**
