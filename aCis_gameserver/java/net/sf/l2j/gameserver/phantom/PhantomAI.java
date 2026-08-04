@@ -236,13 +236,20 @@ public final class PhantomAI
 				return;
 			}
 			
+			// Single lookup: getEventForPlayer() returns the event or null (avoids iterating
+			// events twice per tick). Computed here so the store guard and the stuck detector
+			// below can also react to a running event.
+			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
+			final boolean eventRunning = event != null && event.getState() == AbstractEvent.State.RUNNING;
+			
 			// Early store-mode guard: while a private store is open the phantom stays seated,
 			// so loot/farm/stuck-escape logic must not move or teleport it away.
-			// If the faction war starts, close the store so the phantom can fight.
+			// If the faction war starts OR the phantom's event goes RUNNING, close the store so
+			// it can fight (otherwise a store phantom teleported to the arena stays seated forever).
 			if (phantom.getOperateType() != OperateType.NONE)
 			{
 				final boolean warStarting = PhantomEngine.canJoinWar(phantom);
-				if (warStarting)
+				if (warStarting || eventRunning)
 				{
 					phantom.getSellList().clear();
 					phantom.setOperateType(OperateType.NONE);
@@ -256,7 +263,9 @@ public final class PhantomAI
 				}
 			}
 			
-			if (detectAndEscapeStuck(phantom))
+			// Never let the stuck detector teleport a phantom out of a running event arena
+			// (e.g. while it stands still waiting for the event's respawn with HOLD_1).
+			if (!eventRunning && detectAndEscapeStuck(phantom))
 				return;
 			
 			// War combat strafing: melee phantoms occasionally circle around their current war
@@ -275,19 +284,15 @@ public final class PhantomAI
 			
 			// === EVENT MODE: while a registered event is RUNNING, the phantom fights the event ===
 			// (no farming, no patrol, no level-zone teleports - they would pull the phantom away from the arena)
-			// Single lookup: getEventForPlayer() returns the event or null (avoids iterating events twice per tick).
-			final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
-			if (event != null)
+			if (eventRunning)
 			{
-				if (event.getState() == AbstractEvent.State.RUNNING)
-				{
-					handleEventMode(phantom, event);
-					return;
-				}
-				
-				// Registered but event not started yet - behave normally until teleport.
-				LAST_ACTIONS.put(phantom.getObjectId(), "Event waiting");
+				handleEventMode(phantom, event);
+				return;
 			}
+			
+			// Registered but event not started yet - behave normally until teleport.
+			if (event != null)
+				LAST_ACTIONS.put(phantom.getObjectId(), "Event waiting");
 			
 			// === FACTION WAR MODE: highest priority. Runs BEFORE loot/farm/level-zone teleports,
 			// otherwise maybeMoveToFarmZoneStep() would yank the phantom right back to its farm
@@ -788,6 +793,11 @@ public final class PhantomAI
 	 */
 	private static void handleGenericEventMode(Player phantom, AbstractEvent event)
 	{
+		// A phantom left seated in the arena (e.g. private store closed at match start) must
+		// stand up before moving or fighting.
+		if (phantom.isSitting())
+			phantom.standUp();
+		
 		// Priority 1: enemy event participants (opposite team, or any participant for FFA)
 		final Player eventTarget = findEventEnemy(phantom, event);
 		if (eventTarget != null)
