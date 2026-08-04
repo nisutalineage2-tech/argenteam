@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import net.sf.l2j.commons.pool.ThreadPool;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.enums.skills.AbnormalEffect;
 import net.sf.l2j.gameserver.enums.skills.EffectFlag;
 import net.sf.l2j.gameserver.enums.skills.EffectState;
@@ -64,6 +65,16 @@ public abstract class AbstractEffect
 		int period = template.getPeriod();
 		if (_skill.getId() > 2277 && _skill.getId() < 2286 && (_effected instanceof Servitor || (_effected instanceof Player effectedPlayer && effectedPlayer.getSummon() != null)))
 			period /= 2;
+		
+		// Custom: override the duration of configured skills (songs, dances, buffs...)
+		// from Config.SkillDurationList. Only finite durations (> 0) are replaced;
+		// toggles/permanent effects (-1) are left untouched.
+		if (Config.MODIFY_SKILL_DURATION && period > 0)
+		{
+			final Integer override = Config.SKILL_DURATION_OVERRIDES.get(_skill.getId());
+			if (override != null && override > 0)
+				period = override;
+		}
 		
 		_period = period;
 		_periodStartTime = System.currentTimeMillis();

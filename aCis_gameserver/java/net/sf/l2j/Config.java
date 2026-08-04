@@ -365,6 +365,10 @@ public final class Config
 	public static boolean STORE_SKILL_COOLTIME;
 	public static int MAX_BUFFS_AMOUNT;
 	
+	/** Custom: skill duration overrides (skillId -> new duration in seconds). */
+	public static boolean MODIFY_SKILL_DURATION;
+	public static Map<Integer, Integer> SKILL_DURATION_OVERRIDES;
+	
 	/** Custom: Noblesse granted by killing Barakiel (raid boss 25325) */
 	public static boolean ENABLE_RAIDBOSS_NOBLES;
 	public static boolean ANNOUNCE_RAIDBOSS_KILL;
@@ -968,6 +972,34 @@ public final class Config
 		
 		MAX_BUFFS_AMOUNT = players.getProperty("MaxBuffsAmount", 20);
 		STORE_SKILL_COOLTIME = players.getProperty("StoreSkillCooltime", true);
+		
+		// Custom: skill duration overrides (skillId,newDuration;skillId,newDuration...). Duration in seconds.
+		MODIFY_SKILL_DURATION = players.getProperty("EnableModifySkillDuration", false);
+		SKILL_DURATION_OVERRIDES = new HashMap<>();
+		final String durationList = players.getProperty("SkillDurationList", "");
+		if (durationList != null && !durationList.isEmpty())
+		{
+			for (String entry : durationList.split(";"))
+			{
+				if (entry == null || entry.trim().isEmpty())
+					continue;
+				
+				final String[] parts = entry.trim().split(",");
+				if (parts.length >= 2)
+				{
+					try
+					{
+						SKILL_DURATION_OVERRIDES.put(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+					}
+					catch (NumberFormatException nfe)
+					{
+						LOGGER.warn("Invalid SkillDurationList entry: '{}'.", entry);
+					}
+				}
+			}
+		}
+		if (MODIFY_SKILL_DURATION)
+			LOGGER.info("Skill duration modification enabled for {} skills.", SKILL_DURATION_OVERRIDES.size());
 		ENABLE_RAIDBOSS_NOBLES = players.getProperty("RaidBossNobles", false);
 		ANNOUNCE_RAIDBOSS_KILL = players.getProperty("AnnounceRaidBossKill", true);
 		ANNOUNCE_RAIDBOSS_SPAWN = players.getProperty("AnnounceRaidBossSpawn", false);
