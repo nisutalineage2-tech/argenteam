@@ -462,13 +462,7 @@ public final class PhantomEngine
 		return started;
 	}
 	
-	public static int stopAi()
-	{
-		// The phantom AI is always active by design; pausing was removed.
-		// Kept for command compatibility - it just reports the active count.
-		return ACTIVE_PHANTOMS.size();
-	}
-	
+
 	public static int setHomes()
 	{
 		int updated = 0;

@@ -227,17 +227,15 @@ public class AdminPhantom implements IAdminCommandHandler
 		{
 			if (!st.hasMoreTokens())
 			{
-				showPanel(player, "Usage: AI on/off/home");
+				showPanel(player, "Usage: AI on/home");
 				return;
 			}
 
-			final String mode = st.nextToken().toLowerCase();
-			switch (mode)
+			final String mode = st.nextToken().toLowerCase();				switch (mode)
 			{
 				case "on" -> showPanel(player, "AI started for: " + PhantomEngine.startAi());
-				case "off" -> showPanel(player, "La IA de los phantoms esta siempre activa, no se puede pausar. Phantoms activos: " + PhantomEngine.stopAi());
 				case "home" -> showPanel(player, "AI home updated for: " + PhantomEngine.setHomes());
-				default -> showPanel(player, "Usage: AI on/off/home");
+				default -> showPanel(player, "Usage: AI on/home");
 			}
 			return;
 		}
