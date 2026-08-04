@@ -585,13 +585,25 @@ public final class PhantomEngine
 	
 	/**
 	 * Adds a phantom to the war participant roster. Used by the admin panel when forcing
-	 * phantoms into the war map (warteleportin), so their AI actually treats them as
-	 * war participants (search flags, attack enemies, respawn back on the war map).
+	 * phantoms into the war map (warteleportin, warforcejoin during a running war), so
+	 * their AI actually treats them as war participants (search flags, attack enemies,
+	 * respawn back on the war map).
 	 * @param objectId : The phantom object id.
 	 */
 	public static void addWarParticipant(int objectId)
 	{
 		WAR_PARTICIPANTS.add(objectId);
+	}
+	
+	/**
+	 * Removes a phantom from the war participant roster. Used by the admin panel when
+	 * stripping a faction (warforceleave), so its AI no longer treats it as a war
+	 * participant.
+	 * @param objectId : The phantom object id.
+	 */
+	public static void removeWarParticipant(int objectId)
+	{
+		WAR_PARTICIPANTS.remove(objectId);
 	}
 	
 	/**

@@ -596,6 +596,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			}
 
 			final FactionWarManager fwm = FactionWarManager.getInstance();
+			final boolean warRunning = fwm.isRunning();
 			int joined = 0;
 			for (Player phantom : PhantomEngine.getActivePhantoms())
 			{
@@ -603,10 +604,18 @@ public class AdminPhantom implements IAdminCommandHandler
 				{
 					phantom.setFactionId(factionId);
 					FactionData.getInstance().storeData(phantom);
+					
+					// If a war is currently running, register the phantom as a participant right
+					// away: selectWarParticipants() already ran when the war started, so without
+					// this the newly-factioned phantom would never join (no flags, no combat,
+					// respawn back to town on death).
+					if (warRunning)
+						PhantomEngine.addWarParticipant(phantom.getObjectId());
+					
 					joined++;
 				}
 			}
-			showPanel(player, "Forzado " + joined + " phantoms sin faccion a unirse a la faccion " + factionId + ".");
+			showPanel(player, "Forzado " + joined + " phantoms sin faccion a unirse a la faccion " + factionId + (warRunning ? " (participantes de guerra)" : ".") + ".");
 			return;
 		}
 
@@ -625,6 +634,10 @@ public class AdminPhantom implements IAdminCommandHandler
 				{
 					phantom.setFactionId(0);
 					FactionData.getInstance().removeData(phantom);
+					
+					// Mirror warforcejoin: drop the phantom from the war roster so its AI stops
+					// treating it as a war participant.
+					PhantomEngine.removeWarParticipant(phantom.getObjectId());
 					removed++;
 				}
 			}
