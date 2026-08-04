@@ -26,6 +26,7 @@ import net.sf.l2j.gameserver.enums.skills.SkillType;	import net.sf.l2j.gameserve
 	import net.sf.l2j.gameserver.event.LuckyChestsEvent;
 	import net.sf.l2j.gameserver.event.RaidInTheMiddleEvent;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
+import net.sf.l2j.gameserver.factionwar.FactionWarCheckpoint;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.factionwar.FactionWarRegistry;
 import net.sf.l2j.gameserver.geoengine.GeoEngine;
@@ -34,6 +35,7 @@ import net.sf.l2j.gameserver.model.WorldObject;
 import net.sf.l2j.gameserver.model.actor.Creature;
 import net.sf.l2j.gameserver.model.actor.Npc;
 import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.instance.FactionWarCpFlag;
 import net.sf.l2j.gameserver.model.actor.instance.FactionWarFlag;
 import net.sf.l2j.gameserver.model.actor.instance.FactionWarGuard;
@@ -380,8 +382,8 @@ public final class PhantomAI
 			if (inNeutralZone)
 			{
 				// Phantom self-registration for Faction War: move toward War Registrar NPC to join war
-				final boolean warRunning = PhantomEngine.canJoinWar(phantom);
-				if (warRunning && phantom.getFactionId() == 0) // Not yet assigned to a faction
+				final boolean canJoinWar = PhantomEngine.canJoinWar(phantom);
+				if (canJoinWar && phantom.getFactionId() == 0) // Not yet assigned to a faction
 				{
 					final int registrarNpcId = FactionWarConfig.getWarRegistrarNpcId();
 					if (registrarNpcId > 0)
@@ -402,8 +404,15 @@ public final class PhantomAI
 							{
 								// Close enough to registrar - join the war (simulate player registration)
 								// Choose the faction with fewer players
-								int goodCount = FactionWarManager.getInstance().getPlayerCount(FactionWarConfig.getGoodFactionId());
-								int evilCount = FactionWarManager.getInstance().getPlayerCount(FactionWarConfig.getEvilFactionId());
+								int goodCount = 0;
+								int evilCount = 0;
+								for (Player p : World.getInstance().getPlayers())
+								{
+									if (p.getFactionId() == FactionWarConfig.getGoodFactionId())
+										goodCount++;
+									else if (p.getFactionId() == FactionWarConfig.getEvilFactionId())
+										evilCount++;
+								}
 								int factionId = (goodCount <= evilCount) ? FactionWarConfig.getGoodFactionId() : FactionWarConfig.getEvilFactionId();
 
 								phantom.setFactionId(factionId);

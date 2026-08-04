@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import net.sf.l2j.commons.random.Rnd;
 import net.sf.l2j.gameserver.data.xml.FactionData;
+import net.sf.l2j.gameserver.data.xml.RestartPointData;
+import net.sf.l2j.gameserver.enums.RestartType;
 import net.sf.l2j.gameserver.factionwar.FactionWarConfig;
 import net.sf.l2j.gameserver.factionwar.FactionWarManager;
 import net.sf.l2j.gameserver.handler.IAdminCommandHandler;
@@ -62,28 +65,28 @@ public class AdminPhantom implements IAdminCommandHandler
 		"admin_phantom_emergencyheal",
 		"admin_phantom_emergencyrespawn"
 	};
-	
+
 	@Override
 	public void useAdminCommand(String command, Player player)
 	{
 		final StringTokenizer st = new StringTokenizer(command);
 		String cmd = st.nextToken();
-		
+
 		if (cmd.equals("admin_phantom") && st.hasMoreTokens())
 			cmd = "admin_phantom_" + st.nextToken().toLowerCase();
-		
+
 		if (cmd.equals("admin_phantom") || cmd.equals("admin_phantom_status"))
 		{
 			showPanel(player, null);
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_online"))
 		{
 			showOnline(player, parsePage(st), 0, null);
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_factions"))
 		{
 			if (!FactionWarConfig.isEnabled())
@@ -91,27 +94,27 @@ public class AdminPhantom implements IAdminCommandHandler
 				showPanel(player, "Faction system is disabled.");
 				return;
 			}
-			
+
 			final int factionId = parseCount(st, 0);
 			final int page = parsePage(st);
 			showOnline(player, page, factionId, null);
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_reload"))
 		{
 			PhantomConfig.load();
 			showPanel(player, "Config reloaded. IDs: " + PhantomConfig.getPhantomIds().size());
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_start"))
 		{
 			PhantomEngine.startConfigured(player);
 			showPanel(player, "Loading phantoms in background...");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_create"))
 		{
 			final int count = parseCount(st, 1);
@@ -124,7 +127,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Created NEW phantoms: " + loaded + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_bring"))
 		{
 			// Per-phantom bring from the list: admin_phantom bring <page> <filterFaction> <objectId>.
@@ -140,7 +143,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Brought phantoms: " + PhantomEngine.bringAll(player) + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_bringfaction"))
 		{
 			final int factionId = parseCount(st, 0);
@@ -148,7 +151,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Brought " + label + " phantoms: " + PhantomEngine.bringFaction(player, factionId) + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_resurrect"))
 		{
 			// Per-phantom revive from the list: admin_phantom resurrect <page> <filterFaction> <objectId>.
@@ -161,7 +164,7 @@ public class AdminPhantom implements IAdminCommandHandler
 					showOnline(player, page, filterFaction, PhantomEngine.resurrect(objectId) ? "Resurrected phantom " + objectId + "." : "Phantom " + objectId + " isn't dead or isn't active.");
 				return;
 			}
-			
+
 			// No args: revive the targeted phantom, otherwise everyone.
 			final WorldObject target = player.getTarget();
 			if (target instanceof Player tp && PhantomEngine.isPhantom(tp.getObjectId()))
@@ -172,7 +175,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Resurrected phantoms: " + PhantomEngine.resurrectAll() + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_resurrectfaction"))
 		{
 			final int factionId = parseCount(st, 0);
@@ -180,7 +183,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Resurrected " + label + " phantoms: " + PhantomEngine.resurrectFaction(factionId) + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_heal"))
 		{
 			// Per-phantom heal from the list: admin_phantom heal <page> <filterFaction> <objectId>.
@@ -193,7 +196,7 @@ public class AdminPhantom implements IAdminCommandHandler
 					showOnline(player, page, filterFaction, PhantomEngine.heal(objectId) ? "Healed phantom " + objectId + "." : "Phantom " + objectId + " isn't active.");
 				return;
 			}
-			
+
 			// No args: heal the targeted phantom, otherwise everyone.
 			final WorldObject target = player.getTarget();
 			if (target instanceof Player tp && PhantomEngine.isPhantom(tp.getObjectId()))
@@ -204,7 +207,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Healed phantoms: " + PhantomEngine.healFaction(0) + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_healfaction"))
 		{
 			final int factionId = parseCount(st, 0);
@@ -212,14 +215,14 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Healed " + label + " phantoms: " + PhantomEngine.healFaction(factionId) + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_deleteall"))
 		{
 			final int deleted = PhantomEngine.deleteAll();
 			showPanel(player, "Deleted ALL phantoms: " + deleted + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_ai"))
 		{
 			if (!st.hasMoreTokens())
@@ -227,7 +230,7 @@ public class AdminPhantom implements IAdminCommandHandler
 				showPanel(player, "Usage: AI on/off/home");
 				return;
 			}
-			
+
 			final String mode = st.nextToken().toLowerCase();
 			switch (mode)
 			{
@@ -238,13 +241,13 @@ public class AdminPhantom implements IAdminCommandHandler
 			}
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_radar"))
 		{
 			markRadar(player, st.hasMoreTokens() ? st.nextToken().toLowerCase() : "phantoms");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_load"))
 		{
 			if (!st.hasMoreTokens())
@@ -252,20 +255,20 @@ public class AdminPhantom implements IAdminCommandHandler
 				showPanel(player, "Usage: load objectId [here|db]");
 				return;
 			}
-			
+
 			final int objectId = parseObjectId(st, player, 0, 0);
 			if (objectId <= 0)
 				return;
-			
+
 			boolean spawnHere = true;
 			if (st.hasMoreTokens())
 				spawnHere = !st.nextToken().equalsIgnoreCase("db");
-			
+
 			final Player phantom = PhantomEngine.load(objectId, player, spawnHere);
 			showPanel(player, (phantom == null) ? "Couldn't load phantom " + objectId + "." : "Loaded phantom " + phantom.getName() + ".");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_kill"))
 		{
 			final int page = parsePage(st);
@@ -275,7 +278,7 @@ public class AdminPhantom implements IAdminCommandHandler
 				showOnline(player, page, filterFaction, PhantomEngine.kill(objectId) ? "Killed phantom " + objectId + "." : "Phantom " + objectId + " isn't active.");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_delete"))
 		{
 			final int page = parsePage(st);
@@ -285,7 +288,7 @@ public class AdminPhantom implements IAdminCommandHandler
 				showOnline(player, page, filterFaction, PhantomEngine.deleteConfigured(objectId) ? "Deleted phantom " + objectId + "." : "Phantom " + objectId + " not found.");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_stop"))
 		{
 			if (st.hasMoreTokens())
@@ -297,10 +300,11 @@ public class AdminPhantom implements IAdminCommandHandler
 					showOnline(player, page, filterFaction, PhantomEngine.stop(objectId) ? "Stopped phantom " + objectId + "." : "Phantom " + objectId + " isn't active.");
 				return;
 			}
-			
+
 			showPanel(player, "Stopped phantoms: " + PhantomEngine.stopAll() + ".");
+			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_faction"))
 		{
 			if (!FactionWarConfig.isEnabled())
@@ -308,19 +312,19 @@ public class AdminPhantom implements IAdminCommandHandler
 				showPanel(player, "Faction system is disabled.");
 				return;
 			}
-			
+
 			final int page = parsePage(st);
 			final int filterFaction = parseCount(st, 0);
 			final int objectId = parseObjectId(st, player, page, filterFaction);
 			if (objectId <= 0)
 				return;
-			
+
 			if (!st.hasMoreTokens())
 			{
 				showOnline(player, page, filterFaction, "Usage: faction " + page + " " + filterFaction + " " + objectId + " <factionId|0>");
 				return;
 			}
-			
+
 			final int factionId;
 			try
 			{
@@ -331,14 +335,14 @@ public class AdminPhantom implements IAdminCommandHandler
 				showOnline(player, page, filterFaction, "Invalid factionId.");
 				return;
 			}
-			
+
 			final Player phantom = PhantomEngine.getActivePhantom(objectId);
 			if (phantom == null)
 			{
 				showOnline(player, page, filterFaction, "Phantom " + objectId + " is not active.");
 				return;
 			}
-			
+
 			if (factionId == 0)
 			{
 				phantom.setFactionId(0);
@@ -359,7 +363,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			}
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_party"))
 		{
 			PhantomAI.ensureFactionParties();
@@ -377,7 +381,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Parties formed. " + partied + " phantoms in " + partyCount.size() + " parties.");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_store"))
 		{
 			int opened = 0;
@@ -386,7 +390,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			{
 				if (p == null || p.isDead())
 					continue;
-				
+
 				if (p.getOperateType() == OperateType.NONE)
 				{
 					p.sitDown();
@@ -405,7 +409,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Store toggle: " + opened + " opened, " + closed + " closed.");
 			return;
 		}
-		
+
 		if (cmd.equals("admin_phantom_factionall"))
 		{
 			if (!FactionWarConfig.isEnabled())
@@ -413,7 +417,7 @@ public class AdminPhantom implements IAdminCommandHandler
 				showPanel(player, "Faction system is disabled.");
 				return;
 			}
-			
+
 			final int factionId;
 			try
 			{
@@ -424,14 +428,14 @@ public class AdminPhantom implements IAdminCommandHandler
 				showPanel(player, "Usage: factionall <factionId> - assigns ALL phantoms without faction to the given faction.");
 				return;
 			}
-			
+
 			final Faction faction = FactionData.getInstance().getFaction(factionId);
 			if (faction == null)
 			{
 				showPanel(player, "Faction " + factionId + " not found.");
 				return;
 			}
-			
+
 			int assigned = 0;
 			for (Player p : PhantomEngine.getActivePhantoms())
 			{
@@ -445,9 +449,8 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Assigned " + assigned + " phantoms to " + faction.getName() + ".");
 			return;
 		}
-	}
-	
-	// Wartime Commands
+
+		// Wartime Commands
 		if (cmd.equals("admin_phantom_warinfo"))
 		{
 			if (!FactionWarConfig.isEnabled())
@@ -467,7 +470,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			sb.append("<tr><td>Estado: <font color=").append(running ? "00FF00" : "FF0000").append(">").append(status).append("</font></td></tr>");
 			sb.append("<tr><td>Votacion: <font color=").append(fwm.isVotingPhaseActive() ? "00FF00" : "FF0000").append(">").append(voteStatus).append("</font></td></tr>");
 			sb.append("<tr><td>Mapa: ").append(fwm.getCurrentMapIndex() + 1).append("/").append(FactionWarConfig.getMaps().size()).append("</td></tr>");
-			sb.append("<tr><td>Duracion: ").append(fwm.getWarDurationMinutes()).append(" min</td></tr>");
+			sb.append("<tr><td>Duracion: ").append(FactionWarConfig.getWarDurationMinutes()).append(" min</td></tr>");
 			sb.append("<tr><td>Puntos - Furious: ").append(fwm.getScore(FactionWarConfig.getGoodFactionId())).append("</td></tr>");
 			sb.append("<tr><td>Puntos - Fast: ").append(fwm.getScore(FactionWarConfig.getEvilFactionId())).append("</td></tr>");
 			sb.append("<tr><td>Ganadora: Faccion ").append(fwm.getWinningFaction()).append("</td></tr>");
@@ -551,7 +554,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			final FactionWarManager fwm = FactionWarManager.getInstance();
 			if (fwm.isRunning())
 			{
-				fwm.stopWar();
+				fwm.stop();
 				showPanel(player, "Faction War detenida.");
 			}
 			else
@@ -676,7 +679,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			{
 				if (phantom != null && phantom.getFactionId() > 0 && !phantom.isDead())
 				{
-					final Location neutral = new Location(FactionWarConfig.getNeutralSpawnLocX(), FactionWarConfig.getNeutralSpawnLocY(), FactionWarConfig.getNeutralSpawnLocZ());
+					final Location neutral = FactionWarConfig.getNeutralSpawnLoc();
 					final int rx = neutral.getX() + Rnd.get(-100, 100);
 					final int ry = neutral.getY() + Rnd.get(-100, 100);
 					phantom.teleportTo(rx, ry, neutral.getZ(), 0);
@@ -726,10 +729,10 @@ public class AdminPhantom implements IAdminCommandHandler
 						healed++;
 					}
 				}
-				else if (phantom != null && phantom.getCurrentHp() < phantom.getMaxHp())
+				else if (phantom != null && phantom.getStatus().getHp() < phantom.getStatus().getMaxHp())
 				{
-					phantom.setCurrentHp(phantom.getMaxHp());
-					phantom.setCurrentMp(phantom.getMaxMp());
+					phantom.getStatus().setHp(phantom.getStatus().getMaxHp());
+					phantom.getStatus().setMp(phantom.getStatus().getMaxMp());
 					phantom.broadcastUserInfo();
 					healed++;
 				}
@@ -754,12 +757,13 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Respawn de emergencia: " + respawned + " phantoms resucitados.");
 			return;
 		}
+	}
 
-		private static List<Player> filterByFaction(List<Player> phantoms, int factionId)
+	private static List<Player> filterByFaction(List<Player> phantoms, int factionId)
 	{
 		if (factionId <= 0)
 			return phantoms;
-		
+
 		final List<Player> filtered = new ArrayList<>();
 		for (Player p : phantoms)
 		{
@@ -768,12 +772,12 @@ public class AdminPhantom implements IAdminCommandHandler
 		}
 		return filtered;
 	}
-	
+
 	private static int parsePage(StringTokenizer st)
 	{
 		if (!st.hasMoreTokens())
 			return 0;
-		
+
 		try
 		{
 			return Math.max(0, Integer.parseInt(st.nextToken()));
@@ -783,7 +787,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			return 0;
 		}
 	}
-	
+
 	private static int parseObjectId(StringTokenizer st, Player player, int page, int filterFaction)
 	{
 		if (!st.hasMoreTokens())
@@ -791,7 +795,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			showOnline(player, page, filterFaction, "Missing objectId.");
 			return 0;
 		}
-		
+
 		try
 		{
 			return Integer.parseInt(st.nextToken());
@@ -802,12 +806,12 @@ public class AdminPhantom implements IAdminCommandHandler
 			return 0;
 		}
 	}
-	
+
 	private static int parseCount(StringTokenizer st, int defaultValue)
 	{
 		if (!st.hasMoreTokens())
 			return defaultValue;
-		
+
 		try
 		{
 			return Math.max(0, Math.min(50, Integer.parseInt(st.nextToken())));
@@ -817,7 +821,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			return defaultValue;
 		}
 	}
-	
+
 	private static void markRadar(Player player, String mode)
 	{
 		if (mode.equals("clear"))
@@ -826,28 +830,30 @@ public class AdminPhantom implements IAdminCommandHandler
 			showPanel(player, "Radar cleared.");
 			return;
 		}
-		
+
 		player.getRadarList().removeAllMarkers();
 		int markers = 0;
 		for (Player phantom : PhantomEngine.getActivePhantoms())
 		{
 			if (phantom == null)
 				continue;
-			
+
 			final Location loc = mode.equals("targets") ? PhantomAI.getLastTarget(phantom) : phantom.getPosition();
 			if (loc != null)
 			{
 				player.getRadarList().addMarker(loc);
 				markers++;
 					}
+		}
 		showPanel(player, "Radar markers: " + markers + " (" + mode + ").");
 	}
-	
+
 	private static void showPanel(Player player, String message)
 	{
 		final List<Player> allPhantoms = PhantomEngine.getActivePhantomsSorted();
 		final boolean warEnabled = FactionWarConfig.isEnabled();
 		final boolean warRunning = warEnabled && FactionWarManager.getInstance().isRunning();
+		final FactionWarManager fwm = FactionWarManager.getInstance();
 		final StringBuilder sb = new StringBuilder(8192);
 
 		// Header with improved styling
@@ -866,7 +872,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			sb.append("<table width=340>");
 			sb.append("<tr><td width=120>Estado:</td><td width=220><font color=").append(warRunning ? "00FF00" : "FF0000").append("><b>").append(warRunning ? "EN CURSO" : "DETENIDA").append("</b></font></td></tr>");
 			sb.append("<tr><td width=120>Mapa Actual:</td><td width=220>").append(FactionWarManager.getInstance().getCurrentMapIndex() + 1).append("/").append(FactionWarConfig.getMaps().size()).append("</td></tr>");
-			sb.append("<tr><td width=120>Duración:</td><td width=220>").append(fwm.getWarDurationMinutes()).append(" minutos</td></tr>");
+			sb.append("<tr><td width=120>Duración:</td><td width=220>").append(FactionWarConfig.getWarDurationMinutes()).append(" minutos</td></tr>");
 			if (warRunning)
 			{
 				sb.append("<tr><td width=120>Tiempo Rest:</td><td width=220><font color=FFA500><b>").append(fwm.getRemainingTimeStr()).append("</b></font></td></tr>");
@@ -906,18 +912,18 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("<tr><td>");
 		sb.append("<table width=340>");
 		sb.append("<tr><td width=80>Cantidad:</td><td width=100><edit var=\"createCount\" width=70 height=16 type=number></td>");
-		sb.append("<td width=80>").append(button(sb, "Crear Custom", "admin_phantom create $createCount", 70)).append("</td>");
-		sb.append("<td width=80>").append(button(sb, "Crear 1", "admin_phantom create 1", 50)).append("</td>");
-		sb.append("<td width=80>").append(button(sb, "Crear 5", "admin_phantom create 5", 50)).append("</td>");
+		sb.append("<td width=80>"); button(sb, "Crear Custom", "admin_phantom create $createCount", 70); sb.append("</td>");
+		sb.append("<td width=80>"); button(sb, "Crear 1", "admin_phantom create 1", 50); sb.append("</td>");
+		sb.append("<td width=80>"); button(sb, "Crear 5", "admin_phantom create 5", 50); sb.append("</td>");
 		sb.append("</tr></table>");
 		sb.append("</td></tr>");
 
 		sb.append("<tr><td>");
 		sb.append("<table width=340>");
-		sb.append("<tr><td width=80>").append(button(sb, "Crear 10", "admin_phantom create 10", 70)).append("</td>");
-		sb.append("<td width=80>").append(button(sb, "Crear 20", "admin_phantom create 20", 70)).append("</td>");
-		sb.append("<td width=80>").append(button(sb, "Crear 50", "admin_phantom create 50", 70)).append("</td>");
-		sb.append("<td width=80>").append(button(sb, "Crear 100", "admin_phantom create 100", 70)).append("</td>");
+		sb.append("<tr><td width=80>"); button(sb, "Crear 10", "admin_phantom create 10", 70); sb.append("</td>");
+		sb.append("<td width=80>"); button(sb, "Crear 20", "admin_phantom create 20", 70); sb.append("</td>");
+		sb.append("<td width=80>"); button(sb, "Crear 50", "admin_phantom create 50", 70); sb.append("</td>");
+		sb.append("<td width=80>"); button(sb, "Crear 100", "admin_phantom create 100", 70); sb.append("</td>");
 		sb.append("</tr></table>");
 		sb.append("</td></tr></table><br>");
 
@@ -927,16 +933,16 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("<tr><td>");
 		sb.append("<table width=340>");
 		sb.append("<tr>");
-		sb.append("<td width=85>").append(button(sb, "Traer Todos", "admin_phantom bring", 85)).append("</td>");
-		sb.append("<td width=85>").append(button(sb, "Curar Todos", "admin_phantom heal", 85)).append("</td>");
-		sb.append("<td width=85>").append(button(sb, "Revivir Todos", "admin_phantom resurrect", 85)).append("</td>");
-		sb.append("<td width=85>").append(button(sb, "Detener Todos", "admin_phantom stop", 85)).append("</td>");
+		sb.append("<td width=85>"); button(sb, "Traer Todos", "admin_phantom bring", 85); sb.append("</td>");
+		sb.append("<td width=85>"); button(sb, "Curar Todos", "admin_phantom heal", 85); sb.append("</td>");
+		sb.append("<td width=85>"); button(sb, "Revivir Todos", "admin_phantom resurrect", 85); sb.append("</td>");
+		sb.append("<td width=85>"); button(sb, "Detener Todos", "admin_phantom stop", 85); sb.append("</td>");
 		sb.append("</tr>");
 		sb.append("<tr>");
-		sb.append("<td width=85>").append(button(sb, "Formar Party", "admin_phantom party", 85)).append("</td>");
-		sb.append("<td width=85>").append(button(sb, "Lista Online", "admin_phantom online 0", 85)).append("</td>");
-		sb.append("<td width=85>").append(button(sb, "Borrar Todos", "admin_phantom deleteall", 85)).append("</td>");
-		sb.append("<td width=85>").append(button(sb, "Crear Party", "admin_phantom createParty", 85)).append("</td>");
+		sb.append("<td width=85>"); button(sb, "Formar Party", "admin_phantom party", 85); sb.append("</td>");
+		sb.append("<td width=85>"); button(sb, "Lista Online", "admin_phantom online 0", 85); sb.append("</td>");
+		sb.append("<td width=85>"); button(sb, "Borrar Todos", "admin_phantom deleteall", 85); sb.append("</td>");
+		sb.append("<td width=85>"); button(sb, "Crear Party", "admin_phantom createParty", 85); sb.append("</td>");
 		sb.append("</tr>");
 		sb.append("</table>");
 		sb.append("</td></tr></table><br>");
@@ -957,10 +963,10 @@ public class AdminPhantom implements IAdminCommandHandler
 
 				sb.append("<tr>");
 				sb.append("<td width=70><font color=FFD700><b>").append(safeLabel).append(":</b></font></td>");
-				sb.append("<td width=55>").append(button(sb, "Traer", "admin_phantom bringfaction " + fid, 55)).append("</td>");
-				sb.append("<td width=55>").append(button(sb, "Revivir", "admin_phantom resurrectfaction " + fid, 55)).append("</td>");
-				sb.append("<td width=55>").append(button(sb, "Curar", "admin_phantom healfaction " + fid, 55)).append("</td>");
-				sb.append("<td width=55>").append(button(sb, "Ver", "admin_phantom factions " + fid + " 0", 55)).append("</td>");
+				sb.append("<td width=55>"); button(sb, "Traer", "admin_phantom bringfaction " + fid, 55); sb.append("</td>");
+				sb.append("<td width=55>"); button(sb, "Revivir", "admin_phantom resurrectfaction " + fid, 55); sb.append("</td>");
+				sb.append("<td width=55>"); button(sb, "Curar", "admin_phantom healfaction " + fid, 55); sb.append("</td>");
+				sb.append("<td width=55>"); button(sb, "Ver", "admin_phantom factions " + fid + " 0", 55); sb.append("</td>");
 				sb.append("</tr>");
 			}
 
@@ -981,7 +987,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("</body></html>");
 		sendHtml(player, sb);
 	}
-	
+
 	private static void showOnline(Player player, int page, int filterFaction, String message)
 	{
 		List<Player> phantoms = PhantomEngine.getActivePhantomsSorted();
@@ -996,18 +1002,18 @@ public class AdminPhantom implements IAdminCommandHandler
 		{
 			title = "Phantoms en linea";
 		}
-		
+
 		final int maxPage = phantoms.isEmpty() ? 0 : (phantoms.size() - 1) / PAGE_SIZE;
 		page = Math.max(0, Math.min(page, maxPage));
-		
+
 		final StringBuilder sb = new StringBuilder(8192);
 		sb.append("<html><body><center><font color=LEVEL>").append(title).append("</font></center><br>");
 		if (message != null)
 			sb.append("<font color=99FF99>").append(message).append("</font><br1>");
-		
+
 		sb.append("Total: <font color=LEVEL>").append(phantoms.size()).append("</font> | Pagina: ").append(page + 1).append("/").append(maxPage + 1).append("<br1>");
 		sb.append("<table width=310>");
-		
+
 		final int start = page * PAGE_SIZE;
 		final int end = Math.min(start + PAGE_SIZE, phantoms.size());
 		for (int i = start; i < end; i++)
@@ -1033,7 +1039,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		}
 		sb.append("</table>");
 		sb.append("<center><font color=808080>Traer=teleport | Rev=revivir | Cur=curar | K=matar | S=detener | X=borrar | Fac=asignar faccion</font></center><br>");
-		
+
 		sb.append("<table width=300><tr>");
 		if (filterFaction > 0)
 		{
@@ -1051,7 +1057,7 @@ public class AdminPhantom implements IAdminCommandHandler
 		sb.append("</body></html>");
 		sendHtml(player, sb);
 	}
-	
+
 	/**
 	 * Cycles to the next real faction id (from faction.xml), wrapping back to 0 after
 	 * the last one. Unlike the old fId+1 logic, this works with non-contiguous ids.
@@ -1060,54 +1066,53 @@ public class AdminPhantom implements IAdminCommandHandler
 	{
 		if (!FactionWarConfig.isEnabled())
 			return 0;
-		
+
 		final int[] factionIds = FactionData.getInstance().getFactionIds();
 		if (factionIds.length == 0)
 			return 0;
-		
+
 		if (current == 0)
 			return factionIds[0];
-		
+
 		for (int i = 0; i < factionIds.length; i++)
 		{
 			if (factionIds[i] == current)
 				return (i + 1 < factionIds.length) ? factionIds[i + 1] : 0;
 		}
-		
+
 		return factionIds[0];
 	}
-	
+
 	private static String shortText(String text, int max)
 	{
 		if (text == null)
 			return "-";
 		return text.length() <= max ? text : text.substring(0, max);
 	}
-	
+
 	private static String htmlSafe(String text)
 	{
 		if (text == null)
 			return "";
 		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
 	}
-	
+
 	private static void sendHtml(Player player, StringBuilder sb)
 	{
 		final NpcHtmlMessage html = new NpcHtmlMessage(0);
 		html.setHtml(sb.toString());
 		player.sendPacket(html);
 	}
-	
+
 	private static void sectionTitle(StringBuilder sb, String title)
 	{
 		sb.append("<table width=330><tr><td bgcolor=3A3A3A><font color=FFD700>").append(title).append("</font></td></tr></table><br1>");
 	}
-	
+
 	private static void infoRow(StringBuilder sb, String label, Object value)
 	{
 		sb.append("<tr><td width=140>").append(label).append("</td><td width=190><font color=LEVEL>").append(value).append("</font></td></tr>");
 	}
-	
 
 	private static void buttonRow2(StringBuilder sb, String label1, String bypass1, String label2, String bypass2)
 	{			sb.append("<table width=300><tr>");
@@ -1115,7 +1120,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			button(sb, label2, bypass2, 150);
 			sb.append("</tr></table>");
 	}
-	
+
 	private static void buttonRowSkipEmpty(StringBuilder sb, String label1, String bypass1, String label2, String bypass2, String label3, String bypass3)
 	{
 		sb.append("<table width=300><tr>");
@@ -1127,22 +1132,21 @@ public class AdminPhantom implements IAdminCommandHandler
 			button(sb, label3, bypass3, 150);
 		sb.append("</tr></table>");
 	}
-	
+
 	private static void button(StringBuilder sb, String label, String bypass)
 	{
 		sb.append("<td><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=90 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 	}
-	
+
 	private static void button(StringBuilder sb, String label, String bypass, int width)
 	{
 		sb.append("<td><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=").append(width).append(" height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 	}
-	
+
 	private static void miniButton(StringBuilder sb, String label, String bypass, int width)
 	{
 		sb.append("<button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=").append(width).append(" height=17 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\">");
 	}
-	
 
 	@Override
 	public String[] getAdminCommandList()
