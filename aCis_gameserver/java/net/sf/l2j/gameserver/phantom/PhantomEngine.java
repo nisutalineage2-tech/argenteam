@@ -680,8 +680,7 @@ public final class PhantomEngine
 					// re-teleport to avoid a visible double-teleport flicker.
 					if (p.distance3D(warSpawn) < 600)
 					{
-						FactionWarRegistry.getInstance().register(p);
-						PhantomAI.setHome(p);
+												PhantomAI.setHome(p);
 						return;
 					}
 					
@@ -694,8 +693,7 @@ public final class PhantomEngine
 					if (p.isTeleporting())
 						p.onTeleported();
 					
-					FactionWarRegistry.getInstance().register(p);
-					PhantomAI.setHome(p);
+										PhantomAI.setHome(p);
 					
 					// Say arrival phrase
 					PhantomSocial.sayWarPhrase(p);

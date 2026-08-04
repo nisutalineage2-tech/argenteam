@@ -310,8 +310,7 @@ public final class PhantomAI
 						phantom.revalidateZone(true);
 						phantom.broadcastUserInfo();
 						PhantomAI.setHome(phantom);
-						FactionWarRegistry.getInstance().register(phantom);
-						LAST_ACTIONS.put(phantom.getObjectId(), "War join");
+												LAST_ACTIONS.put(phantom.getObjectId(), "War join");
 						PhantomLog.info("Phantom " + phantom.getName() + " joined the faction war from neutral zone.");
 					}
 					return;
@@ -380,6 +379,58 @@ public final class PhantomAI
 			// === NEUTRAL ZONE BEHAVIOR: open private store or human-like idle (war is not running here) ===
 			if (inNeutralZone)
 			{
+				// Phantom self-registration for Faction War: move toward War Registrar NPC to join war
+				final boolean warRunning = PhantomEngine.canJoinWar(phantom);
+				if (warRunning && phantom.getFactionId() == 0) // Not yet assigned to a faction
+				{
+					final int registrarNpcId = FactionWarConfig.getWarRegistrarNpcId();
+					if (registrarNpcId > 0)
+					{
+						// Find the War Registrar NPC
+						final Npc registrar = getKnownNpc(phantom, registrarNpcId);
+						if (registrar != null && !registrar.isDead())
+						{
+							// If not close enough to registrar, move toward it
+							if (phantom.distance3D(registrar) > 150)
+							{
+								final Location dest = new Location(registrar.getX(), registrar.getY(), registrar.getZ());
+								moveTo(phantom, dest, "Moving to War Registrar");
+								LAST_ACTIONS.put(phantom.getObjectId(), "Moving to Registrar");
+								return;
+							}
+							else
+							{
+								// Close enough to registrar - join the war (simulate player registration)
+								// Choose the faction with fewer players
+								int goodCount = FactionWarManager.getInstance().getPlayerCount(FactionWarConfig.getGoodFactionId());
+								int evilCount = FactionWarManager.getInstance().getPlayerCount(FactionWarConfig.getEvilFactionId());
+								int factionId = (goodCount <= evilCount) ? FactionWarConfig.getGoodFactionId() : FactionWarConfig.getEvilFactionId();
+
+								phantom.setFactionId(factionId);
+								phantom.broadcastUserInfo();
+
+								// Teleport to faction spawn point
+								final Location warSpawn = FactionWarManager.getInstance().getFactionSpawn(factionId);
+								if (warSpawn != null)
+								{
+									// Randomize slightly to avoid all phantoms stacking on the exact spawn point.
+									final int rx = warSpawn.getX() + Rnd.get(-250, 250);
+									final int ry = warSpawn.getY() + Rnd.get(-250, 250);
+									phantom.teleportTo(rx, ry, warSpawn.getZ(), 20);
+									if (phantom.isTeleporting())
+										phantom.onTeleported();
+								}
+
+								phantom.revalidateZone(true);
+								PhantomAI.setHome(phantom);
+								LAST_ACTIONS.put(phantom.getObjectId(), "War join via Registrar");
+								PhantomLog.info("Phantom " + phantom.getName() + " joined the faction war via War Registrar NPC.");
+								return;
+							}
+						}
+					}
+				}
+
 				// Store sold out: the phantom was left seated with no store, stand up and resume.
 				if (phantom.isSitting() && phantom.getOperateType() == OperateType.NONE)
 				{
@@ -387,14 +438,14 @@ public final class PhantomAI
 					LAST_ACTIONS.put(phantom.getObjectId(), "Stand up");
 					return;
 				}
-				
+
 				// Sit and open a real sell store.
 				if (PhantomConfig.storeEnabled() && phantom.getOperateType() == OperateType.NONE && !phantom.isSitting() && Rnd.get(100) < PhantomConfig.storeChance())
 				{
 					openPrivateStore(phantom);
 					return;
 				}
-				
+
 				// Occasionally send some phantoms to hunt an alive Grand Boss.
 				if (!phantom.isMoving() && PhantomConfig.bossHuntEnabled() && Rnd.get(100) < 8)
 				{
@@ -402,7 +453,7 @@ public final class PhantomAI
 					LAST_ACTIONS.put(phantom.getObjectId(), "Boss check");
 					return;
 				}
-				
+
 				// Human-like idle: wander, sit/stand, emote and glance at players instead of
 				// standing like a statue until something happens. In town phantoms also
 				// occasionally walk up to a known NPC and emulate interacting with it.
@@ -413,7 +464,7 @@ public final class PhantomAI
 					handleIdleBehavior(phantom, true);
 					return;
 				}
-				
+
 				LAST_ACTIONS.put(phantom.getObjectId(), "Neutral zone");
 				return;
 			}
@@ -1093,7 +1144,34 @@ public final class PhantomAI
 			// must return to its faction base no matter what.
 			Location destination = null;
 			if (returnToWar)
-				destination = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
+			{
+				// Check if faction controls any checkpoints - if so, respawn at random friendly-controlled checkpoint
+				final FactionWarCheckpoint checkpoints = FactionWarManager.getInstance().getCheckpoints();
+				final List<Integer> friendlyCheckpointIndices = new ArrayList<>();
+				final Integer factionId = phantom.getFactionId();
+
+				// Find all checkpoints controlled by this faction
+				for (Map.Entry<Integer, Integer> entry : checkpoints.getOwners().entrySet())
+				{
+					if (entry.getValue() != null && entry.getValue().equals(factionId))
+					{
+						friendlyCheckpointIndices.add(entry.getKey());
+					}
+				}
+
+				if (!friendlyCheckpointIndices.isEmpty())
+				{
+					// Pick a random checkpoint controlled by our faction
+					final int randomIndex = Rnd.get(friendlyCheckpointIndices.size());
+					final int checkpointIndex = friendlyCheckpointIndices.get(randomIndex);
+					destination = checkpoints.getLocations().get(checkpointIndex);
+				}
+				else
+				{
+					// Fall back to faction spawn
+					destination = FactionWarManager.getInstance().getFactionSpawn(phantom.getFactionId());
+				}
+			}
 			if (destination == null && Config.ENABLE_FACTION_SYSTEM && phantom.getFactionId() > 0)
 			{
 				final Faction faction = FactionData.getInstance().getFaction(phantom.getFactionId());

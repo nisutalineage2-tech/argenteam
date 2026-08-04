@@ -49,7 +49,18 @@ public class AdminPhantom implements IAdminCommandHandler
 		"admin_phantom_factions",
 		"admin_phantom_party",
 		"admin_phantom_store",
-		"admin_phantom_factionall"
+		"admin_phantom_factionall",
+		"admin_phantom_warinfo",
+		"admin_phantom_warstat",
+		"admin_phantom_warstart",
+		"admin_phantom_warstop",
+		"admin_phantom_warforcejoin",
+		"admin_phantom_warforceleave",
+		"admin_phantom_warteleportin",
+		"admin_phantom_warteleportout",
+		"admin_phantom_emergencyrecall",
+		"admin_phantom_emergencyheal",
+		"admin_phantom_emergencyrespawn"
 	};
 	
 	@Override
@@ -436,7 +447,315 @@ public class AdminPhantom implements IAdminCommandHandler
 		}
 	}
 	
-	private static List<Player> filterByFaction(List<Player> phantoms, int factionId)
+	// Wartime Commands
+		if (cmd.equals("admin_phantom_warinfo"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			final boolean running = fwm.isRunning();
+			final String status = running ? "EN CURSO" : "DETENIDA";
+			final String voteStatus = fwm.isVotingPhaseActive() ? "EN VOTACION" : "SIN VOTACION";
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("<html><body>");
+			sb.append("<center><table width=200><tr><td><font color=LEVEL>Estado Faction War:</font></td></tr>");
+			sb.append("<tr><td>Estado: <font color=").append(running ? "00FF00" : "FF0000").append(">").append(status).append("</font></td></tr>");
+			sb.append("<tr><td>Votacion: <font color=").append(fwm.isVotingPhaseActive() ? "00FF00" : "FF0000").append(">").append(voteStatus).append("</font></td></tr>");
+			sb.append("<tr><td>Mapa: ").append(fwm.getCurrentMapIndex() + 1).append("/").append(FactionWarConfig.getMaps().size()).append("</td></tr>");
+			sb.append("<tr><td>Duracion: ").append(fwm.getWarDurationMinutes()).append(" min</td></tr>");
+			sb.append("<tr><td>Puntos - Furious: ").append(fwm.getScore(FactionWarConfig.getGoodFactionId())).append("</td></tr>");
+			sb.append("<tr><td>Puntos - Fast: ").append(fwm.getScore(FactionWarConfig.getEvilFactionId())).append("</td></tr>");
+			sb.append("<tr><td>Ganadora: Faccion ").append(fwm.getWinningFaction()).append("</td></tr>");
+			sb.append("</table></center>");
+			sb.append("<br><center><button value=\"Actualizar\" action=\"bypass -h admin_phantom_warinfo\" width=80 height=20></center>");
+			sb.append("</body></html>");
+
+			sendHtml(player, sb);
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_warstat"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			final List<FactionWarManager.FactionWarStats> topPlayers = fwm.getTopPlayers(5);
+			final Map<Integer, FactionWarManager.FactionWarStats> allStats = fwm.getAllPlayerStats();
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("<html><body>");
+			sb.append("<center><table width=250><tr><td><font color=LEVEL>Top 5 Jugadores Faction War:</font></td></tr></table></center>");
+
+			if (topPlayers.isEmpty())
+			{
+				sb.append("<center>No hay estadisticas disponibles</center>");
+			}
+			else
+			{
+				sb.append("<center><table width=250>");
+				for (int i = 0; i < topPlayers.size(); i++)
+				{
+					final FactionWarManager.FactionWarStats stats = topPlayers.get(i);
+					sb.append("<tr><td>").append(i + 1).append(". ").append(stats.playerName);
+					sb.append(" (Fac ").append(stats.factionId).append("): ");
+					sb.append(stats.points).append(" pts (").append(stats.kills).append(" kills, ").append(stats.deaths).append(" deaths)</td></tr>");
+				}
+				sb.append("</table></center>");
+			}
+
+			sb.append("<br><center><button value=\"Actualizar\" action=\"bypass -h admin_phantom_warstat\" width=80 height=20></center>");
+			sb.append("</body></html>");
+
+			sendHtml(player, sb);
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_warstart"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			if (!fwm.isVotingPhaseActive())
+			{
+				fwm.startVotePhase();
+				showPanel(player, "Faction War votacion iniciada.");
+			}
+			else
+			{
+				showPanel(player, "La votacion ya esta en curso.");
+			}
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_warstop"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			if (fwm.isRunning())
+			{
+				fwm.stopWar();
+				showPanel(player, "Faction War detenida.");
+			}
+			else
+			{
+				showPanel(player, "No hay guerra en curso.");
+			}
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_warforcejoin"))
+		{
+			if (!st.hasMoreTokens())
+			{
+				showPanel(player, "Usage: warforcejoin <factionId|1|2>");
+				return;
+			}
+
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			final int factionId;
+			try
+			{
+				factionId = Integer.parseInt(st.nextToken());
+			}
+			catch (Exception e)
+			{
+				showPanel(player, "Usage: warforcejoin <factionId|1|2>");
+				return;
+			}
+
+			if (factionId != FactionWarConfig.getGoodFactionId() && factionId != FactionWarConfig.getEvilFactionId())
+			{
+				showPanel(player, "Faction ID invalido. Use 1 (Furious) o 2 (Fast).");
+				return;
+			}
+
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			int joined = 0;
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom != null && phantom.getFactionId() == 0) // Only unaffiliated phantoms
+				{
+					phantom.setFactionId(factionId);
+					FactionData.getInstance().storeData(phantom);
+					joined++;
+				}
+			}
+			showPanel(player, "Forzado " + joined + " phantoms sin faccion a unirse a la faccion " + factionId + ".");
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_warforceleave"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			int removed = 0;
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom != null && phantom.getFactionId() > 0)
+				{
+					phantom.setFactionId(0);
+					FactionData.getInstance().removeData(phantom);
+					removed++;
+				}
+			}
+			showPanel(player, "Removido " + removed + " phantoms de sus facciones.");
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_warteleportin"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			final FactionWarManager fwm = FactionWarManager.getInstance();
+			if (!fwm.isRunning())
+			{
+				showPanel(player, "No hay guerra en curso para teletransportar.");
+				return;
+			}
+
+			int teleported = 0;
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom != null && phantom.getFactionId() > 0 && !phantom.isDead())
+				{
+					final Location spawn = fwm.getFactionSpawn(phantom.getFactionId());
+					if (spawn != null)
+					{
+						final int rx = spawn.getX() + Rnd.get(-100, 100);
+						final int ry = spawn.getY() + Rnd.get(-100, 100);
+						phantom.teleportTo(rx, ry, spawn.getZ(), 0);
+						teleported++;
+					}
+				}
+			}
+			showPanel(player, "Teletransportado " + teleported + " phantoms de faccion a sus spawns de guerra.");
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_warteleportout"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			int teleported = 0;
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom != null && phantom.getFactionId() > 0 && !phantom.isDead())
+				{
+					final Location neutral = new Location(FactionWarConfig.getNeutralSpawnLocX(), FactionWarConfig.getNeutralSpawnLocY(), FactionWarConfig.getNeutralSpawnLocZ());
+					final int rx = neutral.getX() + Rnd.get(-100, 100);
+					final int ry = neutral.getY() + Rnd.get(-100, 100);
+					phantom.teleportTo(rx, ry, neutral.getZ(), 0);
+					teleported++;
+				}
+			}
+			showPanel(player, "Teletransportado " + teleported + " phantoms de faccion a zona neutral.");
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_emergencyrecall"))
+		{
+			if (!FactionWarConfig.isEnabled())
+			{
+				showPanel(player, "Faction system is disabled.");
+				return;
+			}
+
+			int recalled = 0;
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom != null && !phantom.isDead())
+				{
+					final Location nearestTown = RestartPointData.getInstance().getLocationToTeleport(phantom, RestartType.TOWN);
+					if (nearestTown != null)
+					{
+						final int rx = nearestTown.getX() + Rnd.get(-100, 100);
+						final int ry = nearestTown.getY() + Rnd.get(-100, 100);
+						phantom.teleportTo(rx, ry, nearestTown.getZ(), 0);
+						recalled++;
+					}
+				}
+			}
+			showPanel(player, "Recall de emergencia: " + recalled + " phantoms teletransportados a la ciudad mas cercana.");
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_emergencyheal"))
+		{
+			int healed = 0;
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom != null && phantom.isDead())
+				{
+					if (PhantomEngine.resurrect(phantom.getObjectId()))
+					{
+						healed++;
+					}
+				}
+				else if (phantom != null && phantom.getCurrentHp() < phantom.getMaxHp())
+				{
+					phantom.setCurrentHp(phantom.getMaxHp());
+					phantom.setCurrentMp(phantom.getMaxMp());
+					phantom.broadcastUserInfo();
+					healed++;
+				}
+			}
+			showPanel(player, "Curacion de emergencia: " + healed + " phantoms curados o resucitados.");
+			return;
+		}
+
+		if (cmd.equals("admin_phantom_emergencyrespawn"))
+		{
+			int respawned = 0;
+			for (Player phantom : PhantomEngine.getActivePhantoms())
+			{
+				if (phantom != null && phantom.isDead())
+				{
+					if (PhantomEngine.resurrect(phantom.getObjectId()))
+					{
+						respawned++;
+					}
+				}
+			}
+			showPanel(player, "Respawn de emergencia: " + respawned + " phantoms resucitados.");
+			return;
+		}
+
+		private static List<Player> filterByFaction(List<Player> phantoms, int factionId)
 	{
 		if (factionId <= 0)
 			return phantoms;
@@ -520,8 +839,7 @@ public class AdminPhantom implements IAdminCommandHandler
 			{
 				player.getRadarList().addMarker(loc);
 				markers++;
-			}
-		}
+					}
 		showPanel(player, "Radar markers: " + markers + " (" + mode + ").");
 	}
 	
@@ -531,72 +849,135 @@ public class AdminPhantom implements IAdminCommandHandler
 		final boolean warEnabled = FactionWarConfig.isEnabled();
 		final boolean warRunning = warEnabled && FactionWarManager.getInstance().isRunning();
 		final StringBuilder sb = new StringBuilder(8192);
-		
-		// Header
+
+		// Header with improved styling
 		sb.append("<html><body>");
-		sb.append("<center><table width=330><tr><td align=center bgcolor=333333><font color=LEVEL>Phantom Manager</font></td></tr></table></center>");
+		sb.append("<center><table width=350><tr><td align=center bgcolor=000080><font color=FFFFFF size=2><b>PHANTOM MANAGER</b></font></td></tr></table></center>");
 		if (message != null)
-			sb.append("<center><font color=99FF99>").append(message).append("</font></center>");
+			sb.append("<center><font color=00FF00>").append(message).append("</font></center>");
 		sb.append("<br>");
-		
-		// Faction War: status + start/stop/restart
+
+		// Faction War Status Section
 		if (warEnabled)
 		{
-			sb.append("<table width=330><tr><td align=center bgcolor=").append(warRunning ? "003300" : "330000").append("><font color=").append(warRunning ? "00FF00" : "FF0000").append(">").append(warRunning ? "FACTION WAR - EN CURSO" : "FACTION WAR - DETENIDA").append("</font></td></tr></table>");
-			buttonRow2(sb, "Iniciar", "admin_factionwar start", "Detener", "admin_factionwar stop");
-			buttonRow2(sb, "Reiniciar", "admin_factionwar restart", "Panel Guerra", "admin_factionwar");
-			sb.append("<br>");
+			sb.append("<table width=350>");
+			sb.append("<tr><td bgcolor=202020><font color=FFFFFF>Estado Faction War:</font></td></tr>");
+			sb.append("<tr><td>");
+			sb.append("<table width=340>");
+			sb.append("<tr><td width=120>Estado:</td><td width=220><font color=").append(warRunning ? "00FF00" : "FF0000").append("><b>").append(warRunning ? "EN CURSO" : "DETENIDA").append("</b></font></td></tr>");
+			sb.append("<tr><td width=120>Mapa Actual:</td><td width=220>").append(FactionWarManager.getInstance().getCurrentMapIndex() + 1).append("/").append(FactionWarConfig.getMaps().size()).append("</td></tr>");
+			sb.append("<tr><td width=120>Duración:</td><td width=220>").append(fwm.getWarDurationMinutes()).append(" minutos</td></tr>");
+			if (warRunning)
+			{
+				sb.append("<tr><td width=120>Tiempo Rest:</td><td width=220><font color=FFA500><b>").append(fwm.getRemainingTimeStr()).append("</b></font></td></tr>");
+				sb.append("<tr><td width=120>Puntos Fury:</td><td width=220><font color=00BFFF><b>").append(fwm.getScore(FactionWarConfig.getGoodFactionId())).append("</b></font></td></tr>");
+				sb.append("<tr><td width=120>Puntos Veloz:</td><td width=220><font color=FF4444><b>").append(fwm.getScore(FactionWarConfig.getEvilFactionId())).append("</b></font></td></tr>");
+				sb.append("<tr><td width=120>Ganadora:</td><td width=220><font color=FFD700><b>Faccion ").append(fwm.getWinningFaction()).append("</b></font></td></tr>");
+			}
+			sb.append("</table>");
+			sb.append("</td></tr>");
+
+			sb.append("<tr><td>");
+			buttonRow2(sb, "Iniciar Votación", "admin_factionwar start", "Detener Guerra", "admin_factionwar stop");
+			sb.append("</td></tr>");
+
+			sb.append("<tr><td>");
+			buttonRow2(sb, "Reiniciar Guerra", "admin_factionwar restart", "Panel Guerra", "admin_factionwar");
+			sb.append("</td></tr>");
+
+			sb.append("</table><br>");
 		}
-		
-		// Estado
-		sectionTitle(sb, "Estado");
-		sb.append("<table width=330>");
+
+		// General Stats Section
+		sb.append("<table width=350>");
+		sb.append("<tr><td bgcolor=202020><font color=FFFFFF>Estadísticas Generales</font></td></tr>");
+		sb.append("<tr><td>");
+		sb.append("<table width=340>");
 		infoRow(sb, "Phantoms activos", allPhantoms.size());
-		sb.append("<tr><td width=140>IA</td><td width=190><font color=").append(PhantomAI.isAiPaused() ? "FF0000" : "00FF00").append(">").append(PhantomAI.isAiPaused() ? "OFF (pausada)" : "ON").append("</font></td></tr>");
+		sb.append("<tr><td width=120>IA del Sistema:</td><td width=220><font color=").append(PhantomAI.isAiPaused() ? "FF0000" : "00FF00").append(">").append(PhantomAI.isAiPaused() ? "OFF ( Pausada )" : "ON ( Activa )").append("</font></td></tr>");
 		if (warEnabled)
-			infoRow(sb, "Participan en guerra", PhantomConfig.warParticipationChance() + "%, max " + PhantomConfig.warMaxPerFaction() + "/fac");
+			infoRow(sb, "Participación en Guerra", PhantomConfig.warParticipationChance() + "%, max " + PhantomConfig.warMaxPerFaction() + "/facción");
 		sb.append("</table>");
-		
-		// Acciones
-		sectionTitle(sb, "Acciones");
-		buttonRow2(sb, "Cargar config", "admin_phantom start", "IA On", "admin_phantom ai on");
-		buttonRow2(sb, "IA Off", "admin_phantom ai off", "Fijar Home", "admin_phantom ai home");
-		
-		// Crear: campo editable con cantidad a gusto del GM + atajos rapidos.
-		sb.append("<table width=330><tr><td width=60>Crear</td>");
-		sb.append("<td width=90><edit var=\"createCount\" width=70 height=16 type=number></td>");
-		button(sb, "Crear", "admin_phantom create $createCount", 70);
-		sb.append("<td width=50></td></tr></table>");
-		buttonRow2(sb, "Crear 1", "admin_phantom create 1", "Crear 5", "admin_phantom create 5");
-		buttonRowSkipEmpty(sb, "Crear 20", "admin_phantom create 20", "", "", "", "");
-		
-		buttonRow2(sb, "Traer todos", "admin_phantom bring", "Curar todos", "admin_phantom heal");
-		buttonRow2(sb, "Revivir todos", "admin_phantom resurrect", "Formar party", "admin_phantom party");
-		buttonRow2(sb, "Lista online", "admin_phantom online 0", "Parar todo", "admin_phantom stop");
-		buttonRowSkipEmpty(sb, "Borrar todos", "admin_phantom deleteall", "", "", "", "");
-		
-		// Por Faccion
+		sb.append("</td></tr></table><br>");
+
+		// Phantom Creation Section
+		sb.append("<table width=350>");
+		sb.append("<tr><td bgcolor=202020><font color=FFFFFF>Creación de Phantoms</font></td></tr>");
+		sb.append("<tr><td>");
+		sb.append("<table width=340>");
+		sb.append("<tr><td width=80>Cantidad:</td><td width=100><edit var=\"createCount\" width=70 height=16 type=number></td>");
+		sb.append("<td width=80>").append(button(sb, "Crear Custom", "admin_phantom create $createCount", 70)).append("</td>");
+		sb.append("<td width=80>").append(button(sb, "Crear 1", "admin_phantom create 1", 50)).append("</td>");
+		sb.append("<td width=80>").append(button(sb, "Crear 5", "admin_phantom create 5", 50)).append("</td>");
+		sb.append("</tr></table>");
+		sb.append("</td></tr>");
+
+		sb.append("<tr><td>");
+		sb.append("<table width=340>");
+		sb.append("<tr><td width=80>").append(button(sb, "Crear 10", "admin_phantom create 10", 70)).append("</td>");
+		sb.append("<td width=80>").append(button(sb, "Crear 20", "admin_phantom create 20", 70)).append("</td>");
+		sb.append("<td width=80>").append(button(sb, "Crear 50", "admin_phantom create 50", 70)).append("</td>");
+		sb.append("<td width=80>").append(button(sb, "Crear 100", "admin_phantom create 100", 70)).append("</td>");
+		sb.append("</tr></table>");
+		sb.append("</td></tr></table><br>");
+
+		// Phantom Control Section
+		sb.append("<table width=350>");
+		sb.append("<tr><td bgcolor=202020><font color=FFFFFF>Control de Phantoms</font></td></tr>");
+		sb.append("<tr><td>");
+		sb.append("<table width=340>");
+		sb.append("<tr>");
+		sb.append("<td width=85>").append(button(sb, "Traer Todos", "admin_phantom bring", 85)).append("</td>");
+		sb.append("<td width=85>").append(button(sb, "Curar Todos", "admin_phantom heal", 85)).append("</td>");
+		sb.append("<td width=85>").append(button(sb, "Revivir Todos", "admin_phantom resurrect", 85)).append("</td>");
+		sb.append("<td width=85>").append(button(sb, "Detener Todos", "admin_phantom stop", 85)).append("</td>");
+		sb.append("</tr>");
+		sb.append("<tr>");
+		sb.append("<td width=85>").append(button(sb, "Formar Party", "admin_phantom party", 85)).append("</td>");
+		sb.append("<td width=85>").append(button(sb, "Lista Online", "admin_phantom online 0", 85)).append("</td>");
+		sb.append("<td width=85>").append(button(sb, "Borrar Todos", "admin_phantom deleteall", 85)).append("</td>");
+		sb.append("<td width=85>").append(button(sb, "Crear Party", "admin_phantom createParty", 85)).append("</td>");
+		sb.append("</tr>");
+		sb.append("</table>");
+		sb.append("</td></tr></table><br>");
+
+		// Faction-Based Controls (if war enabled)
 		if (warEnabled && FactionData.getInstance().getFactionCount() > 0)
 		{
-			sectionTitle(sb, "Por Faccion");
-			sb.append("<table width=330>");
+			sb.append("<table width=350>");
+			sb.append("<tr><td bgcolor=202020><font color=FFFFFF>Control por Facción</font></td></tr>");
+			sb.append("<tr><td>");
+			sb.append("<table width=340>");
+
 			for (int fid : FactionData.getInstance().getFactionIds())
 			{
 				final Faction f = FactionData.getInstance().getFaction(fid);
 				final String label = (f != null) ? f.getName() : ("F" + fid);
-				sb.append("<tr><td width=90><font color=FFD700>").append(htmlSafe(shortText(label, 10))).append("</font></td>");
-				button(sb, "Traer", "admin_phantom bringfaction " + fid, 60);
-				button(sb, "Revivir", "admin_phantom resurrectfaction " + fid, 60);
-				button(sb, "Curar", "admin_phantom healfaction " + fid, 60);
-				button(sb, "Ver", "admin_phantom factions " + fid + " 0", 60);
+				final String safeLabel = htmlSafe(shortText(label, 8));
+
+				sb.append("<tr>");
+				sb.append("<td width=70><font color=FFD700><b>").append(safeLabel).append(":</b></font></td>");
+				sb.append("<td width=55>").append(button(sb, "Traer", "admin_phantom bringfaction " + fid, 55)).append("</td>");
+				sb.append("<td width=55>").append(button(sb, "Revivir", "admin_phantom resurrectfaction " + fid, 55)).append("</td>");
+				sb.append("<td width=55>").append(button(sb, "Curar", "admin_phantom healfaction " + fid, 55)).append("</td>");
+				sb.append("<td width=55>").append(button(sb, "Ver", "admin_phantom factions " + fid + " 0", 55)).append("</td>");
 				sb.append("</tr>");
 			}
+
 			sb.append("</table>");
+			sb.append("</td></tr></table><br>");
 		}
-		
-		sb.append("<br><center><font color=808080>Con un phantom como target: 'Revivir' y 'Curar' actuan sobre el.</font></center>");
-		sb.append("<center><font color=808080>Usa 'Lista online' o 'Ver' por faccion para editar cada phantom.</font></center>");
-		
+
+		// Help Information
+		sb.append("<table width=350>");
+		sb.append("<tr><td bgcolor=202020><font color=FFFFFF>Información de Ayuda</font></td></tr>");
+		sb.append("<tr><td>");
+		sb.append("<font color=808080>• Los Phantoms NO pueden ejecutar comandos de administrador</font><br>");
+		sb.append("<font color=808080>• Solo el GM tiene acceso a este panel de control</font><br>");
+		sb.append("<font color=808080>• Con un Phantom seleccionado como target: 'Revivir' y 'Curar' actúan sobre él específicamente</font><br>");
+		sb.append("<font color=808080>• Use 'Lista Online' o 'Ver por facción' para editar Phantoms individualmente</font>");
+		sb.append("</td></tr></table>");
+
 		sb.append("</body></html>");
 		sendHtml(player, sb);
 	}
