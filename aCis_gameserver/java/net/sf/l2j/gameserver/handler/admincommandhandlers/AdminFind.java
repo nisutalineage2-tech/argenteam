@@ -335,7 +335,7 @@ public class AdminFind implements IAdminCommandHandler
 		for (Item item : list)
 		{
 			list.append(((list.indexOf(item) % 2) == 0 ? "<table width=280 height=22 bgcolor=000000><tr>" : "<table width=280><tr>"));
-			list.append("<td width=36 height=41 align=center><table><tr><td><img src=icon.noimage width=32 height=32></td></tr></table></td>");
+			list.append("<td width=36 height=41 align=center><img src=icon.noimage width=32 height=32></td>");
 			list.append("<td width=160>", StringUtil.trimAndDress(item.getName(), 28), "<br1><font color=\"B09878\">Item Id:</font> <font color=BDB76B>", item.getItemId(), (item.isQuestItem() ? " (Quest)" : ""), "</font></td>");
 			list.append("<td><edit var=\"amount_", item.getItemId(), "\" width=52 type=number></td>");
 			list.append("<td><button action=\"bypass admin_give ", item.getItemId(), " $amount_", item.getItemId(), "\" width=32 height=32 back=L2UI_CH3.mapbutton_zoomin2 fore=L2UI_CH3.mapbutton_zoomin1></td>");

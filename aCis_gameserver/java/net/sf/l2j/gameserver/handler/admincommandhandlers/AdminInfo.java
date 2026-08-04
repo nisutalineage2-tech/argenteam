@@ -394,9 +394,8 @@ public class AdminInfo implements IAdminCommandHandler
 				
 				droplist.append(((row % 2) == 0 ? "<table width=280 bgcolor=000000><tr>" : "<table width=280><tr>"));
 				droplist.append("<td width=34 height=40><img src=icon.noimage width=32 height=32></td>");
-				droplist.append("<td width=246>&nbsp;", name, "<br1>");
-				droplist.append("<table width=240><tr><td width=80><font color=B09878>Rate:</font> <font color=", color, ">", percent, "%</font></td><td width=160><font color=B09878>Amount: </font>", amount, "</td></tr></table>");
-				droplist.append("</td></tr></table><img src=L2UI.SquareGray width=280 height=1>");
+				droplist.append("<td width=246>&nbsp;", name, "<br1><font color=B09878>Rate:</font> <font color=", color, ">", percent, "%</font> | <font color=B09878>Amount:</font> ", amount, "</td>");
+				droplist.append("</tr></table><img src=L2UI.SquareGray width=280 height=1>");
 				
 				row++;
 			}
