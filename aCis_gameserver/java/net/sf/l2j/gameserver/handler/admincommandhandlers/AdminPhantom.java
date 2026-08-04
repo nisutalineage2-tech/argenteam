@@ -874,15 +874,16 @@ public class AdminPhantom implements IAdminCommandHandler
 
 		// IMPORTANT: flat HTML only. Nested tables (table inside td inside table) crash the
 		// L2 client with "Insufficient Memory" (NCHtmlTable::CreateFrame recursion).
-		sb.append("<html><body><center><font color=FFD700 size=2><b>PHANTOM MANAGER</b></font></center>");
+		sb.append("<html><body><center>");
+		sb.append("<table width=350><tr><td bgcolor=3A3A3A align=center><font color=FFD700 size=2><b>PHANTOM MANAGER</b></font></td></tr></table>");
 		if (message != null && !message.isEmpty())
-			sb.append("<center><font color=00FF00>").append(htmlSafe(message)).append("</font></center>");
+			sb.append("<table width=350><tr><td bgcolor=0A3A0A align=center><font color=7FFF00>").append(htmlSafe(message)).append("</font></td></tr></table>");
 		sb.append("<br1>");
 
 		// --- Faction War Status ---
 		if (warEnabled)
 		{
-			sb.append("<table width=350><tr><td bgcolor=000080 align=center><font color=FFFFFF><b>Faction War</b></font></td></tr></table>");
+			sectionTitle(sb, "Faction War");
 			sb.append("<table width=350>");
 			sb.append("<tr><td width=110>Estado:</td><td width=240><font color=").append(warRunning ? "00FF00" : "FF0000").append("><b>").append(warRunning ? "EN CURSO" : "DETENIDA").append("</b></font></td></tr>");
 			sb.append("<tr><td>Mapa:</td><td>").append(fwm.getCurrentMapIndex() + 1).append("/").append(FactionWarConfig.getMaps().size()).append("</td></tr>");
@@ -890,85 +891,94 @@ public class AdminPhantom implements IAdminCommandHandler
 			if (warRunning)
 			{
 				sb.append("<tr><td>Tiempo:</td><td><font color=FFA500><b>").append(fwm.getRemainingTimeStr()).append("</b></font></td></tr>");
-				sb.append("<tr><td>Puntos " + FactionWarConfig.getGoodFactionName() + ":</td><td><font color=00BFFF><b>").append(fwm.getScore(FactionWarConfig.getGoodFactionId())).append("</b></font></td></tr>");
-				sb.append("<tr><td>Puntos " + FactionWarConfig.getEvilFactionName() + ":</td><td><font color=FF4444><b>").append(fwm.getScore(FactionWarConfig.getEvilFactionId())).append("</b></font></td></tr>");
+				sb.append("<tr><td>Puntos ").append(FactionWarConfig.getGoodFactionName()).append(":</td><td><font color=00BFFF><b>").append(fwm.getScore(FactionWarConfig.getGoodFactionId())).append("</b></font></td></tr>");
+				sb.append("<tr><td>Puntos ").append(FactionWarConfig.getEvilFactionName()).append(":</td><td><font color=FF4444><b>").append(fwm.getScore(FactionWarConfig.getEvilFactionId())).append("</b></font></td></tr>");
 				sb.append("<tr><td>Ganadora:</td><td><font color=FFD700><b>Fac ").append(fwm.getWinningFaction()).append("</b></font></td></tr>");
 			}
+			sb.append("<tr><td height=5></td></tr>");
 			sb.append("<tr>");
-			button(sb, "Iniciar Votacion", "admin_factionwar start", 100);
-			button(sb, "Detener", "admin_factionwar stop", 80);
-			button(sb, "Panel Guerra", "admin_factionwar", 80);
+			button(sb, "Iniciar Votacion", "admin_factionwar start", 110);
+			button(sb, "Detener", "admin_factionwar stop", 110);
+			button(sb, "Panel Guerra", "admin_factionwar", 110);
 			sb.append("</tr>");
 			sb.append("</table><br1>");
 		}
 
 		// --- General Stats ---
-		sb.append("<table width=350><tr><td bgcolor=000080 align=center><font color=FFFFFF><b>Estadisticas</b></font></td></tr></table>");
+		sectionTitle(sb, "Estadisticas");
 		sb.append("<table width=350>");
-		infoRow(sb, "Phantoms activos", allPhantoms.size());			sb.append("<tr><td width=140>IA del Sistema:</td><td width=210><font color=00FF00><b>ON (siempre activa)</b></font></td></tr>");
+		infoRow(sb, "Phantoms activos", allPhantoms.size());
+		sb.append("<tr><td width=140>IA del Sistema:</td><td width=190><font color=00FF00><b>ON (siempre activa)</b></font></td></tr>");
 		if (warEnabled)
 			infoRow(sb, "Participacion Guerra", PhantomConfig.warParticipationChance() + "% max " + PhantomConfig.warMaxPerFaction() + "/fac");
 		sb.append("</table><br1>");
 
 		// --- Phantom Creation ---
-		sb.append("<table width=350><tr><td bgcolor=000080 align=center><font color=FFFFFF><b>Creacion</b></font></td></tr></table>");
+		sectionTitle(sb, "Creacion");
 		sb.append("<table width=350><tr><td>Cant: <edit var=\"createCount\" width=50 height=16 type=number></td>");
-		button(sb, "Crear", "admin_phantom create $createCount", 60);
+		button(sb, "Crear", "admin_phantom create $createCount", 110);
 		sb.append("</tr>");
+		sb.append("<tr><td height=5></td></tr>");
 		sb.append("<tr>");
-		button(sb, "x1", "admin_phantom create 1", 45);
-		button(sb, "x5", "admin_phantom create 5", 45);
-		button(sb, "x10", "admin_phantom create 10", 45);
-		button(sb, "x20", "admin_phantom create 20", 45);
-		button(sb, "x50", "admin_phantom create 50", 45);
-		button(sb, "x100", "admin_phantom create 100", 45);
+		button(sb, "x1", "admin_phantom create 1", 50);
+		button(sb, "x5", "admin_phantom create 5", 50);
+		button(sb, "x10", "admin_phantom create 10", 50);
+		button(sb, "x20", "admin_phantom create 20", 50);
+		button(sb, "x50", "admin_phantom create 50", 50);
+		button(sb, "x100", "admin_phantom create 100", 50);
 		sb.append("</tr></table><br1>");
 
 		// --- Phantom Control ---
-		sb.append("<table width=350><tr><td bgcolor=000080 align=center><font color=FFFFFF><b>Control</b></font></td></tr></table>");
+		sectionTitle(sb, "Control");
 		sb.append("<table width=350>");
 		sb.append("<tr>");
-		button(sb, "Traer Todos", "admin_phantom bring", 85);
-		button(sb, "Curar Todos", "admin_phantom heal", 85);
-		button(sb, "Revivir Todos", "admin_phantom resurrect", 85);
-		button(sb, "Detener Todos", "admin_phantom stop", 85);
+		button(sb, "Traer Todos", "admin_phantom bring", 110);
+		button(sb, "Curar Todos", "admin_phantom heal", 110);
+		button(sb, "Revivir Todos", "admin_phantom resurrect", 110);
 		sb.append("</tr>");
+		sb.append("<tr><td height=5></td></tr>");
 		sb.append("<tr>");
-		button(sb, "Formar Party", "admin_phantom party", 85);
-		button(sb, "Lista Online", "admin_phantom online 0", 85);
-		button(sb, "Borrar Todos", "admin_phantom deleteall", 85);
+		button(sb, "Detener Todos", "admin_phantom stop", 110);
+		button(sb, "Formar Party", "admin_phantom party", 110);
+		button(sb, "Lista Online", "admin_phantom online 0", 110);
+		sb.append("</tr>");
+		sb.append("<tr><td height=5></td></tr>");
+		sb.append("<tr>");
+		button(sb, "Borrar Todos", "admin_phantom deleteall", 160);
+		button(sb, "Radar", "admin_phantom radar", 160);
 		sb.append("</tr>");
 		sb.append("</table><br1>");
 
 		// --- Per-Faction Controls ---
 		if (warEnabled && FactionData.getInstance().getFactionCount() > 0)
 		{
-			sb.append("<table width=350><tr><td bgcolor=000080 align=center><font color=FFFFFF><b>Control por Faccion</b></font></td></tr></table>");
+			sectionTitle(sb, "Control por Faccion");
 			sb.append("<table width=350>");
 			for (int fid : FactionData.getInstance().getFactionIds())
 			{
 				final Faction f = FactionData.getInstance().getFaction(fid);
 				final String label = (f != null) ? f.getName() : ("F" + fid);
 				final String safeLabel = htmlSafe(shortText(label, 8));
-				sb.append("<tr><td width=70><font color=FFD700><b>").append(safeLabel).append(":</b></font></td>");
-				button(sb, "Traer", "admin_phantom bringfaction " + fid, 50);
-				button(sb, "Revivir", "admin_phantom resurrectfaction " + fid, 55);
-				button(sb, "Curar", "admin_phantom healfaction " + fid, 50);
-				button(sb, "Ver", "admin_phantom factions " + fid + " 0", 45);
+				sb.append("<tr><td width=70 align=left><font color=FFD700><b>").append(safeLabel).append(":</b></font></td>");
+				button(sb, "Traer", "admin_phantom bringfaction " + fid, 65);
+				button(sb, "Revivir", "admin_phantom resurrectfaction " + fid, 65);
+				button(sb, "Curar", "admin_phantom healfaction " + fid, 65);
+				button(sb, "Ver", "admin_phantom factions " + fid + " 0", 65);
 				sb.append("</tr>");
+				sb.append("<tr><td height=3></td></tr>");
 			}
 			sb.append("</table><br1>");
 		}
 
 		// --- Help ---
-		sb.append("<table width=350><tr><td bgcolor=000080 align=center><font color=FFFFFF><b>Ayuda</b></font></td></tr></table>");
+		sectionTitle(sb, "Ayuda");
 		sb.append("<table width=350><tr><td>");
 		sb.append("<font color=808080>Los Phantoms no ejecutan comandos de admin.<br1>");
 		sb.append("Con un phantom como target, Revivir y Curar actuan sobre el.<br1>");
 		sb.append("Usa Lista Online o Ver por Faccion para editar individuales.</font>");
 		sb.append("</td></tr></table>");
 
-		sb.append("</body></html>");
+		sb.append("</center></body></html>");
 		sendHtml(player, sb);
 	}
 
@@ -1119,12 +1129,12 @@ public class AdminPhantom implements IAdminCommandHandler
 
 	private static void button(StringBuilder sb, String label, String bypass)
 	{
-		sb.append("<td><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=90 height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+		sb.append("<td align=center><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=90 height=22 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 	}
 
 	private static void button(StringBuilder sb, String label, String bypass, int width)
 	{
-		sb.append("<td><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=").append(width).append(" height=21 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
+		sb.append("<td align=center><button value=\"").append(label).append("\" action=\"bypass -h ").append(bypass).append("\" width=").append(width).append(" height=22 back=\"L2UI_ch3.Btn1_normalOn\" fore=\"L2UI_ch3.Btn1_normal\"></td>");
 	}
 
 	private static void miniButton(StringBuilder sb, String label, String bypass, int width)
