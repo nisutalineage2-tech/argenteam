@@ -584,6 +584,17 @@ public final class PhantomEngine
 	}
 	
 	/**
+	 * Adds a phantom to the war participant roster. Used by the admin panel when forcing
+	 * phantoms into the war map (warteleportin), so their AI actually treats them as
+	 * war participants (search flags, attack enemies, respawn back on the war map).
+	 * @param objectId : The phantom object id.
+	 */
+	public static void addWarParticipant(int objectId)
+	{
+		WAR_PARTICIPANTS.add(objectId);
+	}
+	
+	/**
 	 * @param phantom : The phantom.
 	 * @return True when the phantom has a faction, the war is running and it was selected
 	 * to participate (config-gated). Used by the AI to decide war mode vs normal life.
@@ -593,11 +604,11 @@ public final class PhantomEngine
 		if (phantom == null || !Config.ENABLE_FACTION_SYSTEM || phantom.getFactionId() <= 0 || !FactionWarManager.getInstance().isRunning() || !isWarParticipant(phantom.getObjectId()))
 			return false;
 		
-		// A phantom registered to an active event (REGISTER/STARTING/RUNNING) never joins
-		// the war: the event owns its position. This is the central safety net that covers
-		// every caller (AI think, respawn, returnPhantomsFromWar, admin warforcejoin...).
+		// Only a RUNNING event owns the phantom's position (the match is live, it fights the
+		// arena). A phantom merely registered in REGISTER/STARTING must still be able to join
+		// the war - the event will teleport it to the arena when the match starts.
 		final AbstractEvent event = EventEngine.getInstance().getEventForPlayer(phantom.getObjectId());
-		return event == null || event.getState() == AbstractEvent.State.IDLE || event.getState() == AbstractEvent.State.ENDED;
+		return event == null || event.getState() != AbstractEvent.State.RUNNING;
 	}
 	
 	/**

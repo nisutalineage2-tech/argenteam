@@ -655,6 +655,11 @@ public class AdminPhantom implements IAdminCommandHandler
 					final Location spawn = fwm.getFactionSpawn(phantom.getFactionId());
 					if (spawn != null)
 					{
+						// Register the phantom as a war participant so its AI actually treats it
+						// as being in the war (search flags, attack enemies, respawn back on the
+						// war map). Otherwise it would stand on the war map without any objective.
+						PhantomEngine.addWarParticipant(phantom.getObjectId());
+						
 						final int rx = spawn.getX() + Rnd.get(-100, 100);
 						final int ry = spawn.getY() + Rnd.get(-100, 100);
 						phantom.teleportTo(rx, ry, spawn.getZ(), 0);

@@ -273,10 +273,9 @@ public final class PhantomAI
 			
 			// Registered but event not started yet (REGISTER/STARTING): walk to the Event
 			// Manager NPC of the city and wait there, simulating a player registering for the
-			// event. The return is unconditional: a registered phantom must NOT farm, open a
-			// store or join the war while waiting - the event owns it until the match starts
-			// and teleports everyone to the arena.
-			if (event != null)
+			// event. Only applies when the faction war is NOT running: a war participant must
+			// keep fighting the war - the event will teleport it to the arena when it starts.
+			if (event != null && !warRunning)
 			{
 				moveToEventManager(phantom);
 				return;
