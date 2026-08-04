@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.network.SystemMessageId;
@@ -36,6 +37,16 @@ public final class AnswerTradeRequest extends L2GameClientPacket
 			player.sendPacket(SendTradeDone.FAIL_STATIC_PACKET);
 			player.sendPacket(SystemMessageId.TARGET_IS_NOT_FOUND_IN_THE_GAME);
 			player.setActiveRequester(null);
+			return;
+		}
+		
+		// Faction check: players of different factions cannot trade (mirrors TradeRequest).
+		// Only enforced on accept; declining flows through the normal path.
+		if (Config.ENABLE_FACTION_SYSTEM && _response == 1 && player.getFactionId() != partner.getFactionId())
+		{
+			player.setActiveRequester(null);
+			partner.onTransactionResponse();
+			player.sendPacket(SendTradeDone.FAIL_STATIC_PACKET);
 			return;
 		}
 		

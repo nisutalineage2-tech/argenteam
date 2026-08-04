@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.manager.PartyMatchRoomManager;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.group.Party;
@@ -27,6 +28,15 @@ public final class RequestAnswerJoinParty extends L2GameClientPacket
 		final Player requestor = player.getActiveRequester();
 		if (requestor == null)
 			return;
+		
+		// Faction check: players of different factions cannot join a party (mirrors RequestJoinParty).
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() != requestor.getFactionId())
+		{
+			player.setActiveRequester(null);
+			requestor.onTransactionResponse();
+			requestor.sendPacket(new JoinParty(0));
+			return;
+		}
 		
 		requestor.sendPacket(new JoinParty(_response));
 		

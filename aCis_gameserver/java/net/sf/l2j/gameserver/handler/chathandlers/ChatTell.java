@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.handler.chathandlers;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.manager.RelationManager;
 import net.sf.l2j.gameserver.enums.SayType;
 import net.sf.l2j.gameserver.handler.IChatHandler;
@@ -38,6 +39,13 @@ public class ChatTell implements IChatHandler
 		if (targetPlayer.isInJail() || targetPlayer.isChatBanned())
 		{
 			player.sendPacket(SystemMessageId.TARGET_IS_CHAT_BANNED);
+			return;
+		}
+		
+		// Faction check: players of different factions cannot whisper each other.
+		if (Config.ENABLE_FACTION_SYSTEM && !player.isGM() && player.getFactionId() != targetPlayer.getFactionId())
+		{
+			player.sendPacket(SystemMessageId.TARGET_IS_INCORRECT);
 			return;
 		}
 		

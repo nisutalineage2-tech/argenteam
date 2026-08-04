@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.network.clientpackets;
 
+import net.sf.l2j.Config;
 import net.sf.l2j.gameserver.data.manager.DuelManager;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.group.CommandChannel;
@@ -33,6 +34,10 @@ public final class RequestDuelAnswerStart extends L2GameClientPacket
 		
 		player.setActiveRequester(null);
 		requestor.onTransactionResponse();
+		
+		// Faction check: same-faction players cannot duel (mirrors RequestDuelStart).
+		if (Config.ENABLE_FACTION_SYSTEM && player.getFactionId() == requestor.getFactionId())
+			return;
 		
 		if (_duelAccepted)
 		{
