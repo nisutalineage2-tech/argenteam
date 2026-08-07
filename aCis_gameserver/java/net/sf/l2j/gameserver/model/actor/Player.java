@@ -532,7 +532,22 @@ public final class Player extends Playable
 		
 		// Set the base class ID to that of the actual class ID.
 		player.setBaseClass(player.getClassId());
-		
+
+		// Set starting level to 76 and adjust EXP, HP, MP, CP accordingly
+		player.getStatus().setLevel(76);
+		long expForLevel76 = 0;
+		for (int i = 1; i < 76; i++) {
+			expForLevel76 += PlayerLevelData.getInstance().getPlayerLevel(i).requiredExpToLevelUp();
+		}
+		player.getStatus().setExp(expForLevel76);
+		// Set HP, MP, CP to max
+		player.getStatus().setHp(player.getStatus().getMaxHp());
+		player.getStatus().setMp(player.getStatus().getMaxMp());
+		player.getStatus().setCp(player.getStatus().getMaxCp());
+
+		// New character now gets B-grade equipment for free from GM shop
+		// instead of free adena/items on creation
+
 		// Add the player in the characters table of the database
 		try (Connection con = ConnectionPool.getConnection();
 			PreparedStatement ps = con.prepareStatement(INSERT_CHARACTER))
@@ -1542,6 +1557,14 @@ public final class Player extends Playable
 		_onlineTime = time;
 		_onlineBeginTime = System.currentTimeMillis();
 	}
+	/**
+	 * @return the _onlineTime
+	 */
+	public long getOnlineTime()
+	{
+		return _onlineTime;
+	}
+
 	
 	@Override
 	public PcInventory getInventory()

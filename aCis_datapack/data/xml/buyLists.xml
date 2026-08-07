@@ -10435,7 +10435,7 @@
 		<product id="4223"/>
 	</buyList>
 	<buyList id="2012" npcId="-1">
-		<product id="99"/>
+		<product id="99" price="0" />
 		<product id="100"/>
 		<product id="101"/>
 		<product id="308"/>
@@ -11614,8 +11614,8 @@
 		<product id="2"/>
 		<product id="3"/>
 		<product id="66"/>
-		<product id="67"/>
-		<product id="68"/>
+		<product id="67" price="0" />
+		<product id="68" price="0" />
 		<product id="120"/>
 		<product id="121"/>
 		<product id="122"/>
@@ -11704,7 +11704,7 @@
 		<product id="5"/>
 		<product id="6"/>
 		<product id="7"/>
-		<product id="87"/>
+		<product id="87" price="0" />
 		<product id="152"/>
 		<product id="153"/>
 		<product id="154"/>
@@ -11735,8 +11735,8 @@
 		<product id="7816"/>
 	</buyList>
 	<buyList id="9009" npcId="-1">
-		<product id="69"/>
-		<product id="83"/>
+		<product id="69" price="0" />
+		<product id="83" price="0" />
 		<product id="123"/>
 		<product id="125"/>
 		<product id="126"/>
@@ -11750,7 +11750,7 @@
 		<product id="7826"/>
 	</buyList>
 	<buyList id="9010" npcId="-1">
-		<product id="70"/>
+		<product id="70" price="0" />
 		<product id="124"/>
 		<product id="5285"/>
 		<product id="5791"/>
@@ -11830,7 +11830,7 @@
 		<product id="7828"/>
 	</buyList>
 	<buyList id="9015" npcId="-1">
-		<product id="93"/>
+		<product id="93" price="0" />
 		<product id="291"/>
 		<product id="292"/>
 		<product id="293"/>
@@ -11846,8 +11846,8 @@
 		<product id="7831"/>
 	</buyList>
 	<buyList id="9016" npcId="-1">
-		<product id="86"/>
-		<product id="88"/>
+		<product id="86" price="0" />
+		<product id="88" price="0" />
 		<product id="156"/>
 		<product id="157"/>
 		<product id="158"/>
@@ -11866,7 +11866,7 @@
 		<product id="7829"/>
 	</buyList>
 	<buyList id="9017" npcId="-1">
-		<product id="90"/>
+		<product id="90" price="0" />
 		<product id="178"/>
 		<product id="183"/>
 		<product id="184"/>
@@ -11879,13 +11879,13 @@
 		<product id="7825"/>
 	</buyList>
 	<buyList id="9018" npcId="-1">
-		<product id="72"/>
-		<product id="73"/>
-		<product id="74"/>
-		<product id="75"/>
-		<product id="76"/>
-		<product id="77"/>
-		<product id="84"/>
+		<product id="72" price="0" />
+		<product id="73" price="0" />
+		<product id="74" price="0" />
+		<product id="75" price="0" />
+		<product id="76" price="0" />
+		<product id="77" price="0" />
+		<product id="84" price="0" />
 		<product id="131"/>
 		<product id="132"/>
 		<product id="133"/>
@@ -11939,7 +11939,7 @@
 		<product id="6315"/>
 	</buyList>
 	<buyList id="9019" npcId="-1">
-		<product id="71"/>
+		<product id="71" price="0" />
 		<product id="4711"/>
 		<product id="4712"/>
 		<product id="4713"/>
@@ -12061,9 +12061,9 @@
 		<product id="4800"/>
 	</buyList>
 	<buyList id="9024" npcId="-1">
-		<product id="94"/>
-		<product id="95"/>
-		<product id="96"/>
+		<product id="94" price="0" />
+		<product id="95" price="0" />
+		<product id="96" price="0" />
 		<product id="298"/>
 		<product id="299"/>
 		<product id="301"/>
@@ -12133,7 +12133,7 @@
 		<product id="173"/>
 		<product id="161"/>
 		<product id="160"/>
-		<product id="85"/>
+		<product id="85" price="0" />
 		<product id="193"/>
 	</buyList>
 	<buyList id="9026" npcId="-1">
@@ -12164,7 +12164,7 @@
 		<product id="206"/>
 	</buyList>
 	<buyList id="9027" npcId="-1">
-		<product id="79"/>
+		<product id="79" price="0" />
 		<product id="136"/>
 		<product id="137"/>
 		<product id="138"/>
@@ -12185,7 +12185,7 @@
 		<product id="7724"/>
 	</buyList>
 	<buyList id="9028" npcId="-1">
-		<product id="78"/>
+		<product id="78" price="0" />
 		<product id="4723"/>
 		<product id="4724"/>
 		<product id="4725"/>
@@ -12285,7 +12285,7 @@
 		<product id="4806"/>
 	</buyList>
 	<buyList id="9033" npcId="-1">
-		<product id="97"/>
+		<product id="97" price="0" />
 		<product id="300"/>
 		<product id="4855"/>
 		<product id="4856"/>
@@ -12295,7 +12295,7 @@
 		<product id="4860"/>
 	</buyList>
 	<buyList id="9034" npcId="-1">
-		<product id="91"/>
+		<product id="91" price="0" />
 		<product id="163"/>
 		<product id="171"/>
 		<product id="175"/>
@@ -12311,7 +12311,7 @@
 		<product id="7834"/>
 	</buyList>
 	<buyList id="9035" npcId="-1">
-		<product id="92"/>
+		<product id="92" price="0" />
 		<product id="207"/>
 		<product id="208"/>
 		<product id="209"/>
@@ -12325,8 +12325,8 @@
 		<product id="4902"/>
 	</buyList>
 	<buyList id="9036" npcId="-1">
-		<product id="80"/>
-		<product id="85"/>
+		<product id="80" price="0" />
+		<product id="85" price="0" />
 		<product id="147"/>
 		<product id="149"/>
 		<product id="150"/>
@@ -12349,7 +12349,7 @@
 		<product id="5649"/>
 	</buyList>
 	<buyList id="9037" npcId="-1">
-		<product id="81"/>
+		<product id="81" price="0" />
 		<product id="5644"/>
 		<product id="5645"/>
 		<product id="5646"/>
@@ -12400,7 +12400,7 @@
 		<product id="5625"/>
 	</buyList>
 	<buyList id="9042" npcId="-1">
-		<product id="98"/>
+		<product id="98" price="0" />
 		<product id="304"/>
 		<product id="305"/>
 		<product id="4861"/>
@@ -12444,7 +12444,7 @@
 		<product id="5607"/>
 	</buyList>
 	<buyList id="9045" npcId="-1">
-		<product id="82"/>
+		<product id="82" price="0" />
 		<product id="6364"/>
 		<product id="6581"/>
 		<product id="6582"/>

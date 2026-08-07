@@ -535,7 +535,7 @@ public final class PhantomAI
 					}
 					
 					LAST_ACTIONS.put(phantom.getObjectId(), "Attack " + target.getName());
-					phantom.getAI().tryToAttack(target, false, false);
+					phantom.getAI().tryToAttack(target, !target.isAttackableWithoutForceBy(phantom), false);
 					return;
 				}
 			}
@@ -580,7 +580,7 @@ public final class PhantomAI
 		}
 		
 		LAST_ACTIONS.put(phantom.getObjectId(), action + target.getName());
-		phantom.getAI().tryToAttack(target, false, false);
+		phantom.getAI().tryToAttack(target, !target.isAttackableWithoutForceBy(phantom), false);
 	}
 	
 	private static void attackPlayer(Player phantom, Player target, String action)
@@ -596,9 +596,9 @@ public final class PhantomAI
 			restMp(phantom);
 			return;
 		}
-		
+
 		LAST_ACTIONS.put(phantom.getObjectId(), action + target.getName());
-		phantom.getAI().tryToAttack(target, true, false);
+		phantom.getAI().tryToAttack(target, !target.isAttackableWithoutForceBy(phantom), false);
 	}
 	
 	/**

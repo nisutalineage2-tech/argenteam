@@ -289,7 +289,26 @@ public class EnterWorld extends L2GameClientPacket
 		// Attacker or spectator logging into a siege zone will be ported at town.
 		if (player.isInsideZone(ZoneId.SIEGE) && player.getSiegeState() < 2)
 			player.teleportTo(RestartType.TOWN);
-		
+
+		// Newbie System
+		if (Config.ENABLE_NEWBIE_SYSTEM && player.getOnlineTime() == 0)
+		{
+			if (player.isMageClass())
+			{
+				for (IntIntHolder item : Config.START_ITEM_MAGE)
+				{
+					player.addItem(item.getId(), item.getValue(), true);
+				}
+			}
+			else
+			{
+				for (IntIntHolder item : Config.START_ITEM_FIGHT)
+				{
+					player.addItem(item.getId(), item.getValue(), true);
+				}
+			}
+		}
+
 		// Tutorial
 		final QuestState qs = player.getQuestList().getQuestState("Tutorial");
 		if (qs != null)

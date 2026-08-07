@@ -22,6 +22,11 @@ import net.sf.l2j.gameserver.network.serverpackets.ActionFailed;
 import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
 import net.sf.l2j.gameserver.scripting.QuestState;
 
+import ext.mods.quests.QuestData;
+import ext.mods.quests.QuestManager;
+import ext.mods.quests.holder.QuestHolder;
+import ext.mods.gameserver.data.xml.ItemData;
+
 public final class RequestBypassToServer extends L2GameClientPacket
 {
 	private static final Logger GMAUDIT_LOG = Logger.getLogger("gmaudit");

@@ -16,6 +16,7 @@ import net.sf.l2j.gameserver.model.World;
 import net.sf.l2j.gameserver.model.actor.Player;
 import net.sf.l2j.gameserver.model.location.Location;
 import net.sf.l2j.gameserver.data.xml.FactionData;
+import net.sf.l2j.gameserver.geoengine.GeoEngine;
 import net.sf.l2j.gameserver.network.SystemMessageId;
 import net.sf.l2j.gameserver.network.serverpackets.ConfirmDlg;
 import net.sf.l2j.gameserver.network.serverpackets.ExShowScreenMessage;
@@ -424,7 +425,16 @@ public abstract class AbstractEvent
 				{
 					final int x = loc.getX() + Rnd.get(-radius, radius);
 					final int y = loc.getY() + Rnd.get(-radius, radius);
-					ep.getPlayer().teleportTo(x, y, loc.getZ(), 0);
+					// Validate the destination is walkable before teleporting
+					final Location validatedLoc = GeoEngine.getInstance().getValidLocation(
+							loc.getX(), loc.getY(), loc.getZ(), x, y, loc.getZ(), null);
+					if (!validatedLoc.equals(new Location(x, y, loc.getZ())))
+					{
+						LOGGER.info("Event position adjusted for walkability: ({},{},{}) -> ({},{},{})",
+								x, y, loc.getZ(),
+								validatedLoc.getX(), validatedLoc.getY(), validatedLoc.getZ());
+					}
+					ep.getPlayer().teleportTo(validatedLoc.getX(), validatedLoc.getY(), validatedLoc.getZ(), 0);
 				}
 				
 				team.setColors(ep.getPlayer());
@@ -755,7 +765,16 @@ public abstract class AbstractEvent
 				// Teleport to spawn
 				final int x = loc.getX() + Rnd.get(-radius, radius);
 				final int y = loc.getY() + Rnd.get(-radius, radius);
-				player.teleportTo(x, y, loc.getZ(), 0);
+				// Validate the destination is walkable before teleporting
+				final Location validatedLoc = GeoEngine.getInstance().getValidLocation(
+						loc.getX(), loc.getY(), loc.getZ(), x, y, loc.getZ(), null);
+				if (!validatedLoc.equals(new Location(x, y, loc.getZ())))
+				{
+					LOGGER.info("Event position adjusted for walkability: ({},{},{}) -> ({},{},{})",
+							x, y, loc.getZ(),
+							validatedLoc.getX(), validatedLoc.getY(), validatedLoc.getZ());
+				}
+				player.teleportTo(validatedLoc.getX(), validatedLoc.getY(), validatedLoc.getZ(), 0);
 				
 				// Enable skills
 				player.enableAllSkills();

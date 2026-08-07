@@ -368,6 +368,10 @@ public final class Config
 	/** Custom: skill duration overrides (skillId -> new duration in seconds). */
 	public static boolean MODIFY_SKILL_DURATION;
 	public static Map<Integer, Integer> SKILL_DURATION_OVERRIDES;
+	/** Newbie System */
+	public static boolean ENABLE_NEWBIE_SYSTEM;
+	public static IntIntHolder[] START_ITEM_FIGHT;
+	public static IntIntHolder[] START_ITEM_MAGE;
 	
 	/** Custom: Noblesse granted by killing Barakiel (raid boss 25325) */
 	public static boolean ENABLE_RAIDBOSS_NOBLES;
@@ -1000,6 +1004,10 @@ public final class Config
 		}
 		if (MODIFY_SKILL_DURATION)
 			LOGGER.info("Skill duration modification enabled for {} skills.", SKILL_DURATION_OVERRIDES.size());
+		// Newbie System
+		ENABLE_NEWBIE_SYSTEM = players.getProperty("EnableNewbieSystem", false);
+		START_ITEM_FIGHT = players.parseIntIntList("StartItemFight", "");
+		START_ITEM_MAGE = players.parseIntIntList("StartItemMage", "");
 		ENABLE_RAIDBOSS_NOBLES = players.getProperty("RaidBossNobles", false);
 		ANNOUNCE_RAIDBOSS_KILL = players.getProperty("AnnounceRaidBossKill", true);
 		ANNOUNCE_RAIDBOSS_SPAWN = players.getProperty("AnnounceRaidBossSpawn", false);
