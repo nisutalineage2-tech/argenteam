@@ -81,7 +81,7 @@ public class QuestManager
 					}
 
 					sb.append("</td></tr></table>");
-					sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br>");
+					sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br1>");
 				}
 			}
 
@@ -89,7 +89,7 @@ public class QuestManager
 			if (!rewards.isEmpty())
 			{
 				sb.append("<center><font color=\"LEVEL\">Rewards</font></center><br1>");
-				sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br>");
+				sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br1>");
 
 				int totalRewards = rewards.size();
 				int totalPages = (int) Math.ceil((double) totalRewards / MAX_ITEM_PAGE);
@@ -142,25 +142,25 @@ public class QuestManager
 
 			sb.append("<center><br>");
 			sb.append("<font color=B09878>Notificações:</font>");
-			sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br>");
+			sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br1>");
 			sb.append("<table width=200>");
 
 			sb.append("<tr>");
 			sb.append("<td width=120 align=left>Notificação HTML</td>");
 			sb.append("<td width=16 align=center>");
-			sb.append("<button action=\"bypass -h questnotify html ").append(player.isQuestNotifyHtml() ? "off" : "on").append("\" ").append("width=16 height=16 back=\"").append(player.isQuestNotifyHtml() ? \"L2UI.CheckBox_checked\" : \"L2UI.CheckBox\").append("\" ").append("fore=\"").append(player.isQuestNotifyHtml() ? \"L2UI.CheckBox_checked\" : \"L2UI.CheckBox\").append("\">");
+			sb.append("<button action=\"bypass -h questnotify html ").append(player.isQuestNotifyHtml() ? "off" : "on").append("\" ").append("width=16 height=16 back=\"").append(player.isQuestNotifyHtml() ? "L2UI.CheckBox_checked" : "L2UI.CheckBox").append("\" ").append("fore=\"").append(player.isQuestNotifyHtml() ? "L2UI.CheckBox_checked" : "L2UI.CheckBox").append("\">");
 			sb.append("</td>");
 			sb.append("</tr>");
 
 			sb.append("<tr>");
 			sb.append("<td width=120 align=left>Notificação Chat</td>");
 			sb.append("<td width=16 align=center>");
-			sb.append("<button action=\"bypass -h questnotify chat ").append(player.isQuestNotifyChat() ? "off" : "on").append("\" ").append("width=16 height=16 back=\"").append(player.isQuestNotifyChat() ? \"L2UI.CheckBox_checked\" : \"L2UI.CheckBox\").append("\" ").append("fore=\"").append(player.isQuestNotifyChat() ? \"L2UI.CheckBox_checked\" : \"L2UI.CheckBox\").append("\">");
+			sb.append("<button action=\"bypass -h questnotify chat ").append(player.isQuestNotifyChat() ? "off" : "on").append("\" ").append("width=16 height=16 back=\"").append(player.isQuestNotifyChat() ? "L2UI.CheckBox_checked" : "L2UI.CheckBox").append("\" ").append("fore=\"").append(player.isQuestNotifyChat() ? "L2UI.CheckBox_checked" : "L2UI.CheckBox").append("\">");
 			sb.append("</td>");
 			sb.append("</tr>");
 
 			sb.append("</table></center><br1>");
-			sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br>");
+			sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br1>");
 			sb.append("</body></html>");
 
 			html.setHtml(sb.toString());
@@ -242,7 +242,7 @@ public class QuestManager
 				}
 
 				sb.append("</td></tr></table>");
-				sb.append("<img src=\"L2UI.SquareGray" width=300 height=1><br>");
+				sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br1>");
 			}
 		}
 
@@ -250,7 +250,7 @@ public class QuestManager
 		if (!rewards.isEmpty())
 		{
 			sb.append("<center><font color=\"LEVEL\">Rewards</font></center><br1>");
-			sb.append("<img src=\"L2UI.SquareGray" width=300 height=1><br>");
+			sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br1>");
 
 			int totalRewards = rewards.size();
 			int totalPages = (int) Math.ceil((double) totalRewards / MAX_ITEM_PAGE);
@@ -276,7 +276,7 @@ public class QuestManager
 				sb.append("</td>");
 				sb.append("<td width=240><font color=LEVEL>").append(template.getName()).append("</font><br1>x").append(StringUtil.formatNumber(reward.getCount())).append(" <font color=B09878>received!</font></td>");
 				sb.append("</tr></table>");
-				sb.append("<img src=\"L2UI.SquareGray" width=300 height=1><br1>");
+				sb.append("<img src=\"L2UI.SquareGray\" width=300 height=1><br1>");
 			}
 
 			if (totalRewards > MAX_ITEM_PAGE)
