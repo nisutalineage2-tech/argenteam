@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.w3c.dom.Document;
 
-import ext.mods.commons.data.StatSet;
-import ext.mods.commons.data.xml.IXmlReader;
+import net.sf.l2j.commons.data.StatSet;
+import net.sf.l2j.commons.data.xml.IXmlReader;
 import ext.mods.quests.holder.QuestHolder;
 import ext.mods.quests.holder.QuestObjective;
 import ext.mods.quests.holder.QuestReward;
@@ -31,8 +31,8 @@ public class QuestData implements IXmlReader
 	@Override
 	public void load()
 	{
-		parseDataFile("custom/mods/quests.xml");
-		LOGGER.info("Loaded {" + _quests.size() + "} quests.");
+		parseFile("custom/mods/quests.xml");
+		IXmlReader.LOGGER.info("Loaded {" + _quests.size() + "} quests.");
 	}
 
 	@Override

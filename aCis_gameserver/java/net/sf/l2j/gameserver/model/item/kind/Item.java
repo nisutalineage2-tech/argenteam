@@ -285,6 +285,14 @@ public abstract class Item
 	{
 		return _name;
 	}
+
+	/**
+	 * @return the icon path of the item
+	 */
+	public String getIcon()
+	{
+		return "icon.noimage";
+	}
 	
 	/**
 	 * @return int the part of the body used with the item.

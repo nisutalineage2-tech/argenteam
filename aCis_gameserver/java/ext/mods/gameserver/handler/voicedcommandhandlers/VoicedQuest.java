@@ -1,7 +1,7 @@
 package ext.mods.gameserver.handler.voicedcommandhandlers;
 
 import ext.mods.gameserver.handler.IVoicedCommandHandler;
-import ext.mods.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.actor.Player;
 import ext.mods.quests.QuestManager;
 
 public class VoicedQuest implements IVoicedCommandHandler

@@ -293,6 +293,10 @@ public final class Player extends Playable
 	private int _lastCompassZone; // the last compass zone update send to the client
 	
 	private boolean _isIn7sDungeon;
+
+	/** Quest notification settings */
+	private boolean _questNotifyHtml = true;
+	private boolean _questNotifyChat = true;
 	
 	private final Punishment _punishment = new Punishment(this);
 	private final RecipeBook _recipeBook = new RecipeBook(this);
@@ -5540,6 +5544,48 @@ public final class Player extends Playable
 	public QuestList getQuestList()
 	{
 		return _questList;
+	}
+
+	/**
+	 * @return List of active quest IDs (quests in STARTED state)
+	 */
+	public List<Integer> getActiveQuestIds()
+	{
+		List<Integer> activeQuestIds = new ArrayList<>();
+		for (QuestState qs : _questList)
+		{
+			if (qs != null && qs.isStarted())
+			{
+				activeQuestIds.add(qs.getQuest().getQuestId());
+			}
+		}
+		return activeQuestIds;
+	}
+
+	/**
+	 * @param questId The ID of the quest to check
+	 * @return True if the quest is completed, false otherwise
+	 */
+	public boolean isQuestCompleted(int questId)
+	{
+		QuestState qs = _questList.getQuestState(questId);
+		return qs != null && qs.isCompleted();
+	}
+
+	/**
+	 * @return True if HTML quest notifications are enabled
+	 */
+	public boolean isQuestNotifyHtml()
+	{
+		return _questNotifyHtml;
+	}
+
+	/**
+	 * @return True if chat quest notifications are enabled
+	 */
+	public boolean isQuestNotifyChat()
+	{
+		return _questNotifyChat;
 	}
 	
 	public boolean isHero()

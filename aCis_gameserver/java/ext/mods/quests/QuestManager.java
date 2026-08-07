@@ -2,14 +2,14 @@ package ext.mods.quests;
 
 import java.util.List;
 
-import ext.mods.commons.lang.StringUtil;
-import ext.mods.gameserver.data.xml.ItemData;
-import ext.mods.gameserver.data.xml.NpcData;
-import ext.mods.gameserver.model.actor.Player;
-import ext.mods.gameserver.model.actor.template.NpcTemplate;
-import ext.mods.gameserver.model.item.kind.Item;
-import ext.mods.gameserver.network.serverpackets.NpcHtmlMessage;
-import ext.mods.gameserver.network.serverpackets.PlaySound;
+import net.sf.l2j.commons.lang.StringUtil;
+import net.sf.l2j.gameserver.data.xml.ItemData;
+import net.sf.l2j.gameserver.data.xml.NpcData;
+import net.sf.l2j.gameserver.model.actor.Player;
+import net.sf.l2j.gameserver.model.actor.template.NpcTemplate;
+import net.sf.l2j.gameserver.model.item.kind.Item;
+import net.sf.l2j.gameserver.network.serverpackets.NpcHtmlMessage;
+import net.sf.l2j.gameserver.network.serverpackets.PlaySound;
 import ext.mods.quests.holder.QuestHolder;
 import ext.mods.quests.holder.QuestObjective;
 import ext.mods.quests.holder.QuestReward;
@@ -75,9 +75,9 @@ public class QuestManager
 					}
 					else
 					{
-						sb.append("<font color=B09878>Progress: ").append(StringUtil.formatNumber(currentCount)).append(" / ").append(StringUtil.formatNumber(requiredCount)).append("</font><br1>");
+						sb.append("<font color=B09878>Progress: ").append(StringUtil.formatNumber(0)).append(" / ").append(StringUtil.formatNumber(requiredCount)).append("</font><br1>");
 
-						sb.append(generateBarProgress(200, 4, (int) currentCount, requiredCount));
+						sb.append(generateBarProgress(200, 4, (int) 0, requiredCount));
 					}
 
 					sb.append("</td></tr></table>");
