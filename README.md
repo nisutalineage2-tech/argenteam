@@ -30,7 +30,7 @@ Diseñado para operar en LAN (IP de ejemplo: `192.168.100.141`) con jugadores re
 - Al terminar, los personajes quedan **congelados** durante `EndFreezeSeconds` y luego son teletransportados a la zona neutral (Gludin Village).
 - Cada facción tiene **1 bandera principal** (NPC 90000) que defender y capturar.
 - Hay **4 checkpoints** (NPC 90003) por mapa, neutrales y disputables: cualquier facción puede tomarlos para que su equipo respawnee más cerca del frente.
-- Al morir, el respawn es configurable (`RespawnOnDeathMode`): última bandera capturada / base de la facción / zona neutral.
+- Al morir, el respawn es configurable (`DeathRespawnMode`): última bandera capturada / base de la facción / zona neutral.
 - El scoreboard se muestra arriba de todo con el tiempo del evento, actualizado cada 3 segundos y con el sufijo `[Faction War]`.
 - Las facciones bloquean interacción entre sí: no hay PM, trade, duelo, party ni invitaciones a clan entre facciones rivales.
 
@@ -119,8 +119,8 @@ Bots que simulan jugadores reales. Su IA está **siempre activa** (no existe opc
 
 | Propiedad | Descripción |
 |---|---|
-| `PhantomsEnabled` | Activa/desactiva el sistema |
-| `PhantomIds` | IDs guardados que carga `//phantom_start` |
+| Activación | El sistema se inicia con el comando admin `//phantom start` (carga los `PhantomIds`); la IA queda siempre activa |
+| `PhantomIds` | IDs guardados que carga `//phantom start` |
 | `SpawnAtGm` / `PersistCreated` | Spawn cerca del GM y persistencia |
 | `WarParticipationChance` / `WarMaxPerFaction` / `WarNearbyOnlyRange` | Qué phantoms van a la guerra |
 | Niveles, equipo, chat social | Rango de niveles, grade de equipo, frases y delays |
