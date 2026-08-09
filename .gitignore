@@ -2,9 +2,10 @@
 .idea
 .metadata
 
-# Freebuff (estado local de la app, no subir a GitHub)
+# Herramientas de IA (estado local, no subir a GitHub)
 .freebuff/
 .agents/
+.claude/
 
 # Logs y crash dumps de la JVM
 *.log
