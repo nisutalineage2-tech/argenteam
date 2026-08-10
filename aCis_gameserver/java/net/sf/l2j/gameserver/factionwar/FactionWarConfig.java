@@ -394,6 +394,12 @@ public class FactionWarConfig
 			_maps.add(new WarMap("Giran", 83400, 148000, -3400, 3000, null, null));
 		}
 		
+		// Startup log: confirms which config the server actually loaded.
+		LOGGER.info("FactionWarConfig: enabled={} | NeutralSpawnLoc: {} (radius {}) | NewbieSpawnLoc: {} | GoodSpawn: {} | EvilSpawn: {} | DeathRespawnMode: {} | Checkpoints: {} (radius {})", _enabled, _neutralSpawnLoc, _neutralZoneRadius, _newbieSpawnLoc, _goodSpawnLoc, _evilSpawnLoc, _deathRespawnMode, _checkpointCount, _checkpointRadius);
+		LOGGER.info("FactionWarConfig: {} war map(s) loaded:", _maps.size());
+		for (WarMap map : _maps)
+			LOGGER.info("  - {}: center ({}) | radius {} | GoodSpawn: {} | EvilSpawn: {}", map.getName(), map.getCenter(), map.getRadius(), map.getGoodSpawn(), map.getEvilSpawn());
+		
 		Collections.shuffle(_maps);
 	}
 	
