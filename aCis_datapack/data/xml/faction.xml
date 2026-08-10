@@ -5,10 +5,10 @@
 	  Each faction requires: id, name, nameColor (hex), titleColor (hex), homeX, homeY, homeZ.
 	  
 	  homeX/homeY/homeZ = Coordinates of the faction base (respawn location on death / teleport on join).
-	  Adjust coordinates to match your server's geodata.
-	  
-	  Example factions below use Gludio and Giran as bases.
+	  Both factions share the NEUTRAL ZONE (Gludin Village, same coords as NeutralSpawnLoc in
+	  factionwar.properties: -82205,150869,-3120). During the Faction War, players are teleported
+	  to the war map spawns defined per-map in factionwar.properties (Maps line).
 	-->
-	<faction id="1" name="Order of the Elites" nameColor="6666FF" titleColor="6666FF" homeX="-84318" homeY="244579" homeZ="-792"/>
-	<faction id="2" name="Shadow Legion" nameColor="FF4444" titleColor="FF4444" homeX="82218" homeY="148561" homeZ="-3472"/>
+	<faction id="1" name="Order of the Elites" nameColor="6666FF" titleColor="6666FF" homeX="-82205" homeY="150869" homeZ="-3120"/>
+	<faction id="2" name="Shadow Legion" nameColor="FF4444" titleColor="FF4444" homeX="-82205" homeY="150869" homeZ="-3120"/>
 </list>
