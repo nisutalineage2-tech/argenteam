@@ -37,6 +37,12 @@ echo     COMPILANDO aCis GAMESERVER
 echo ========================================
 echo.
 
+REM Respaldo del ultimo JAR bueno ANTES de limpiar (build\ se borra completo)
+if exist "%GS_DIR%\build\l2jserver.jar" (
+    echo Respaldo del JAR anterior...
+    copy /y "%GS_DIR%\build\l2jserver.jar" "%GS_DIR%\l2jserver.jar.bak" >nul
+)
+
 if exist "%GS_DIR%\build" (
     echo Limpiando build anterior...
     rmdir /s /q "%GS_DIR%\build"
@@ -60,11 +66,7 @@ for /f %%a in ('type "%GS_DIR%\build\_files.txt" ^| find /c /v ""') do set FILE_
 echo Encontrados %FILE_COUNT% archivos. Compilando...
 
 "%JAVA_HOME%\bin\javac" -encoding UTF-8 -source 21 -target 21 -cp "%CLASSPATH%" -d "%GS_DIR%\build\classes" -sourcepath "%GS_DIR%\java" @"%GS_DIR%\build\_files.txt"
-if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Fallo la compilacion del Gameserver.
-    pause
-    exit /b 1
-)
+if %ERRORLEVEL% NEQ 0 goto :build_failed
 del "%GS_DIR%\build\_files.txt"
 echo Gameserver compilado exitosamente.
 
@@ -73,12 +75,11 @@ echo Creando l2jserver.jar...
 pushd "%GS_DIR%\build\classes"
 "%JAVA_HOME%\bin\jar" cf "%GS_DIR%\build\l2jserver.jar" .
 popd
-if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Fallo al crear el JAR.
-    pause
-    exit /b 1
-)
+if %ERRORLEVEL% NEQ 0 goto :build_failed
 echo JAR creado exitosamente.
+
+REM Actualizar el respaldo con el JAR recien creado
+copy /y "%GS_DIR%\build\l2jserver.jar" "%GS_DIR%\l2jserver.jar.bak" >nul
 
 REM ============================================================
 REM  DIST GAMESERVER — estructura igual que build.xml
@@ -179,3 +180,48 @@ echo     COMPILACION COMPLETA
 echo ========================================
 echo.
 pause
+exit /b 0
+
+REM ============================================================
+REM  MANEJO DE FALLOS: restaurar el JAR anterior y avisar claro
+REM ============================================================
+:build_failed
+if not exist "%GS_DIR%\l2jserver.jar.bak" goto :no_backup
+
+for %%F in ("%GS_DIR%\l2jserver.jar.bak") do set "JAR_DATE=%%~tF"
+if not exist "%GS_DIR%\build" mkdir "%GS_DIR%\build"
+copy /y "%GS_DIR%\l2jserver.jar.bak" "%GS_DIR%\build\l2jserver.jar" >nul
+
+echo.
+echo ============================================================
+echo  ERROR: LA COMPILACION DEL GAMESERVER FALLO.
+echo ============================================================
+echo.
+echo  El JAR anterior NO se perdio: quedo restaurado en
+echo    aCis_gameserver\build\l2jserver.jar   (fecha: %JAR_DATE%)
+echo  Respaldo guardado en aCis_gameserver\l2jserver.jar.bak
+echo.
+echo  IMPORTANTE: ese JAR es la version ANTERIOR y NO incluye
+echo  los cambios recientes. El server seguira funcionando con
+echo  el JAR VIEJO (el desplegado en C:\server no fue tocado)
+echo  hasta que corrijas los errores de arriba y vuelvas a
+echo  compilar con exito.
+echo ============================================================
+echo.
+pause
+exit /b 1
+
+:no_backup
+echo.
+echo ============================================================
+echo  ERROR: LA COMPILACION DEL GAMESERVER FALLO.
+echo ============================================================
+echo.
+echo  No se encontro un JAR anterior para restaurar (primer
+echo  build o respaldo inexistente). El build quedo SIN
+echo  l2jserver.jar. Corregi los errores de arriba y volve a
+echo  compilar.
+echo ============================================================
+echo.
+pause
+exit /b 1
