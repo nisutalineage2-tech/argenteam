@@ -515,52 +515,33 @@ public abstract class Playable extends Creature
 	public boolean isAttackableWithoutForceBy(Playable attacker)
 	{
 		final Player attackerPlayer = attacker.getActingPlayer();
-		
+
 		// No cast upon self/owner.
 		if (attackerPlayer == getActingPlayer())
 			return false;
-		
+
 		// No checks for players in Olympiad.
 		if (isInSameActiveOlympiadMatch(attackerPlayer))
 			return true;
-		
+
 		// No checks for players in Duel.
 		if (isInSameActiveDuel(attackerPlayer))
 			return true;
-		
-		// Neutral zone: no PvP allowed.
-		if (Config.ENABLE_FACTION_SYSTEM && FactionWarConfig.isEnabled() && FactionWarConfig.isInNeutralZone(getPosition()))
-			return false;
-		
-		// Faction check: same faction members cannot auto-attack each other.
-		if (Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayer.getFactionId() == getActingPlayer().getFactionId())
-			return false;
-		
-		// Cross-faction: different factions can auto-attack each other.
-		if (Config.ENABLE_FACTION_SYSTEM && attackerPlayer.getFactionId() != 0 && getActingPlayer().getFactionId() != 0 && attackerPlayer.getFactionId() != getActingPlayer().getFactionId())
-			return true;
-		
-		final boolean sameParty = isInSameParty(attackerPlayer);
-		final boolean sameCommandChannel = isInSameCommandChannel(attackerPlayer);
-		
+
 		// No checks for Playables in arena.
-		if (isInArena() && attacker.isInArena() && !(sameParty || sameCommandChannel))
+		if (isInArena() && attacker.isInArena())
 			return true;
-		
-		// Players in the same CC/party/alliance/clan cannot attack without CTRL
-		if (sameParty || sameCommandChannel || isInSameClan(attackerPlayer) || isInSameAlly(attackerPlayer) || isInSameActiveSiegeSide(attackerPlayer))
-			return false;
-		
+
 		// CTRL is not needed if both are in a PVP area
 		if (isInsideZone(ZoneId.PVP) && attacker.isInsideZone(ZoneId.PVP))
 			return true;
-		
+
 		// CTRL is not needed if the target (this) is flagged / PK
 		if (getKarma() > 0 || getPvpFlag() > 0)
 			return true;
-		
-		// Any other case returns false, even clan war. You need CTRL to attack.
-		return false;
+
+		// Always allow attacking without CTRL for PvP
+		return true;
 	}
 	
 	/**

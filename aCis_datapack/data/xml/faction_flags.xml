@@ -32,9 +32,9 @@
 	<flag mapId="2" flag_type="default" flag_name="Base X2" faction_id="1" isCapturable="False" x="-21984" y="104842" z="-3653" />
 	<flag mapId="2" flag_type="default" flag_name="Base X1" faction_id="2" isCapturable="False" x="-12925" y="106635" z="-3535" />
 	<flag mapId="2" flag_type="default" flag_name="Castle Crystal" faction_id="0" isCapturable="True" x="-18351" y="113802" z="-2771" />
-	<flag mapId="2" flag_type="default" flag_name="Treasure Room" faction_id="0" isCapturable="True" x="-17210" y="11148" z="-2680" />
+	<flag mapId="2" flag_type="default" flag_name="Treasure Room" faction_id="0" isCapturable="True" x="-17210" y="109452" z="-2680" />
 	<flag mapId="2" flag_type="default" flag_name="Upstairs" faction_id="0" isCapturable="True" x="-18116" y="109178" z="-2499" />
-	<flag mapId="2" flag_type="default" flag_name="Balcony" faction_id="0" isCapturable="True" x="-19274" y="10934" z="-2568" />
+	<flag mapId="2" flag_type="default" flag_name="Balcony" faction_id="0" isCapturable="True" x="-19274" y="109238" z="-2568" />
 	<flag mapId="2" flag_type="default" flag_name="Balcony 2" faction_id="0" isCapturable="True" x="-18036" y="107607" z="-2572" />
 	<flag mapId="2" flag_type="default" flag_name="Landing Zone" faction_id="0" isCapturable="True" x="-18593" y="112334" z="-2510" />
 	<flag mapId="2" flag_type="default" flag_name="Stone Wall" faction_id="0" isCapturable="True" x="-18685" y="110764" z="-2206" />
@@ -91,11 +91,11 @@
 	
 	<!-- Aden (castle exterior) -->
 	<flag mapId="9" flag_type="default" flag_name="Aden Base Good" faction_id="1" isCapturable="False" x="148500" y="34500" z="-2200" />
-	<flag mapId="9" flag_type="default" flag_name="Aden Base Evil" faction_id="2" isCapturable="False" x="151500" y="31500" z="-2200" />
+	<flag mapId="9" flag_type="default" flag_name="Aden Base Evil" faction_id="2" isCapturable="False" x="151500" y="33000" z="-2200" />
 	<flag mapId="9" flag_type="default" flag_name="Aden Center" faction_id="0" isCapturable="True" x="150000" y="33000" z="-2200" />
 	<flag mapId="9" flag_type="default" flag_name="Aden Castle Gate" faction_id="0" isCapturable="True" x="149500" y="32800" z="-2200" />
 	<flag mapId="9" flag_type="default" flag_name="Aden Temple" faction_id="0" isCapturable="True" x="150800" y="34400" z="-2200" />
-	<flag mapId="9" flag_type="default" flag_name="Aden North" faction_id="0" isCapturable="True" x="148700" y="31800" z="-2200" />
+	<flag mapId="9" flag_type="default" flag_name="Aden North" faction_id="0" isCapturable="True" x="148700" y="33200" z="-2200" />
 	
 	<!-- Goddard (fortress surroundings) -->
 	<flag mapId="10" flag_type="default" flag_name="Goddard Base Good" faction_id="1" isCapturable="False" x="143500" y="-46500" z="-2400" />
