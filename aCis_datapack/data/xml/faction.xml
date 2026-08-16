@@ -9,6 +9,6 @@
 	  factionwar.properties: -82205,150869,-3120). During the Faction War, players are teleported
 	  to the war map spawns defined per-map in factionwar.properties (Maps line).
 	-->
-	<faction id="1" name="Order of the Elites" nameColor="6666FF" titleColor="6666FF" homeX="-82205" homeY="150869" homeZ="-3120"/>
-	<faction id="2" name="Shadow Legion" nameColor="FF4444" titleColor="FF4444" homeX="-82205" homeY="150869" homeZ="-3120"/>
+	<faction id="1" name="Argentina" nameColor="6666FF" titleColor="6666FF" homeX="-82205" homeY="150869" homeZ="-3120"/>
+	<faction id="2" name="Brasil" nameColor="FF4444" titleColor="FF4444" homeX="-82205" homeY="150869" homeZ="-3120"/>
 </list>
