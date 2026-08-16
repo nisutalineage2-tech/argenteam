@@ -1661,25 +1661,46 @@ public class FactionWarManager
 	{
 		if (!Config.ENABLE_FACTION_SYSTEM)
 			return;
-		
+
 		final net.sf.l2j.gameserver.data.xml.FactionData factionData = net.sf.l2j.gameserver.data.xml.FactionData.getInstance();
-		
+
 		for (Player player : World.getInstance().getPlayers())
 		{
 			if (player == null || !player.isOnline())
 				continue;
-			
+
 			final int factionId = player.getFactionId();
 			if (factionId <= 0)
 				continue;
-			
+
 			final net.sf.l2j.gameserver.model.Faction faction = factionData.getFaction(factionId);
 			if (faction == null)
 				continue;
-			
-			player.getAppearance().setNameColor(faction.getNameColor());
-			player.getAppearance().setTitleColor(faction.getTitleColor());
-			player.setTitle(faction.getName());
+
+			String name = faction.getName();
+			int nameColor = faction.getNameColor();
+			int titleColor = faction.getTitleColor();
+
+			// Override with properties if faction war is enabled and this is a good/evil faction
+			if (FactionWarConfig.isEnabled())
+			{
+				if (factionId == FactionWarConfig.getGoodFactionId())
+				{
+					name = FactionWarConfig.getGoodFactionName();
+					nameColor = FactionWarConfig.getGoodFactionColor();
+					titleColor = FactionWarConfig.getGoodFactionColor();
+				}
+				else if (factionId == FactionWarConfig.getEvilFactionId())
+				{
+					name = FactionWarConfig.getEvilFactionName();
+					nameColor = FactionWarConfig.getEvilFactionColor();
+					titleColor = FactionWarConfig.getEvilFactionColor();
+				}
+			}
+
+			player.getAppearance().setNameColor(nameColor);
+			player.getAppearance().setTitleColor(titleColor);
+			player.setTitle(name);
 			player.broadcastUserInfo();
 		}
 		LOGGER.info("Broadcasted faction visuals to all online players.");

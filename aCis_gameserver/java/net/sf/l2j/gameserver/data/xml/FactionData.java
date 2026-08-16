@@ -130,17 +130,39 @@ public class FactionData implements IXmlReader
 	{
 		if (!Config.ENABLE_FACTION_SYSTEM)
 			return;
-		
+
 		try
 		{
 			restoreData(player);
-			
+
 			final Faction faction = _factions.get(player.getFactionId());
 			if (faction != null)
 			{
-				player.getAppearance().setNameColor(faction.getNameColor());
-				player.getAppearance().setTitleColor(faction.getTitleColor());
-				player.setTitle(faction.getName());
+				String name = faction.getName();
+				int nameColor = faction.getNameColor();
+				int titleColor = faction.getTitleColor();
+
+				// Override with properties if faction war is enabled and this is a good/evil faction
+				if (FactionWarConfig.isEnabled())
+				{
+					final int playerFactionId = player.getFactionId();
+					if (playerFactionId == FactionWarConfig.getGoodFactionId())
+					{
+						name = FactionWarConfig.getGoodFactionName();
+						nameColor = FactionWarConfig.getGoodFactionColor();
+						titleColor = FactionWarConfig.getGoodFactionColor();
+					}
+					else if (playerFactionId == FactionWarConfig.getEvilFactionId())
+					{
+						name = FactionWarConfig.getEvilFactionName();
+						nameColor = FactionWarConfig.getEvilFactionColor();
+						titleColor = FactionWarConfig.getEvilFactionColor();
+					}
+				}
+
+				player.getAppearance().setNameColor(nameColor);
+				player.getAppearance().setTitleColor(titleColor);
+				player.setTitle(name);
 			}
 		}
 		catch (Exception e)
